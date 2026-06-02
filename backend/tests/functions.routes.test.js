@@ -14,6 +14,20 @@ describe('function routes', () => {
     expect(response.body.error).toBe('function_not_migrated');
   });
 
+  it('supports createDataSubAssessment function', async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post('/api/functions/createDataSubAssessment')
+      .send({ event: {} })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      skipped: true,
+      reason: 'No entity_id in event'
+    });
+  });
+
   it('returns 400 for unknown quizSession actions', async () => {
     const app = createApp();
 

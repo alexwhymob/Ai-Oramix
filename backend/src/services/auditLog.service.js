@@ -1,4 +1,5 @@
 import { AuditLog } from '../models/index.js';
+import mongoose from 'mongoose';
 
 export async function writeAuditLog({
   req,
@@ -9,6 +10,10 @@ export async function writeAuditLog({
   metadata = {}
 }) {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return;
+    }
+
     const actor = user || req?.user || null;
 
     await AuditLog.create({

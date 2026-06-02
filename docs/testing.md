@@ -28,6 +28,7 @@ Teste inicial:
 - Autenticacao deve testar hash de password e assinatura/verificacao JWT sem escrever na base online.
 - Auditoria deve testar model `AuditLog` e protecao do endpoint de leitura.
 - `quizSession` deve testar validacao de email corporativo, acao desconhecida e funcoes ainda nao migradas.
+- `createDataSubAssessment` deve testar eventos sem ID, score alto, subavaliacoes existentes e parsing seguro de `pillar_scores`.
 
 ## Frontend
 

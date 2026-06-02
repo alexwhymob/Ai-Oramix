@@ -1,4 +1,5 @@
 import { handleQuizSessionAction } from '../services/quizSession.service.js';
+import { createDataSubAssessment } from '../services/subAssessment.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 
 const AUDIT_ACTIONS = {
@@ -28,6 +29,23 @@ export async function invokeFunction(req, res, next) {
           action: req.body?.action,
           hasForm: Boolean(req.body?.form),
           answersCount: Array.isArray(req.body?.answers) ? req.body.answers.length : undefined
+        }
+      });
+      res.json(result);
+      return;
+    }
+
+    if (functionName === 'createDataSubAssessment') {
+      const result = await createDataSubAssessment(req.body);
+      await writeAuditLog({
+        req,
+        action: result.success ? 'sub_assessment.create_data' : 'sub_assessment.skip_data',
+        entity: 'Assessment',
+        entity_id: result.subAssessmentId || req.body?.event?.entity_id || null,
+        metadata: {
+          parentAssessmentId: req.body?.event?.entity_id,
+          reason: result.reason,
+          dataScore: result.dataScore
         }
       });
       res.json(result);

@@ -138,7 +138,7 @@ Cada funcao deve ser feita como tarefa separada.
 Estado das funcoes:
 
 - `quizSession`: concluida.
-- `createDataSubAssessment`: pendente.
+- `createDataSubAssessment`: concluida.
 - `generateReport`: pendente.
 - `sendReport`: pendente.
 

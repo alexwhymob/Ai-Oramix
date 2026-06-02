@@ -108,6 +108,7 @@ Implementado na Fase 8:
 
 ```txt
 POST /api/functions/quizSession
+POST /api/functions/createDataSubAssessment
 ```
 
 Acoes suportadas:
@@ -123,6 +124,13 @@ Acoes suportadas:
 - `getSubResult`
 
 Funcoes ainda pendentes retornam `501 function_not_migrated`.
+
+`createDataSubAssessment` cria uma subavaliacao para o pilar `dados` quando:
+
+- o assessment principal esta `completed`;
+- nao e uma subavaliacao;
+- `pillar_scores` contem `dados` com score inferior a `2.5`;
+- ainda nao existe subavaliacao para o assessment pai.
 
 ## Health Check
 

@@ -4,6 +4,31 @@
 
 ### Tarefa
 
+Migracao da funcao Base44 `createDataSubAssessment`.
+
+### Ficheiros alterados
+
+- `backend/src/services/subAssessment.service.js`
+- `backend/src/controllers/functions.controller.js`
+- `backend/tests/subAssessment.service.test.js`
+- `backend/tests/functions.routes.test.js`
+- `docs/api.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. O fluxo do quiz passa a conseguir criar subavaliacao de dados no backend proprio quando o score do pilar `dados` fica abaixo de `2.5`.
+
+### Observacoes
+
+A funcao e idempotente: se a subavaliacao ja existir, retorna `skipped` com o ID existente.
+
+## 2026-06-02
+
+### Tarefa
+
 Migracao da funcao Base44 `quizSession`.
 
 ### Ficheiros alterados
