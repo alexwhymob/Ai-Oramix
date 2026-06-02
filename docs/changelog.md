@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-06-03
+
+### Tarefa
+
+Migracao do convite de utilizadores internos a partir da configuracao admin.
+
+### Ficheiros alterados
+
+- `backend/src/app.js`
+- `backend/src/controllers/users.controller.js`
+- `backend/src/routes/users.routes.js`
+- `backend/src/services/auth.service.js`
+- `backend/tests/auth.service.test.js`
+- `backend/tests/users.routes.test.js`
+- `frontend/src/api/usersClient.js`
+- `frontend/src/pages/admin/Configuration.jsx`
+- `docs/api.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. A configuracao admin deixa de depender de stub para enviar convites e passa a usar a nossa API com protecao admin-only.
+
+### Observacoes
+
+- O convite reaproveita o fluxo de `reset-password` para definicao inicial da password.
+- O endpoint novo e `POST /api/users/invite`.
+- O sistema registra auditoria com a acao `user.invited`.
+
 ## 2026-06-02
 
 ### Tarefa
@@ -34,6 +64,7 @@ Alto. A recuperacao de password deixa de ser stub no frontend e passa a existir 
 ### Observacoes
 
 - O backend agora distingue melhor falha de whitelist do Atlas vs falha de DNS/SRV.
+- O backend agora aceita `MONGODB_DIRECT_URI` como fallback para ambientes com problemas na resolucao SRV do Atlas.
 - O login respeita o parametro `from` no redirecionamento.
 - As paginas `forgot-password` e `reset-password` ficaram ligadas nas rotas do frontend.
 

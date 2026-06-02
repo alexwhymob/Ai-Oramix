@@ -1,7 +1,10 @@
+import { apiRequest } from './apiClient';
+
 export function createUsersClient() {
   return {
-    inviteUser: async () => {
-      throw new Error('User invitations are not migrated yet.');
-    }
+    inviteUser: (email, role, full_name = '') => apiRequest('/users/invite', {
+      method: 'POST',
+      body: JSON.stringify({ email, role, full_name })
+    })
   };
 }

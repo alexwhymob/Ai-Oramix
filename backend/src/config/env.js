@@ -6,6 +6,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
   MONGODB_URI: z.string().min(1).optional(),
+  MONGODB_DIRECT_URI: z.string().min(1).optional(),
   MONGODB_DB_NAME: z.string().min(1).optional(),
   JWT_SECRET: z.string().min(32).optional(),
   LLM_PROVIDER: z.enum(['openai', 'google', 'anthropic']).default('openai'),

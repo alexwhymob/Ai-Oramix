@@ -56,12 +56,14 @@ export default function AdminConfiguration() {
   const handleInvite = async () => {
     if (!inviteEmail) return;
     setInviting(true);
-    await base44.users.inviteUser(inviteEmail, inviteRole === 'admin' ? 'admin' : 'user');
-    // After invite, update role if not admin (inviteUser only supports admin/user)
-    setInviteEmail('');
-    toast.success(`Invitation sent to ${inviteEmail}`);
-    setInviting(false);
-    qc.invalidateQueries({ queryKey: ['all_users'] });
+    try {
+      await base44.users.inviteUser(inviteEmail, inviteRole);
+      setInviteEmail('');
+      toast.success(`Invitation sent to ${inviteEmail}`);
+      qc.invalidateQueries({ queryKey: ['all_users'] });
+    } finally {
+      setInviting(false);
+    }
   };
 
   const [activeTab, setActiveTab] = useState('users');

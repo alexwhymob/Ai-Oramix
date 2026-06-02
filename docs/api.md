@@ -218,6 +218,7 @@ base44.auth.logout()
 base44.auth.register({ email, password })
 base44.auth.resetPasswordRequest(email)
 base44.auth.resetPassword({ resetToken, newPassword })
+base44.users.inviteUser(email, role)
 ```
 
 Endpoints propostos:
@@ -229,6 +230,7 @@ POST /api/auth/logout
 POST /api/auth/register
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
+POST /api/users/invite
 ```
 
 Autenticacao ainda nao foi migrada. O frontend contem stubs controlados ate a fase JWT.
@@ -242,6 +244,7 @@ POST /api/auth/forgot-password
 POST /api/auth/reset-password
 GET  /api/auth/me
 POST /api/auth/logout
+POST /api/users/invite
 ```
 
 `GET /api/auth/me` exige header:
@@ -249,6 +252,14 @@ POST /api/auth/logout
 ```txt
 Authorization: Bearer <token>
 ```
+
+`POST /api/users/invite`:
+
+- exige autenticacao;
+- permite apenas `admin`;
+- cria o utilizador se nao existir;
+- atualiza o `role` se o utilizador ja existir;
+- envia e-mail de convite com link para `/reset-password?token=...`.
 
 ## Audit Logs
 

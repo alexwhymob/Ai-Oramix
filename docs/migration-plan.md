@@ -141,6 +141,7 @@ Estado das funcoes:
 - `createDataSubAssessment`: concluida.
 - `generateReport`: concluida.
 - `sendReport`: concluida.
+- `base44.users.inviteUser`: concluida via `POST /api/users/invite`.
 
 Risco: alto. Contem regras centrais do produto.
 
@@ -174,4 +175,4 @@ Risco: medio.
 
 ## Proxima Tarefa Recomendada
 
-Validar o fluxo funcional completo em ambiente local: quiz, subavaliacao, geracao de relatorio e envio de notificacao por e-mail.
+Validar o fluxo funcional completo em ambiente local: convite de utilizador, login, quiz, subavaliacao, geracao de relatorio e envio de notificacao por e-mail.

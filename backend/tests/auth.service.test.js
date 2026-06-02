@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  createInviteUserService,
   createPasswordResetRequestService,
   createResetPasswordService,
   hashPassword,
@@ -83,5 +84,52 @@ describe('auth service', () => {
     expect(user.reset_password_token_hash).toBeNull();
     expect(user.reset_password_expires_at).toBeNull();
     expect(save).toHaveBeenCalledOnce();
+  });
+
+  it('creates or updates a user and sends an invite email', async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const sendEmail = vi.fn().mockResolvedValue({ success: true });
+    const createdUser = {
+      id: 'user-2',
+      email: 'invitee@example.com',
+      full_name: 'Invitee',
+      role: 'ai_consultant',
+      password_hash: null,
+      save,
+      toJSON() {
+        return {
+          id: this.id,
+          email: this.email,
+          full_name: this.full_name,
+          role: this.role,
+          password_hash: this.password_hash,
+          reset_password_token_hash: this.reset_password_token_hash,
+          reset_password_expires_at: this.reset_password_expires_at
+        };
+      }
+    };
+
+    const inviteUser = createInviteUserService({
+      User: {
+        findOne: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(createdUser)
+      },
+      email: { sendEmail },
+      now: () => new Date('2026-06-03T10:00:00.000Z')
+    });
+
+    const result = await inviteUser({
+      email: 'invitee@example.com',
+      role: 'ai_consultant',
+      full_name: 'Invitee'
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.invited_user.email).toBe('invitee@example.com');
+    expect(result.invited_user.role).toBe('ai_consultant');
+    expect(createdUser.reset_password_token_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(createdUser.reset_password_expires_at).toBeInstanceOf(Date);
+    expect(save).toHaveBeenCalledOnce();
+    expect(sendEmail).toHaveBeenCalledOnce();
   });
 });

@@ -96,6 +96,7 @@ export async function getUserFromToken(token) {
 
 export const requestPasswordReset = createPasswordResetRequestService();
 export const resetPasswordWithToken = createResetPasswordService();
+export const inviteUser = createInviteUserService();
 
 export function createPasswordResetRequestService(deps = {}) {
   const models = {
@@ -187,6 +188,74 @@ export function createResetPasswordService(deps = {}) {
   };
 }
 
+export function createInviteUserService(deps = {}) {
+  const models = {
+    User: deps.User || User
+  };
+  const emailClient = deps.email || { sendEmail };
+  const now = deps.now || (() => new Date());
+
+  return async function runInviteUser({ email, role = 'account_manager', full_name = '' }) {
+    const normalizedEmail = email?.toLowerCase().trim();
+    if (!normalizedEmail) {
+      const error = new Error('Email is required');
+      error.status = 400;
+      error.code = 'missing_email';
+      throw error;
+    }
+
+    if (!['admin', 'ai_consultant', 'account_manager'].includes(role)) {
+      const error = new Error('Invalid role');
+      error.status = 400;
+      error.code = 'invalid_role';
+      throw error;
+    }
+
+    let user = await models.User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      user = await models.User.create({
+        email: normalizedEmail,
+        full_name: full_name.trim() || normalizedEmail,
+        role,
+        password_hash: null
+      });
+    } else {
+      user.role = role;
+      if (full_name?.trim()) {
+        user.full_name = full_name.trim();
+      }
+    }
+
+    const resetToken = generateResetToken();
+    user.reset_password_token_hash = hashResetToken(resetToken);
+    user.reset_password_expires_at = new Date(now().getTime() + PASSWORD_RESET_EXPIRES_IN_MS);
+    await user.save();
+
+    const setupUrl = `${env.FRONTEND_URL.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+    await emailClient.sendEmail({
+      to: user.email,
+      subject: 'You have been invited to Oramix',
+      text: [
+        `Hello ${user.full_name || user.email},`,
+        '',
+        'You have been invited to access Oramix.',
+        '',
+        `Your role: ${formatRoleLabel(user.role)}`,
+        `Set your password here: ${setupUrl}`,
+        '',
+        'This link expires in 1 hour.'
+      ].join('\n')
+    });
+
+    return {
+      success: true,
+      invited_user: sanitizeUser(user)
+    };
+  };
+}
+
 export function hashResetToken(token) {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -197,11 +266,31 @@ function generateResetToken() {
 
 function createAuthResponse(user) {
   const token = signAuthToken(user);
-  const jsonUser = user.toJSON();
-  delete jsonUser.password_hash;
+  const jsonUser = sanitizeUser(user);
 
   return {
     access_token: token,
     user: jsonUser
   };
+}
+
+function sanitizeUser(user) {
+  const jsonUser = user.toJSON ? user.toJSON() : { ...user };
+  delete jsonUser.password_hash;
+  delete jsonUser.reset_password_token_hash;
+  delete jsonUser.reset_password_expires_at;
+  return jsonUser;
+}
+
+function formatRoleLabel(role) {
+  switch (role) {
+    case 'admin':
+      return 'Admin';
+    case 'ai_consultant':
+      return 'AI Consultant';
+    case 'account_manager':
+      return 'Account Manager';
+    default:
+      return role;
+  }
 }

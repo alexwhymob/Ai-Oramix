@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 import { env } from './env.js';
 
 export async function connectDb() {
-  if (!env.MONGODB_URI) {
-    throw new Error('MONGODB_URI is required to start the backend');
+  if (!env.MONGODB_URI && !env.MONGODB_DIRECT_URI) {
+    throw new Error('MONGODB_URI or MONGODB_DIRECT_URI is required to start the backend');
   }
 
   try {
-    await mongoose.connect(env.MONGODB_URI, {
+    await mongoose.connect(resolveMongoUri(), {
       dbName: env.MONGODB_DB_NAME,
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
@@ -38,4 +38,8 @@ function normalizeMongoError(error) {
   }
 
   return error;
+}
+
+function resolveMongoUri() {
+  return env.MONGODB_DIRECT_URI || env.MONGODB_URI;
 }

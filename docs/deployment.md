@@ -45,6 +45,7 @@ NODE_ENV=development
 PORT=3000
 FRONTEND_URL=http://localhost:5173
 MONGODB_URI=
+MONGODB_DIRECT_URI=
 MONGODB_DB_NAME=
 JWT_SECRET=
 LLM_PROVIDER=openai
@@ -68,6 +69,7 @@ O backend ja possui autenticacao JWT e geracao de relatorio com provider LLM tro
 - `EMAIL_PROVIDER=resend` e o provider de e-mail suportado nesta fase;
 - `RESEND_API_KEY` e obrigatoria quando `EMAIL_PROVIDER=resend`;
 - `EMAIL_FROM` define o remetente dos e-mails de relatorio.
+- `MONGODB_DIRECT_URI` e opcional e serve como fallback quando a URI SRV do Atlas falha por DNS/SRV no ambiente local.
 
 ## Importacao de Dados
 
