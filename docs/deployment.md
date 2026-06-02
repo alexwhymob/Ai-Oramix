@@ -52,3 +52,14 @@ MONGODB_DB_NAME=
 Arquivos `.env*` sao sempre locais e nao devem ser enviados para o repositorio. A lista acima serve apenas para documentar nomes de variaveis.
 
 O backend ainda nao possui autenticacao JWT, servico LLM ou envio de e-mail. Essas configuracoes serao adicionadas nas proximas fases.
+
+## Importacao de Dados
+
+Com a base MongoDB configurada localmente:
+
+```bash
+cd backend
+npm run import:all
+```
+
+Esse comando importa os CSVs exportados para a nossa MongoDB. Ele nao usa Base44.

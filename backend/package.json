@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "import:pillars": "node src/scripts/importCsv/importPillars.js",
+    "import:questions": "node src/scripts/importCsv/importQuestions.js",
+    "import:assessment-answers": "node src/scripts/importCsv/importAssessmentAnswers.js",
+    "import:all": "node src/scripts/importCsv/importAll.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

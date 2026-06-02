@@ -70,7 +70,7 @@ Risco: medio. A compatibilidade da API afeta varias paginas.
 
 ### Fase 5 - Scripts de importacao CSV
 
-Estado: pendente
+Estado: em progresso
 
 Escopo:
 

@@ -4,6 +4,36 @@
 
 ### Tarefa
 
+Criacao dos scripts de importacao CSV para a nossa MongoDB.
+
+### Ficheiros alterados
+
+- `backend/package.json`
+- `backend/src/scripts/importCsv/parseCsv.js`
+- `backend/src/scripts/importCsv/importUtils.js`
+- `backend/src/scripts/importCsv/importPillars.js`
+- `backend/src/scripts/importCsv/importQuestions.js`
+- `backend/src/scripts/importCsv/importAssessmentAnswers.js`
+- `backend/src/scripts/importCsv/importAll.js`
+- `backend/tests/importCsv.test.js`
+- `docs/database.md`
+- `docs/deployment.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. Foram adicionados scripts manuais de importacao para popular a nossa MongoDB a partir dos CSVs exportados. Nenhuma importacao e executada automaticamente.
+
+### Observacoes
+
+Os scripts usam Mongoose e `MONGODB_URI` local. Nao ha qualquer envio de dados para Base44.
+
+## 2026-06-02
+
+### Tarefa
+
 Criacao da API generica de entidades compativel com `base44.entities`.
 
 ### Ficheiros alterados

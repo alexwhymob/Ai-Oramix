@@ -212,3 +212,32 @@ Os scripts de importacao devem:
 - Fazer upsert por `id`.
 - Ignorar ou tratar como metadados campos como `created_by` e `is_sample`.
 - Gerar relatorio com total lido, inserido, atualizado e com erro.
+
+## Scripts de Importacao
+
+Os CSVs exportados do Base44 sao importados para a nossa base MongoDB usando Mongoose. Nenhum script envia dados para o Base44.
+
+Arquivos de origem na raiz do projeto:
+
+- `Pillar_export.csv`
+- `Question_export.csv`
+- `AssessmentAnswer_export.csv`
+
+Comandos:
+
+```bash
+cd backend
+npm run import:pillars
+npm run import:questions
+npm run import:assessment-answers
+npm run import:all
+```
+
+Cada importacao faz upsert por `id` e imprime um resumo:
+
+- `read`
+- `inserted`
+- `updated`
+- `errors`
+
+Antes de rodar, configurar localmente `MONGODB_URI` e `MONGODB_DB_NAME`. Esses valores nao devem ser versionados.
