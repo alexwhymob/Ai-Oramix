@@ -10,9 +10,11 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(path, options = {}) {
+  const token = window.localStorage.getItem('oramix_access_token');
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {})
     },
     ...options

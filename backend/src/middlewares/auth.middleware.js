@@ -1,0 +1,38 @@
+import { getUserFromToken } from '../services/auth.service.js';
+
+export async function authMiddleware(req, _res, next) {
+  try {
+    const token = extractBearerToken(req.headers.authorization);
+    if (!token) {
+      const error = new Error('Authentication required');
+      error.status = 401;
+      error.code = 'auth_required';
+      throw error;
+    }
+
+    req.user = await getUserFromToken(token);
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+export function requireRoles(roles) {
+  return (req, _res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      const error = new Error('Forbidden');
+      error.status = 403;
+      error.code = 'forbidden';
+      next(error);
+      return;
+    }
+
+    next();
+  };
+}
+
+function extractBearerToken(authorizationHeader) {
+  if (!authorizationHeader) return null;
+  const [scheme, token] = authorizationHeader.split(' ');
+  return scheme === 'Bearer' && token ? token : null;
+}

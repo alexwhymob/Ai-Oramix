@@ -4,6 +4,42 @@
 
 ### Tarefa
 
+Implementacao inicial de autenticacao JWT.
+
+### Ficheiros alterados
+
+- `backend/package.json`
+- `backend/package-lock.json`
+- `backend/src/config/env.js`
+- `backend/src/app.js`
+- `backend/src/services/auth.service.js`
+- `backend/src/middlewares/auth.middleware.js`
+- `backend/src/controllers/auth.controller.js`
+- `backend/src/routes/auth.routes.js`
+- `backend/tests/auth.service.test.js`
+- `frontend/src/api/apiClient.js`
+- `frontend/src/api/authClient.js`
+- `frontend/src/lib/AuthContext.jsx`
+- `frontend/src/pages/Register.jsx`
+- `docs/auth.md`
+- `docs/api.md`
+- `docs/deployment.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto. O projeto passa a ter login/registo basico proprio com JWT. Fluxos avancados de auth ainda nao foram migrados.
+
+### Observacoes
+
+`JWT_SECRET` deve existir apenas em ambiente local/servidor. Nenhum segredo foi versionado.
+
+## 2026-06-02
+
+### Tarefa
+
 Criacao da camada de API local no frontend para entidades.
 
 ### Ficheiros alterados

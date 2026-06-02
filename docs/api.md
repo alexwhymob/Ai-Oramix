@@ -147,6 +147,21 @@ POST /api/auth/reset-password
 
 Autenticacao ainda nao foi migrada. O frontend contem stubs controlados ate a fase JWT.
 
+Implementado na Fase 7:
+
+```txt
+POST /api/auth/login
+POST /api/auth/register
+GET  /api/auth/me
+POST /api/auth/logout
+```
+
+`GET /api/auth/me` exige header:
+
+```txt
+Authorization: Bearer <token>
+```
+
 ## Integracoes
 
 Uso atual:

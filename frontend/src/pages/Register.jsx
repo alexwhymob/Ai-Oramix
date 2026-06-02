@@ -29,7 +29,7 @@ export default function Register() {
     setLoading(true);
     try {
       await base44.auth.register({ email, password });
-      setShowOtp(true);
+      window.location.href = "/";
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {

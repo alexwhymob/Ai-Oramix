@@ -25,6 +25,7 @@ Teste inicial:
 - Models Mongoose devem validar defaults, campos obrigatorios, limites e indices esperados sem ligar a base online.
 - API generica de entidades deve validar entidades permitidas e parametros `q`, `limit`, `skip` e `sort_by`.
 - Scripts de importacao devem testar parsing CSV e mapeamento de campos sem escrever na base online.
+- Autenticacao deve testar hash de password e assinatura/verificacao JWT sem escrever na base online.
 
 ## Frontend
 

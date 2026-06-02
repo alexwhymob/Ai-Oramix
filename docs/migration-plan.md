@@ -70,7 +70,7 @@ Risco: medio. A compatibilidade da API afeta varias paginas.
 
 ### Fase 5 - Scripts de importacao CSV
 
-Estado: em progresso
+Estado: concluida
 
 Escopo:
 
@@ -84,7 +84,7 @@ Risco: medio. Conversao de tipos e encoding precisam de validacao.
 
 ### Fase 6 - Camada de API no frontend
 
-Estado: em progresso
+Estado: concluida
 
 Escopo:
 
@@ -97,7 +97,7 @@ Risco: alto. Afeta toda a interface.
 
 ### Fase 7 - Autenticacao
 
-Estado: pendente
+Estado: concluida
 
 Escopo:
 

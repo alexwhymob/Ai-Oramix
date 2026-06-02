@@ -1,23 +1,54 @@
-export function createAuthClient() {
-  const notMigrated = () => {
-    throw new Error('Auth is not migrated yet. JWT auth will be added in a later phase.');
-  };
+import { apiRequest } from './apiClient';
 
+const TOKEN_KEY = 'oramix_access_token';
+
+export function createAuthClient() {
   return {
-    me: notMigrated,
-    loginViaEmailPassword: notMigrated,
+    me: () => apiRequest('/auth/me'),
+    loginViaEmailPassword: async (email, password) => {
+      const result = await apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      setToken(result.access_token);
+      return result;
+    },
     loginWithProvider: notMigrated,
-    logout: () => {
-      window.location.href = '/';
+    logout: (redirectTo = '/') => {
+      clearToken();
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      }
     },
     redirectToLogin: (fromUrl = '/') => {
       window.location.href = `/login?from=${encodeURIComponent(fromUrl)}`;
     },
-    register: notMigrated,
+    register: async ({ email, password, full_name, role }) => {
+      const result = await apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, full_name, role })
+      });
+      setToken(result.access_token);
+      return result;
+    },
     verifyOtp: notMigrated,
-    setToken: notMigrated,
+    setToken,
     resendOtp: notMigrated,
     resetPasswordRequest: notMigrated,
     resetPassword: notMigrated
   };
+}
+
+function setToken(token) {
+  if (token) {
+    window.localStorage.setItem(TOKEN_KEY, token);
+  }
+}
+
+function clearToken() {
+  window.localStorage.removeItem(TOKEN_KEY);
+}
+
+function notMigrated() {
+  throw new Error('This authentication flow is not migrated yet.');
 }

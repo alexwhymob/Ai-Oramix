@@ -46,6 +46,7 @@ PORT=3000
 FRONTEND_URL=http://localhost:5173
 MONGODB_URI=
 MONGODB_DB_NAME=
+JWT_SECRET=
 ```
 
 ## Observacoes
