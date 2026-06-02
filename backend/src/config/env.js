@@ -7,7 +7,10 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
   MONGODB_URI: z.string().min(1).optional(),
   MONGODB_DB_NAME: z.string().min(1).optional(),
-  JWT_SECRET: z.string().min(32).optional()
+  JWT_SECRET: z.string().min(32).optional(),
+  LLM_PROVIDER: z.enum(['openai', 'google', 'anthropic']).default('openai'),
+  LLM_MODEL: z.string().min(1).default('gpt-5.4'),
+  OPENAI_API_KEY: z.string().min(1).optional()
 });
 
 export const env = envSchema.parse(process.env);

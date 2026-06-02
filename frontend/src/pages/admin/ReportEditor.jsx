@@ -64,14 +64,19 @@ export default function AdminReportEditor() {
 
   const handleRegenerate = async () => {
     setRegenerating(true);
-    const res = await base44.functions.invoke('generateReport', { assessmentId: report.assessment_id, language: reportLang });
-    if (res.data?.success) {
-      qc.invalidateQueries({ queryKey: ['report_detail', id] });
-      toast.success('Report regenerated successfully!');
-    } else {
-      toast.error('Generation failed: ' + (res.data?.error || 'Unknown error'));
+    try {
+      const res = await base44.functions.invoke('generateReport', { assessmentId: report.assessment_id, language: reportLang });
+      if (res.data?.success) {
+        qc.invalidateQueries({ queryKey: ['report_detail', id] });
+        toast.success('Report regenerated successfully!');
+      } else {
+        toast.error('Generation failed: ' + (res.data?.error || 'Unknown error'));
+      }
+    } catch (error) {
+      toast.error('Generation failed: ' + (error?.data?.message || error?.message || 'Unknown error'));
+    } finally {
+      setRegenerating(false);
     }
-    setRegenerating(false);
   };
 
   const handleExportPDF = async () => {

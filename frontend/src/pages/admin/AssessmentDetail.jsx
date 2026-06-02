@@ -5,6 +5,7 @@ import { ArrowLeft, FileText, Sparkles, Plus, Trash2, Loader2, ChevronDown, Chev
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import ScoreBadge from '@/components/ScoreBadge';
 import { useCurrentUser } from '@/lib/useCurrentUser';
@@ -84,10 +85,20 @@ export default function AdminAssessmentDetail() {
   const handleGenerateReport = async () => {
     setShowSectionPicker(false);
     setGenerating(true);
-    const res = await base44.functions.invoke('generateReport', { assessmentId: id, language: customer?.language || 'pt', sections: selectedSections });
-    qc.invalidateQueries({ queryKey: ['report', id] });
-    if (res.data?.reportId) navigate(`/admin/report/${res.data.reportId}`);
-    setGenerating(false);
+    try {
+      const res = await base44.functions.invoke('generateReport', { assessmentId: id, language: customer?.language || 'pt', sections: selectedSections });
+      qc.invalidateQueries({ queryKey: ['report', id] });
+      if (res.data?.reportId) {
+        navigate(`/admin/report/${res.data.reportId}`);
+        return;
+      }
+
+      toast.error('Report generation did not return a report ID.');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Failed to generate report.');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const generateWithAI = async (field) => {
@@ -188,7 +199,7 @@ export default function AdminAssessmentDetail() {
       {generating && (
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center text-blue-400 text-sm">
           <Sparkles className="w-4 h-4 inline mr-2 animate-pulse" />
-          Generating AI report with Claude... This may take 30-60 seconds.
+          Generating AI report with OpenAI... This may take 30-60 seconds.
         </div>
       )}
 

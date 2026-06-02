@@ -3,15 +3,15 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 
 describe('function routes', () => {
-  it('returns 501 for functions that are not migrated yet', async () => {
+  it('requires authentication for generateReport', async () => {
     const app = createApp();
 
     const response = await request(app)
       .post('/api/functions/generateReport')
       .send({})
-      .expect(501);
+      .expect(401);
 
-    expect(response.body.error).toBe('function_not_migrated');
+    expect(response.body.error).toBe('auth_required');
   });
 
   it('supports createDataSubAssessment function', async () => {

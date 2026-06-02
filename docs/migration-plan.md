@@ -29,14 +29,14 @@ Risco: baixo. Nao ha alteracao funcional.
 
 ### Fase 2 - Setup do backend
 
-Estado: em progresso
+Estado: concluida
 
 Escopo:
 
 - Criar estrutura `backend`.
 - Configurar Express.
 - Configurar health check.
-- Configurar ambiente e `.env.example`.
+- Configurar ambiente local.
 - Adicionar testes iniciais.
 - Separar a aplicacao exportada para `frontend/`.
 
@@ -44,7 +44,7 @@ Risco: baixo. Backend ainda isolado.
 
 ### Fase 3 - Models MongoDB
 
-Estado: em progresso
+Estado: concluida
 
 Escopo:
 
@@ -57,7 +57,7 @@ Risco: medio. Modelagem incorreta pode afetar migracao de dados.
 
 ### Fase 4 - API generica de entidades
 
-Estado: em progresso
+Estado: concluida
 
 Escopo:
 
@@ -139,7 +139,7 @@ Estado das funcoes:
 
 - `quizSession`: concluida.
 - `createDataSubAssessment`: concluida.
-- `generateReport`: pendente.
+- `generateReport`: concluida.
 - `sendReport`: pendente.
 
 Risco: alto. Contem regras centrais do produto.
@@ -172,13 +172,6 @@ Escopo:
 
 Risco: medio.
 
-## Primeira Tarefa Recomendada
+## Proxima Tarefa Recomendada
 
-Concluir a Fase 1 criando a documentacao base:
-
-- `docs/architecture.md`
-- `docs/migration-plan.md`
-- `docs/api.md`
-- `docs/changelog.md`
-
-Depois disso, a proxima tarefa recomendada e concluir a Fase 2 instalando dependencias do backend e validando o teste inicial.
+Migrar `sendReport`, aproveitando o novo `Report` e o fluxo de auth/auditoria ja existente.

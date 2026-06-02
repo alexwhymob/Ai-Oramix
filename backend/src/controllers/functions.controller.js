@@ -1,6 +1,7 @@
 import { handleQuizSessionAction } from '../services/quizSession.service.js';
 import { createDataSubAssessment } from '../services/subAssessment.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
+import { generateReport } from '../services/reportGeneration.service.js';
 
 const AUDIT_ACTIONS = {
   registerCustomer: 'quiz.register_customer',
@@ -46,6 +47,23 @@ export async function invokeFunction(req, res, next) {
           parentAssessmentId: req.body?.event?.entity_id,
           reason: result.reason,
           dataScore: result.dataScore
+        }
+      });
+      res.json(result);
+      return;
+    }
+
+    if (functionName === 'generateReport') {
+      const result = await generateReport(req.body, { actor: req.user });
+      await writeAuditLog({
+        req,
+        action: 'report.generate',
+        entity: 'Report',
+        entity_id: result.reportId || null,
+        metadata: {
+          assessmentId: req.body?.assessmentId || null,
+          language: req.body?.language || 'pt',
+          sections: req.body?.sections || null
         }
       });
       res.json(result);

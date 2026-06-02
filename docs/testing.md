@@ -29,6 +29,7 @@ Teste inicial:
 - Auditoria deve testar model `AuditLog` e protecao do endpoint de leitura.
 - `quizSession` deve testar validacao de email corporativo, acao desconhecida e funcoes ainda nao migradas.
 - `createDataSubAssessment` deve testar eventos sem ID, score alto, subavaliacoes existentes e parsing seguro de `pillar_scores`.
+- `generateReport` deve testar schema estruturado, construcao de contexto e permissao por role sem chamar a API real da OpenAI.
 
 ## Frontend
 
@@ -38,7 +39,8 @@ Validacoes atuais:
 
 - Build Vite deve concluir sem o plugin Base44.
 - Chamadas `base44.entities.*` devem apontar para `/api/entities`.
-- Autenticacao, funcoes serverless, convites e LLM ainda nao estao migrados.
+- `base44.functions.invoke('generateReport')` deve apontar para `/api/functions/generateReport`.
+- Integracoes genericas `base44.integrations.Core.InvokeLLM` continuam pendentes.
 
 ## Validacao Manual Minima
 

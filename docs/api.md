@@ -109,6 +109,7 @@ Implementado na Fase 8:
 ```txt
 POST /api/functions/quizSession
 POST /api/functions/createDataSubAssessment
+POST /api/functions/generateReport
 ```
 
 Acoes suportadas:
@@ -131,6 +132,34 @@ Funcoes ainda pendentes retornam `501 function_not_migrated`.
 - nao e uma subavaliacao;
 - `pillar_scores` contem `dados` com score inferior a `2.5`;
 - ainda nao existe subavaliacao para o assessment pai.
+
+`generateReport` agora:
+
+- exige autenticacao;
+- permite `admin` e `ai_consultant`;
+- usa a nossa camada de LLM no backend;
+- gera secoes `section_1` a `section_9` em grupos paralelos;
+- grava/atualiza `Report` com `status: review`, `generated_at` e `language`.
+
+Payload esperado:
+
+```json
+{
+  "assessmentId": "assessment-id",
+  "language": "pt",
+  "sections": ["section_1", "section_2", "section_3"]
+}
+```
+
+Resposta esperada:
+
+```json
+{
+  "success": true,
+  "reportId": "report-id",
+  "sectionsGenerated": ["section_1", "section_2", "section_3"]
+}
+```
 
 ## Health Check
 
@@ -214,4 +243,4 @@ Alternativa proposta:
 POST /api/integrations/llm
 ```
 
-Na primeira fase, essa rota pode ser evitada no frontend e encapsulada diretamente no backend dentro de `generateReport`.
+Nesta fase, o LLM fica encapsulado diretamente no backend dentro de `generateReport`, atraves de uma camada de provider trocavel.

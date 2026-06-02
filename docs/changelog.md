@@ -4,6 +4,40 @@
 
 ### Tarefa
 
+Migracao da funcao Base44 `generateReport` com camada LLM trocavel e provider OpenAI inicial.
+
+### Ficheiros alterados
+
+- `backend/src/config/env.js`
+- `backend/src/controllers/functions.controller.js`
+- `backend/src/services/llm/llmClient.js`
+- `backend/src/services/llm/openai.provider.js`
+- `backend/src/services/reportGeneration.service.js`
+- `backend/tests/functions.routes.test.js`
+- `backend/tests/llmClient.test.js`
+- `backend/tests/reportGeneration.service.test.js`
+- `frontend/src/pages/admin/AssessmentDetail.jsx`
+- `docs/api.md`
+- `docs/deployment.md`
+- `docs/migration-plan.md`
+- `docs/testing.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto. A geracao de relatorio deixa de depender do Base44 e passa a correr no nosso backend, com provider de LLM desacoplado e configuravel por ambiente.
+
+### Observacoes
+
+- O provider inicial e OpenAI, via Responses API e Structured Outputs.
+- O modelo pode ser trocado por `LLM_MODEL` sem alterar codigo.
+- `LLM_PROVIDER` ja aceita a estrategia de extensao para Google e Anthropic, mas esses providers ainda nao estao implementados.
+- `sendReport` continua pendente.
+
+## 2026-06-02
+
+### Tarefa
+
 Migracao da funcao Base44 `createDataSubAssessment`.
 
 ### Ficheiros alterados

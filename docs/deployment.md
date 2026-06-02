@@ -47,13 +47,22 @@ FRONTEND_URL=http://localhost:5173
 MONGODB_URI=
 MONGODB_DB_NAME=
 JWT_SECRET=
+LLM_PROVIDER=openai
+LLM_MODEL=gpt-5.4
+OPENAI_API_KEY=
 ```
 
 ## Observacoes
 
 Arquivos `.env*` sao sempre locais e nao devem ser enviados para o repositorio. A lista acima serve apenas para documentar nomes de variaveis.
 
-O backend ainda nao possui autenticacao JWT, servico LLM ou envio de e-mail. Essas configuracoes serao adicionadas nas proximas fases.
+O backend ja possui autenticacao JWT e geracao de relatorio com provider LLM trocavel. Nesta fase:
+
+- `LLM_PROVIDER=openai` e o provider suportado;
+- `LLM_MODEL` permite trocar o modelo sem alterar codigo;
+- `OPENAI_API_KEY` e obrigatoria quando `LLM_PROVIDER=openai`;
+- Google e Anthropic ainda nao estao implementados;
+- envio de e-mail continua pendente.
 
 ## Importacao de Dados
 
