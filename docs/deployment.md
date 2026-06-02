@@ -39,12 +39,16 @@ npm start
 
 Variaveis iniciais:
 
-```env
+```txt
 NODE_ENV=development
 PORT=3000
 FRONTEND_URL=http://localhost:5173
+MONGODB_URI=
+MONGODB_DB_NAME=
 ```
 
 ## Observacoes
 
-O backend ainda nao possui MongoDB, autenticacao JWT, servico LLM ou envio de e-mail. Essas configuracoes serao adicionadas nas proximas fases.
+Arquivos `.env*` sao sempre locais e nao devem ser enviados para o repositorio. A lista acima serve apenas para documentar nomes de variaveis.
+
+O backend ainda nao possui autenticacao JWT, servico LLM ou envio de e-mail. Essas configuracoes serao adicionadas nas proximas fases.

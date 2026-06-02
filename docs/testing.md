@@ -22,6 +22,7 @@ npm test
 Teste inicial:
 
 - `GET /api/health` deve responder `200` com `{ "status": "ok", "service": "oramix-ai-backend" }`.
+- Models Mongoose devem validar defaults, campos obrigatorios, limites e indices esperados sem ligar a base online.
 
 ## Frontend
 
@@ -34,3 +35,4 @@ Para cada tarefa:
 - Confirmar que os ficheiros esperados foram criados ou alterados.
 - Rodar testes relacionados quando as dependencias estiverem instaladas.
 - Confirmar que o frontend nao mudou visualmente quando a tarefa nao envolver UI.
+- Nunca rodar testes automatizados contra a base MongoDB de producao.

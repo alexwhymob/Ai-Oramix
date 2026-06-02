@@ -44,7 +44,7 @@ Risco: baixo. Backend ainda isolado.
 
 ### Fase 3 - Models MongoDB
 
-Estado: pendente
+Estado: em progresso
 
 Escopo:
 

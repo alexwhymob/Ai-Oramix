@@ -4,6 +4,44 @@
 
 ### Tarefa
 
+Adicao da camada MongoDB/Mongoose e models das entidades Base44.
+
+### Ficheiros alterados
+
+- `backend/package.json`
+- `backend/package-lock.json`
+- `backend/src/config/env.js`
+- `backend/src/config/db.js`
+- `backend/src/server.js`
+- `backend/src/models/baseFields.js`
+- `backend/src/models/Customer.js`
+- `backend/src/models/Assessment.js`
+- `backend/src/models/AssessmentAnswer.js`
+- `backend/src/models/Pillar.js`
+- `backend/src/models/Question.js`
+- `backend/src/models/Report.js`
+- `backend/src/models/ConsultantNote.js`
+- `backend/src/models/User.js`
+- `backend/src/models/index.js`
+- `backend/tests/models.test.js`
+- `docs/database.md`
+- `docs/deployment.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. O backend agora possui configuracao de MongoDB e models Mongoose. Nenhuma chamada do frontend foi alterada.
+
+### Observacoes
+
+Credenciais e arquivos `.env*` continuam fora do repositorio. Testes de models nao usam a base MongoDB online.
+
+## 2026-06-02
+
+### Tarefa
+
 Separacao inicial de frontend/backend e setup base do backend Express.
 
 ### Ficheiros alterados
