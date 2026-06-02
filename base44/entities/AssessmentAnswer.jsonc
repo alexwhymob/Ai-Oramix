@@ -1,0 +1,93 @@
+{
+  "name": "AssessmentAnswer",
+  "type": "object",
+  "properties": {
+    "assessment_id": {
+      "type": "string",
+      "title": "Assessment ID"
+    },
+    "question_id": {
+      "type": "string",
+      "title": "Question ID"
+    },
+    "question_code": {
+      "type": "string",
+      "title": "Question Code"
+    },
+    "pillar_code": {
+      "type": "string",
+      "title": "Pillar Code"
+    },
+    "value": {
+      "type": "number",
+      "title": "Value",
+      "minimum": 1,
+      "maximum": 5
+    }
+  },
+  "required": [
+    "assessment_id",
+    "question_id",
+    "value"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        },
+        {
+          "created_by": {
+            "$exists": true
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Pillar",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "Code"
+    },
+    "name_pt": {
+      "type": "string",
+      "title": "Name (PT)"
+    },
+    "name_en": {
+      "type": "string",
+      "title": "Name (EN)"
+    },
+    "weight": {
+      "type": "number",
+      "title": "Weight (%)"
+    },
+    "order": {
+      "type": "number",
+      "title": "Order"
+    },
+    "icon": {
+      "type": "string",
+      "title": "Icon"
+    },
+    "description_pt": {
+      "type": "string",
+      "title": "Description (PT)"
+    },
+    "description_en": {
+      "type": "string",
+      "title": "Description (EN)"
+    },
+    "assessment_type": {
+      "type": "string",
+      "title": "Assessment Type",
+      "enum": [
+        "main",
+        "sub_assessment"
+      ],
+      "default": "main"
+    }
+  },
+  "required": [
+    "code",
+    "name_pt",
+    "weight"
+  ]
+}

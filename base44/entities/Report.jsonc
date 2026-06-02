@@ -1,0 +1,135 @@
+{
+  "name": "Report",
+  "type": "object",
+  "properties": {
+    "assessment_id": {
+      "type": "string",
+      "title": "Assessment ID"
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": [
+        "draft",
+        "generating",
+        "review",
+        "final"
+      ],
+      "default": "draft"
+    },
+    "section_1": {
+      "type": "string",
+      "title": "1. Executive Summary"
+    },
+    "section_2": {
+      "type": "string",
+      "title": "2. Methodology"
+    },
+    "section_3": {
+      "type": "string",
+      "title": "3. Results by Pillar"
+    },
+    "section_4": {
+      "type": "string",
+      "title": "4. Maturity Radar"
+    },
+    "section_5": {
+      "type": "string",
+      "title": "5. Gap Map"
+    },
+    "section_6": {
+      "type": "string",
+      "title": "6. Quick Wins"
+    },
+    "section_7": {
+      "type": "string",
+      "title": "7. Roadmap"
+    },
+    "section_8": {
+      "type": "string",
+      "title": "8. Use Case Recommendations"
+    },
+    "section_9": {
+      "type": "string",
+      "title": "9. Next Steps"
+    },
+    "generated_at": {
+      "type": "string",
+      "title": "Generated At"
+    },
+    "finalized_at": {
+      "type": "string",
+      "title": "Finalized At"
+    },
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "enum": [
+        "pt",
+        "en"
+      ],
+      "default": "pt"
+    }
+  },
+  "required": [
+    "assessment_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ai_consultant"
+          }
+        }
+      ]
+    }
+  }
+}
