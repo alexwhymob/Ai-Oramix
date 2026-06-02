@@ -30,6 +30,8 @@ Teste inicial:
 - `quizSession` deve testar validacao de email corporativo, acao desconhecida e funcoes ainda nao migradas.
 - `createDataSubAssessment` deve testar eventos sem ID, score alto, subavaliacoes existentes e parsing seguro de `pillar_scores`.
 - `generateReport` deve testar schema estruturado, construcao de contexto e permissao por role sem chamar a API real da OpenAI.
+- `sendReport` deve testar corpo de e-mail, permissoes por role e provider de e-mail sem chamar a API real do Resend.
+- `integrations/llm` deve testar autenticacao, validacao de `prompt` e permissao por role sem chamar a API real da OpenAI.
 
 ## Frontend
 
@@ -40,7 +42,8 @@ Validacoes atuais:
 - Build Vite deve concluir sem o plugin Base44.
 - Chamadas `base44.entities.*` devem apontar para `/api/entities`.
 - `base44.functions.invoke('generateReport')` deve apontar para `/api/functions/generateReport`.
-- Integracoes genericas `base44.integrations.Core.InvokeLLM` continuam pendentes.
+- `base44.functions.invoke('sendReport')` deve apontar para `/api/functions/sendReport`.
+- `base44.integrations.Core.InvokeLLM` deve apontar para `/api/integrations/llm`.
 
 ## Validacao Manual Minima
 

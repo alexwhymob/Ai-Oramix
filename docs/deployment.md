@@ -50,6 +50,9 @@ JWT_SECRET=
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-5.4
 OPENAI_API_KEY=
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=
+EMAIL_FROM=
 ```
 
 ## Observacoes
@@ -62,7 +65,9 @@ O backend ja possui autenticacao JWT e geracao de relatorio com provider LLM tro
 - `LLM_MODEL` permite trocar o modelo sem alterar codigo;
 - `OPENAI_API_KEY` e obrigatoria quando `LLM_PROVIDER=openai`;
 - Google e Anthropic ainda nao estao implementados;
-- envio de e-mail continua pendente.
+- `EMAIL_PROVIDER=resend` e o provider de e-mail suportado nesta fase;
+- `RESEND_API_KEY` e obrigatoria quando `EMAIL_PROVIDER=resend`;
+- `EMAIL_FROM` define o remetente dos e-mails de relatorio.
 
 ## Importacao de Dados
 

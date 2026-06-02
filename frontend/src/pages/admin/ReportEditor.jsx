@@ -119,7 +119,7 @@ export default function AdminReportEditor() {
         toast.error('Failed to send email: ' + (res.data?.error || 'Unknown error'));
       }
     } catch (err) {
-      toast.error('Failed to send email: ' + (err?.response?.data?.error || err.message));
+      toast.error('Failed to send email: ' + (err?.data?.message || err.message));
     }
     setEmailing(false);
   };

@@ -140,7 +140,7 @@ Estado das funcoes:
 - `quizSession`: concluida.
 - `createDataSubAssessment`: concluida.
 - `generateReport`: concluida.
-- `sendReport`: pendente.
+- `sendReport`: concluida.
 
 Risco: alto. Contem regras centrais do produto.
 
@@ -174,4 +174,4 @@ Risco: medio.
 
 ## Proxima Tarefa Recomendada
 
-Migrar `sendReport`, aproveitando o novo `Report` e o fluxo de auth/auditoria ja existente.
+Validar o fluxo funcional completo em ambiente local: quiz, subavaliacao, geracao de relatorio e envio de notificacao por e-mail.

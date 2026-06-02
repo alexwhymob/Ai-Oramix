@@ -6,6 +6,7 @@ import { auditLogsRouter } from './routes/auditLogs.routes.js';
 import { entitiesRouter } from './routes/entities.routes.js';
 import { functionsRouter } from './routes/functions.routes.js';
 import { healthRouter } from './routes/health.routes.js';
+import { integrationsRouter } from './routes/integrations.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { optionalAuthMiddleware } from './middlewares/auth.middleware.js';
 
@@ -22,6 +23,7 @@ export function createApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/audit-logs', auditLogsRouter);
   app.use('/api/functions', functionsRouter);
+  app.use('/api/integrations', integrationsRouter);
   app.use('/api/entities', optionalAuthMiddleware);
   app.use('/api/entities', entitiesRouter);
 

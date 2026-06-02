@@ -102,7 +102,7 @@ POST /api/functions/generateReport
 POST /api/functions/sendReport
 ```
 
-Esses endpoints ainda nao estao implementados no backend. O frontend possui o cliente `functions.invoke`, mas as funcoes serao migradas em fases posteriores.
+O frontend usa o cliente `functions.invoke` para chamar esses endpoints no backend proprio.
 
 Implementado na Fase 8:
 
@@ -110,6 +110,7 @@ Implementado na Fase 8:
 POST /api/functions/quizSession
 POST /api/functions/createDataSubAssessment
 POST /api/functions/generateReport
+POST /api/functions/sendReport
 ```
 
 Acoes suportadas:
@@ -124,7 +125,7 @@ Acoes suportadas:
 - `getSubAssessments`
 - `getSubResult`
 
-Funcoes ainda pendentes retornam `501 function_not_migrated`.
+Funcoes ainda nao migradas retornam `501 function_not_migrated`.
 
 `createDataSubAssessment` cria uma subavaliacao para o pilar `dados` quando:
 
@@ -158,6 +159,34 @@ Resposta esperada:
   "success": true,
   "reportId": "report-id",
   "sectionsGenerated": ["section_1", "section_2", "section_3"]
+}
+```
+
+`sendReport` agora:
+
+- exige autenticacao;
+- permite `admin` e `account_manager`;
+- exige que exista um `Report` para o assessment;
+- envia uma notificacao ao e-mail do cliente atraves do provider configurado;
+- registra auditoria com `report.send`.
+
+Payload esperado:
+
+```json
+{
+  "assessmentId": "assessment-id",
+  "appUrl": "https://app.example.com"
+}
+```
+
+Resposta esperada:
+
+```json
+{
+  "success": true,
+  "to": "cliente@empresa.pt",
+  "provider": "resend",
+  "messageId": "email-provider-id"
 }
 ```
 
@@ -237,10 +266,23 @@ Uso atual:
 base44.integrations.Core.InvokeLLM(...)
 ```
 
-Alternativa proposta:
+Endpoint implementado:
 
 ```txt
 POST /api/integrations/llm
 ```
 
-Nesta fase, o LLM fica encapsulado diretamente no backend dentro de `generateReport`, atraves de uma camada de provider trocavel.
+Comportamento atual:
+
+- exige autenticacao;
+- permite `admin` e `ai_consultant`;
+- usa a mesma camada de provider LLM do backend;
+- retorna texto simples no formato:
+
+```json
+{
+  "text": "..."
+}
+```
+
+Neste momento, `AssessmentDetail` usa esta rota para gerar notas de gap e mitigacao com OpenAI.

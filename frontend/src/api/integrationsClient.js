@@ -1,8 +1,15 @@
+import { apiRequest } from './apiClient';
+
 export function createIntegrationsClient() {
   return {
     Core: {
-      InvokeLLM: async () => {
-        throw new Error('LLM integrations are not migrated yet.');
+      InvokeLLM: async (payload = {}) => {
+        const data = await apiRequest('/integrations/llm', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        return data?.text || '';
       }
     }
   };

@@ -4,6 +4,68 @@
 
 ### Tarefa
 
+Migracao da integracao `base44.integrations.Core.InvokeLLM`.
+
+### Ficheiros alterados
+
+- `backend/src/app.js`
+- `backend/src/controllers/integrations.controller.js`
+- `backend/src/routes/integrations.routes.js`
+- `backend/src/services/llmIntegration.service.js`
+- `backend/tests/integrations.routes.test.js`
+- `backend/tests/llmIntegration.service.test.js`
+- `frontend/src/api/integrationsClient.js`
+- `frontend/src/pages/admin/AssessmentDetail.jsx`
+- `docs/api.md`
+- `docs/testing.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. A geracao assistida de notas no detalhe do assessment deixa de falhar no frontend e passa a usar a nossa API.
+
+### Observacoes
+
+- O endpoint novo e `POST /api/integrations/llm`.
+- Reaproveita a mesma camada OpenAI ja usada por `generateReport`.
+- O teste real do endpoint com Mongo ficou limitado por whitelist do Atlas no processo escalado, mas a chamada real ao `llmClient.generateText()` foi validada com sucesso.
+
+## 2026-06-02
+
+### Tarefa
+
+Migracao da funcao Base44 `sendReport`.
+
+### Ficheiros alterados
+
+- `backend/src/config/env.js`
+- `backend/src/controllers/functions.controller.js`
+- `backend/src/services/email/emailClient.js`
+- `backend/src/services/email/resend.provider.js`
+- `backend/src/services/reportEmail.service.js`
+- `backend/tests/emailClient.test.js`
+- `backend/tests/reportEmail.service.test.js`
+- `frontend/src/pages/admin/ReportEditor.jsx`
+- `docs/api.md`
+- `docs/deployment.md`
+- `docs/migration-plan.md`
+- `docs/testing.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. A notificacao de relatorio pronto passa a correr no backend proprio usando provider de e-mail configuravel.
+
+### Observacoes
+
+- O provider inicial e Resend.
+- `RESEND_API_KEY` deve existir apenas no ambiente local/servidor.
+- A funcao exige autenticacao e permite `admin` e `account_manager`.
+
+## 2026-06-02
+
+### Tarefa
+
 Migracao da funcao Base44 `generateReport` com camada LLM trocavel e provider OpenAI inicial.
 
 ### Ficheiros alterados
@@ -32,7 +94,7 @@ Alto. A geracao de relatorio deixa de depender do Base44 e passa a correr no nos
 - O provider inicial e OpenAI, via Responses API e Structured Outputs.
 - O modelo pode ser trocado por `LLM_MODEL` sem alterar codigo.
 - `LLM_PROVIDER` ja aceita a estrategia de extensao para Google e Anthropic, mas esses providers ainda nao estao implementados.
-- `sendReport` continua pendente.
+- `sendReport` foi migrado na tarefa seguinte.
 
 ## 2026-06-02
 
@@ -84,7 +146,7 @@ Alto. O fluxo de registo de cliente, carregamento do quiz, submissao de resposta
 
 ### Observacoes
 
-`createDataSubAssessment`, `generateReport` e `sendReport` ainda retornam `function_not_migrated` e devem ser migradas nas proximas tarefas.
+`createDataSubAssessment`, `generateReport` e `sendReport` ainda estavam pendentes neste momento da migracao e foram tratados nas tarefas seguintes.
 
 ## 2026-06-02
 

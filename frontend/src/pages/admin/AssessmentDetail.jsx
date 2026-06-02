@@ -104,6 +104,7 @@ export default function AdminAssessmentDetail() {
   const generateWithAI = async (field) => {
     if (!noteForm.pillar_code) return;
     setGeneratingField(field);
+    try {
     const pillar = pillars.find(p => p.code === noteForm.pillar_code);
     const ps = pillarScores.find(p => p.code === noteForm.pillar_code);
     const pillarAnswers = answers.filter(a => a.pillar_code === noteForm.pillar_code);
@@ -115,9 +116,13 @@ export default function AdminAssessmentDetail() {
     const prompt = field === 'gap_description'
       ? `You are an AI readiness consultant. For the pillar "${pillar?.name_pt}" (score: ${ps?.score?.toFixed(2)}/5) of company "${customer?.company}" (sector: ${customer?.sector}), analyze these question scores and write a concise, professional gap description (2-3 sentences) identifying the main weaknesses:\n\n${qaContext}\n\nRespond only with the gap description text in Portuguese.`
       : `You are an AI readiness consultant. For the pillar "${pillar?.name_pt}" (score: ${ps?.score?.toFixed(2)}/5) of company "${customer?.company}", given this gap: "${noteForm.gap_description || 'General maturity gaps in this pillar'}", write 2-3 concrete mitigation measures as a short paragraph in Portuguese. Focus on practical, actionable steps.`;
-    const result = await base44.integrations.Core.InvokeLLM({ prompt, model: 'gpt_5_4' });
-    setNoteForm(prev => ({ ...prev, [field]: result }));
-    setGeneratingField(null);
+      const result = await base44.integrations.Core.InvokeLLM({ prompt, model: 'gpt-5.4' });
+      setNoteForm(prev => ({ ...prev, [field]: result }));
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Failed to generate AI text.');
+    } finally {
+      setGeneratingField(null);
+    }
   };
 
   const handleToggleReviewed = async () => {

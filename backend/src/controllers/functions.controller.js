@@ -2,6 +2,7 @@ import { handleQuizSessionAction } from '../services/quizSession.service.js';
 import { createDataSubAssessment } from '../services/subAssessment.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 import { generateReport } from '../services/reportGeneration.service.js';
+import { sendReport } from '../services/reportEmail.service.js';
 
 const AUDIT_ACTIONS = {
   registerCustomer: 'quiz.register_customer',
@@ -64,6 +65,23 @@ export async function invokeFunction(req, res, next) {
           assessmentId: req.body?.assessmentId || null,
           language: req.body?.language || 'pt',
           sections: req.body?.sections || null
+        }
+      });
+      res.json(result);
+      return;
+    }
+
+    if (functionName === 'sendReport') {
+      const result = await sendReport(req.body, { actor: req.user });
+      await writeAuditLog({
+        req,
+        action: 'report.send',
+        entity: 'Assessment',
+        entity_id: req.body?.assessmentId || null,
+        metadata: {
+          to: result.to,
+          provider: result.provider,
+          messageId: result.messageId
         }
       });
       res.json(result);
