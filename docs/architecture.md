@@ -2,18 +2,18 @@
 
 ## Estado Atual
 
-O projeto atual foi exportado do Base44 e contem um frontend React/Vite em `oramix-ai-guide (1)`. A interface usa React, React Router, React Query, Tailwind CSS, componentes Radix/shadcn e bibliotecas auxiliares para graficos, PDF, markdown e edicao de conteudo.
+O projeto atual foi exportado do Base44 e a aplicacao React/Vite foi movida para `frontend/`. A interface usa React, React Router, React Query, Tailwind CSS, componentes Radix/shadcn e bibliotecas auxiliares para graficos, PDF, markdown e edicao de conteudo.
 
 O frontend chama diretamente o SDK do Base44 por meio de `src/api/base44Client.js`. Essa camada cria o cliente com `@base44/sdk` e e usada pelas paginas e componentes para acessar entidades, autenticacao, funcoes serverless e integracoes.
 
-As regras de negocio mais importantes estao em `base44/functions`:
+As regras de negocio mais importantes herdadas do Base44 estao em `frontend/base44/functions`:
 
 - `quizSession`: registo de clientes, sessao de quiz, submissao de respostas, resultados e subavaliacoes.
 - `createDataSubAssessment`: cria subavaliacao do pilar `dados` quando o score e inferior a `2.5`.
 - `generateReport`: gera ou atualiza relatorio com apoio de LLM.
 - `sendReport`: envia notificacao por e-mail ao cliente.
 
-As entidades Base44 estao documentadas em `base44/entities/*.jsonc` e em `Entidades.md`.
+As entidades Base44 estao documentadas em `frontend/base44/entities/*.jsonc` e em `Entidades.md`.
 
 ## Dependencias Base44
 
@@ -34,6 +34,7 @@ A arquitetura proposta separa frontend e backend, preservando o maximo possivel 
 ```txt
 project-root/
   frontend/
+    package.json
     src/
       api/
         apiClient.js
@@ -60,9 +61,31 @@ project-root/
   docs/
 ```
 
+## Estrutura Atual do Repositorio
+
+```txt
+project-root/
+  frontend/
+    src/
+    base44/
+    package.json
+    vite.config.js
+  backend/
+    src/
+    tests/
+    package.json
+    .env.example
+  docs/
+  AssessmentAnswer_export.csv
+  Pillar_export.csv
+  Question_export.csv
+  Entidades.md
+  prompt_migracao_base44_node_mongodb.md
+```
+
 ## Backend Proposto
 
-O backend deve ser criado em Node.js com Express.js e MongoDB via Mongoose.
+O backend deve ser criado em Node.js com Express.js e MongoDB via Mongoose. A base inicial ja contem uma aplicacao Express isolada com `GET /api/health`.
 
 Responsabilidades:
 

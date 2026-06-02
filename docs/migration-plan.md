@@ -16,7 +16,7 @@ Migrar a aplicacao Base44 para uma aplicacao propria com frontend React/Vite pre
 
 ### Fase 1 - Analise e documentacao inicial
 
-Estado: em progresso
+Estado: concluida
 
 Escopo:
 
@@ -29,7 +29,7 @@ Risco: baixo. Nao ha alteracao funcional.
 
 ### Fase 2 - Setup do backend
 
-Estado: pendente
+Estado: em progresso
 
 Escopo:
 
@@ -38,6 +38,7 @@ Escopo:
 - Configurar health check.
 - Configurar ambiente e `.env.example`.
 - Adicionar testes iniciais.
+- Separar a aplicacao exportada para `frontend/`.
 
 Risco: baixo. Backend ainda isolado.
 
@@ -160,4 +161,4 @@ Concluir a Fase 1 criando a documentacao base:
 - `docs/api.md`
 - `docs/changelog.md`
 
-Depois disso, a proxima tarefa recomendada e iniciar a Fase 2 com a criacao do backend Express isolado.
+Depois disso, a proxima tarefa recomendada e concluir a Fase 2 instalando dependencias do backend e validando o teste inicial.

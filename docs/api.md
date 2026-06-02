@@ -75,6 +75,23 @@ POST /api/functions/generateReport
 POST /api/functions/sendReport
 ```
 
+## Health Check
+
+Endpoint criado na Fase 2:
+
+```txt
+GET /api/health
+```
+
+Resposta esperada:
+
+```json
+{
+  "status": "ok",
+  "service": "oramix-ai-backend"
+}
+```
+
 ## Autenticacao
 
 Chamadas atuais:
