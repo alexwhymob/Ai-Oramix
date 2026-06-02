@@ -4,6 +4,43 @@
 
 ### Tarefa
 
+Migracao dos fluxos `forgot password` e `reset password`, com revisao de login e autorizacao.
+
+### Ficheiros alterados
+
+- `backend/src/models/User.js`
+- `backend/src/services/auth.service.js`
+- `backend/src/controllers/auth.controller.js`
+- `backend/src/routes/auth.routes.js`
+- `backend/src/config/db.js`
+- `backend/src/entities/entityAccess.js`
+- `backend/src/controllers/entities.controller.js`
+- `backend/tests/auth.service.test.js`
+- `backend/tests/entities.routes.test.js`
+- `frontend/src/api/authClient.js`
+- `frontend/src/App.jsx`
+- `frontend/src/pages/Login.jsx`
+- `frontend/src/pages/admin/Configuration.jsx`
+- `frontend/src/pages/admin/Customers.jsx`
+- `docs/auth.md`
+- `docs/api.md`
+- `docs/testing.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto. A recuperacao de password deixa de ser stub no frontend e passa a existir no backend, enquanto o acesso a `User` e configuracao fica mais bem protegido.
+
+### Observacoes
+
+- O backend agora distingue melhor falha de whitelist do Atlas vs falha de DNS/SRV.
+- O login respeita o parametro `from` no redirecionamento.
+- As paginas `forgot-password` e `reset-password` ficaram ligadas nas rotas do frontend.
+
+## 2026-06-02
+
+### Tarefa
+
 Migracao da integracao `base44.integrations.Core.InvokeLLM`.
 
 ### Ficheiros alterados

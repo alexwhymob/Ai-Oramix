@@ -28,7 +28,11 @@ export default function AdminCustomers() {
   const [saving, setSaving] = useState(false);
 
   const { data: allCustomers = [] } = useQuery({ queryKey: ['all_customers'], queryFn: () => base44.entities.Customer.list('-created_date') });
-  const { data: accountManagers = [] } = useQuery({ queryKey: ['account_managers'], queryFn: () => base44.entities.User.list() });
+  const { data: accountManagers = [] } = useQuery({
+    queryKey: ['account_managers'],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !isAccountManager && !isAiConsultant
+  });
   const amUsers = useMemo(() => accountManagers.filter(u => u.role === 'account_manager'), [accountManagers]);
   const customers = useMemo(() => isAccountManager && user ? allCustomers.filter(c => c.created_by === user.email) : allCustomers, [allCustomers, isAccountManager, user]);
   const { data: assessments = [] } = useQuery({ queryKey: ['all_assessments'], queryFn: () => base44.entities.Assessment.list() });

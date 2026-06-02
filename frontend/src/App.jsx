@@ -9,6 +9,8 @@ import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import CustomerRegister from './pages/CustomerRegister';
 import Quiz from './pages/Quiz';
 import AssessmentComplete from './pages/AssessmentComplete';
@@ -18,6 +20,7 @@ import AdminCustomers from './pages/admin/Customers';
 import AdminAssessmentDetail from './pages/admin/AssessmentDetail';
 import AdminReportEditor from './pages/admin/ReportEditor';
 import AdminConfiguration from './pages/admin/Configuration';
+import AdminAuditLogs from './pages/admin/AuditLogs';
 import SubQuiz from './pages/SubQuiz';
 import SubAssessmentComplete from './pages/SubAssessmentComplete';
 
@@ -33,6 +36,8 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/register" element={<CustomerRegister />} />
       <Route path="/quiz/:token" element={<Quiz />} />
       <Route path="/complete/:assessmentId" element={<AssessmentComplete />} />
@@ -44,6 +49,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/assessment/:id" element={<AdminAssessmentDetail />} />
         <Route path="/admin/report/:id" element={<AdminReportEditor />} />
         <Route path="/admin/configuration" element={<AdminConfiguration />} />
+        <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

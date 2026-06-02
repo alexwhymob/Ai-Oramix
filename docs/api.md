@@ -233,11 +233,13 @@ POST /api/auth/reset-password
 
 Autenticacao ainda nao foi migrada. O frontend contem stubs controlados ate a fase JWT.
 
-Implementado na Fase 7:
+Implementado na Fase 7 e extendido nas fases seguintes:
 
 ```txt
 POST /api/auth/login
 POST /api/auth/register
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
 GET  /api/auth/me
 POST /api/auth/logout
 ```

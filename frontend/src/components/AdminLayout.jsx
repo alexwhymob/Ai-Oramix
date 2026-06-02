@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Brain, LogOut, ChevronRight, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Brain, LogOut, ChevronRight, Settings, Activity } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 export default function AdminLayout() {
@@ -36,6 +36,7 @@ export default function AdminLayout() {
   const navItems = [
   { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Dashboard' },
   { to: '/admin/customers', icon: <Users className="w-4 h-4" />, label: 'Clientes / Customers' },
+  ...(['admin', 'ai_consultant'].includes(user.role) ? [{ to: '/admin/audit-logs', icon: <Activity className="w-4 h-4" />, label: 'Audit Logs' }] : []),
   { to: '/admin/configuration', icon: <Settings className="w-4 h-4" />, label: 'Configuration' }];
 
 

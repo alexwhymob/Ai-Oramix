@@ -1,4 +1,10 @@
-import { getUserFromToken, loginUser, registerUser } from '../services/auth.service.js';
+import {
+  getUserFromToken,
+  loginUser,
+  registerUser,
+  requestPasswordReset,
+  resetPasswordWithToken
+} from '../services/auth.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 
 export async function login(req, res, next) {
@@ -51,4 +57,33 @@ export async function me(req, res, next) {
 
 export async function logout(_req, res) {
   res.json({ success: true });
+}
+
+export async function forgotPassword(req, res, next) {
+  try {
+    await requestPasswordReset(req.body || {});
+    await writeAuditLog({
+      req,
+      action: 'auth.password_reset_requested',
+      entity: 'User',
+      metadata: { email: req.body?.email }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resetPassword(req, res, next) {
+  try {
+    const result = await resetPasswordWithToken(req.body || {});
+    await writeAuditLog({
+      req,
+      action: 'auth.password_reset_completed',
+      entity: 'User'
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
 }

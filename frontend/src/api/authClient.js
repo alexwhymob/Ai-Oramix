@@ -34,8 +34,14 @@ export function createAuthClient() {
     verifyOtp: notMigrated,
     setToken,
     resendOtp: notMigrated,
-    resetPasswordRequest: notMigrated,
-    resetPassword: notMigrated
+    resetPasswordRequest: (email) => apiRequest('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    }),
+    resetPassword: ({ resetToken, newPassword }) => apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ resetToken, newPassword })
+    })
   };
 }
 

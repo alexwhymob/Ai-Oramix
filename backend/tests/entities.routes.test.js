@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
+import * as authService from '../src/services/auth.service.js';
 
 describe('entity routes', () => {
   it('returns 404 for unknown entities', async () => {
@@ -24,5 +25,32 @@ describe('entity routes', () => {
       .expect(400);
 
     expect(response.body.error).toBe('invalid_query');
+  });
+
+  it('requires admin access for User entities', async () => {
+    const app = createApp();
+
+    const meSpy = vi.spyOn(authService, 'getUserFromToken');
+
+    const noAuthResponse = await request(app)
+      .get('/api/entities/User')
+      .expect(401);
+
+    expect(noAuthResponse.body.error).toBe('auth_required');
+
+    meSpy.mockResolvedValueOnce({
+      id: 'user-1',
+      email: 'manager@example.com',
+      role: 'account_manager'
+    });
+
+    const forbiddenResponse = await request(app)
+      .get('/api/entities/User')
+      .set('Authorization', 'Bearer token')
+      .expect(403);
+
+    expect(forbiddenResponse.body.error).toBe('forbidden');
+
+    meSpy.mockRestore();
   });
 });

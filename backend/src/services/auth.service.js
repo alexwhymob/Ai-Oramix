@@ -1,10 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createHash, randomBytes } from 'node:crypto';
 import { env } from '../config/env.js';
 import { User } from '../models/index.js';
+import { sendEmail } from './email/emailClient.js';
 
 const TOKEN_EXPIRES_IN = '8h';
 const PUBLIC_USER_FIELDS = 'id email full_name role created_date updated_date created_by_id';
+const PASSWORD_RESET_EXPIRES_IN_MS = 60 * 60 * 1000;
 
 export function requireJwtSecret() {
   if (!env.JWT_SECRET) {
@@ -89,6 +92,107 @@ export async function getUserFromToken(token) {
   }
 
   return user.toJSON();
+}
+
+export const requestPasswordReset = createPasswordResetRequestService();
+export const resetPasswordWithToken = createResetPasswordService();
+
+export function createPasswordResetRequestService(deps = {}) {
+  const models = {
+    User: deps.User || User
+  };
+  const emailClient = deps.email || { sendEmail };
+  const now = deps.now || (() => new Date());
+
+  return async function runPasswordResetRequest({ email }) {
+    if (!email || !email.trim()) {
+      return { success: true };
+    }
+
+    const user = await models.User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return { success: true };
+    }
+
+    const resetToken = generateResetToken();
+    const resetTokenHash = hashResetToken(resetToken);
+    const expiresAt = new Date(now().getTime() + PASSWORD_RESET_EXPIRES_IN_MS);
+
+    user.reset_password_token_hash = resetTokenHash;
+    user.reset_password_expires_at = expiresAt;
+    await user.save();
+
+    const resetUrl = `${env.FRONTEND_URL.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+    await emailClient.sendEmail({
+      to: user.email,
+      subject: 'Reset your Oramix password',
+      text: [
+        `Hello ${user.full_name || user.email},`,
+        '',
+        'We received a request to reset your Oramix password.',
+        '',
+        `Reset your password here: ${resetUrl}`,
+        '',
+        'This link expires in 1 hour.',
+        'If you did not request this, you can ignore this email.'
+      ].join('\n')
+    });
+
+    return { success: true };
+  };
+}
+
+export function createResetPasswordService(deps = {}) {
+  const models = {
+    User: deps.User || User
+  };
+  const now = deps.now || (() => new Date());
+  const hashPasswordFn = deps.hashPassword || hashPassword;
+
+  return async function runResetPassword({ resetToken, newPassword }) {
+    if (!resetToken || !resetToken.trim()) {
+      const error = new Error('Reset token is required');
+      error.status = 400;
+      error.code = 'missing_reset_token';
+      throw error;
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      const error = new Error('Password must be at least 8 characters long');
+      error.status = 400;
+      error.code = 'invalid_password';
+      throw error;
+    }
+
+    const resetTokenHash = hashResetToken(resetToken);
+    const user = await models.User.findOne({
+      reset_password_token_hash: resetTokenHash,
+      reset_password_expires_at: { $gt: now() }
+    });
+
+    if (!user) {
+      const error = new Error('Invalid or expired reset token');
+      error.status = 400;
+      error.code = 'invalid_reset_token';
+      throw error;
+    }
+
+    user.password_hash = await hashPasswordFn(newPassword);
+    user.reset_password_token_hash = null;
+    user.reset_password_expires_at = null;
+    await user.save();
+
+    return { success: true };
+  };
+}
+
+export function hashResetToken(token) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function generateResetToken() {
+  return randomBytes(32).toString('hex');
 }
 
 function createAuthResponse(user) {

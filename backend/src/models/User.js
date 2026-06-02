@@ -10,11 +10,14 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'ai_consultant', 'account_manager'],
     required: true
   },
-  password_hash: { type: String, default: null }
+  password_hash: { type: String, default: null },
+  reset_password_token_hash: { type: String, default: null },
+  reset_password_expires_at: { type: Date, default: null }
 }, schemaOptions);
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
+userSchema.index({ reset_password_token_hash: 1 });
 
 touchUpdatedDate(userSchema);
 

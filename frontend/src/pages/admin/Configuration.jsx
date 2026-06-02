@@ -31,7 +31,19 @@ export default function AdminConfiguration() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['all_users'],
     queryFn: () => base44.entities.User.list(),
+    enabled: isAdmin,
   });
+
+  if (!isAdmin) {
+    return (
+      <div className="p-6">
+        <div className="bg-[#152233] border border-white/10 rounded-xl p-6 text-white/70">
+          <h1 className="text-lg font-semibold text-white mb-1">Access Restricted</h1>
+          <p className="text-sm text-white/50">Only admins can access configuration and user management.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleRoleChange = async (userId, newRole) => {
     setSavingId(userId);

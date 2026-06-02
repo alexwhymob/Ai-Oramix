@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  createPasswordResetRequestService,
+  createResetPasswordService,
   hashPassword,
+  hashResetToken,
   signAuthToken,
   verifyAuthToken,
   verifyPassword
@@ -27,5 +30,58 @@ describe('auth service', () => {
     expect(payload.sub).toBe('user-1');
     expect(payload.email).toBe('admin@example.com');
     expect(payload.role).toBe('admin');
+  });
+
+  it('stores a hashed reset token and sends reset email', async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const sendEmail = vi.fn().mockResolvedValue({ success: true });
+    const user = {
+      email: 'admin@example.com',
+      full_name: 'Admin',
+      save
+    };
+
+    const requestPasswordReset = createPasswordResetRequestService({
+      User: {
+        findOne: vi.fn().mockResolvedValue(user)
+      },
+      email: { sendEmail },
+      now: () => new Date('2026-06-02T10:00:00.000Z')
+    });
+
+    await expect(requestPasswordReset({ email: 'admin@example.com' })).resolves.toEqual({ success: true });
+    expect(user.reset_password_token_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(user.reset_password_expires_at).toBeInstanceOf(Date);
+    expect(save).toHaveBeenCalledOnce();
+    expect(sendEmail).toHaveBeenCalledOnce();
+  });
+
+  it('resets password when token is valid', async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const user = {
+      password_hash: 'old-hash',
+      reset_password_token_hash: 'existing-hash',
+      reset_password_expires_at: new Date('2026-06-02T11:00:00.000Z'),
+      save
+    };
+    const resetToken = 'plain-token';
+    const resetPasswordWithToken = createResetPasswordService({
+      User: {
+        findOne: vi.fn().mockResolvedValue(user)
+      },
+      now: () => new Date('2026-06-02T10:00:00.000Z'),
+      hashPassword: vi.fn().mockResolvedValue('new-hash')
+    });
+
+    await expect(resetPasswordWithToken({
+      resetToken,
+      newPassword: 'new-password'
+    })).resolves.toEqual({ success: true });
+
+    expect(hashResetToken(resetToken)).toHaveLength(64);
+    expect(user.password_hash).toBe('new-hash');
+    expect(user.reset_password_token_hash).toBeNull();
+    expect(user.reset_password_expires_at).toBeNull();
+    expect(save).toHaveBeenCalledOnce();
   });
 });

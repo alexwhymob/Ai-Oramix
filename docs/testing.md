@@ -32,6 +32,7 @@ Teste inicial:
 - `generateReport` deve testar schema estruturado, construcao de contexto e permissao por role sem chamar a API real da OpenAI.
 - `sendReport` deve testar corpo de e-mail, permissoes por role e provider de e-mail sem chamar a API real do Resend.
 - `integrations/llm` deve testar autenticacao, validacao de `prompt` e permissao por role sem chamar a API real da OpenAI.
+- `forgot/reset password` deve testar criacao de token hash, expiracao e troca de password sem depender de MongoDB online.
 
 ## Frontend
 

@@ -10,13 +10,13 @@ Fluxos implementados:
 - Registo basico por email/password.
 - Consulta do utilizador autenticado.
 - Logout client-side.
+- Forgot password com envio de email.
+- Reset password com token de uso unico.
 
 Fluxos ainda nao migrados:
 
 - Google login.
 - OTP.
-- Forgot password.
-- Reset password.
 - Convite de utilizadores por email.
 - Refresh tokens.
 
@@ -27,6 +27,8 @@ Endpoints:
 ```txt
 POST /api/auth/login
 POST /api/auth/register
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
 GET  /api/auth/me
 POST /api/auth/logout
 ```
@@ -68,6 +70,5 @@ Pontos a melhorar em fases futuras:
 - Cookies HTTP-only em vez de `localStorage`.
 - Refresh token.
 - Rate limit em login.
-- Reset password com token de uso unico.
 - Politica de password.
 - Auditoria de eventos de login.

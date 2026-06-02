@@ -6,10 +6,12 @@ import {
   listEntities,
   updateEntity
 } from '../entities/entityService.js';
+import { assertEntityAccess } from '../entities/entityAccess.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 
 export async function listEntityRecords(req, res, next) {
   try {
+    assertEntityAccess({ entityName: req.params.entity, action: 'list', user: req.user });
     const records = await listEntities(req.params.entity, req.query);
     res.json(records);
   } catch (error) {
@@ -19,6 +21,7 @@ export async function listEntityRecords(req, res, next) {
 
 export async function getEntityRecord(req, res, next) {
   try {
+    assertEntityAccess({ entityName: req.params.entity, action: 'get', user: req.user });
     const record = await getEntity(req.params.entity, req.params.id);
     res.json(record);
   } catch (error) {
@@ -28,6 +31,7 @@ export async function getEntityRecord(req, res, next) {
 
 export async function createEntityRecord(req, res, next) {
   try {
+    assertEntityAccess({ entityName: req.params.entity, action: 'create', user: req.user });
     const record = await createEntity(req.params.entity, req.body);
     await writeAuditLog({
       req,
@@ -43,6 +47,7 @@ export async function createEntityRecord(req, res, next) {
 
 export async function bulkCreateEntityRecords(req, res, next) {
   try {
+    assertEntityAccess({ entityName: req.params.entity, action: 'bulkCreate', user: req.user });
     const records = await bulkCreateEntities(req.params.entity, req.body);
     await writeAuditLog({
       req,
@@ -58,6 +63,7 @@ export async function bulkCreateEntityRecords(req, res, next) {
 
 export async function updateEntityRecord(req, res, next) {
   try {
+    assertEntityAccess({ entityName: req.params.entity, action: 'update', user: req.user });
     const record = await updateEntity(req.params.entity, req.params.id, req.body);
     await writeAuditLog({
       req,
@@ -73,6 +79,7 @@ export async function updateEntityRecord(req, res, next) {
 
 export async function deleteEntityRecord(req, res, next) {
   try {
+    assertEntityAccess({ entityName: req.params.entity, action: 'delete', user: req.user });
     const result = await deleteEntity(req.params.entity, req.params.id);
     await writeAuditLog({
       req,
