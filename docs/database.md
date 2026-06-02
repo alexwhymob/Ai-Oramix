@@ -189,6 +189,30 @@ Indices:
 - `email`, unico
 - `role`
 
+### AuditLog
+
+Campos principais:
+
+- `user_id`
+- `user_email`
+- `user_role`
+- `action`
+- `entity`
+- `entity_id`
+- `metadata`
+- `ip`
+- `user_agent`
+
+Indices:
+
+- `id`, unico
+- `user_id`
+- `user_email`
+- `action`
+- `entity`
+- `entity_id`
+- `created_date`
+
 ## Relacoes Logicas
 
 - `Customer.id` -> `Assessment.customer_id`

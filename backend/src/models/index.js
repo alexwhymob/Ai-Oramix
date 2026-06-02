@@ -6,3 +6,4 @@ export { Question } from './Question.js';
 export { Report } from './Report.js';
 export { ConsultantNote } from './ConsultantNote.js';
 export { User } from './User.js';
+export { AuditLog } from './AuditLog.js';

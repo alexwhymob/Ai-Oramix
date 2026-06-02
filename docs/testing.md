@@ -26,6 +26,7 @@ Teste inicial:
 - API generica de entidades deve validar entidades permitidas e parametros `q`, `limit`, `skip` e `sort_by`.
 - Scripts de importacao devem testar parsing CSV e mapeamento de campos sem escrever na base online.
 - Autenticacao deve testar hash de password e assinatura/verificacao JWT sem escrever na base online.
+- Auditoria deve testar model `AuditLog` e protecao do endpoint de leitura.
 
 ## Frontend
 

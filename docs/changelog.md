@@ -4,6 +4,40 @@
 
 ### Tarefa
 
+Adicao de auditoria de atividade.
+
+### Ficheiros alterados
+
+- `backend/src/models/AuditLog.js`
+- `backend/src/models/index.js`
+- `backend/src/services/auditLog.service.js`
+- `backend/src/controllers/auditLogs.controller.js`
+- `backend/src/controllers/auth.controller.js`
+- `backend/src/controllers/entities.controller.js`
+- `backend/src/middlewares/auth.middleware.js`
+- `backend/src/routes/auditLogs.routes.js`
+- `backend/src/app.js`
+- `backend/tests/auditLogs.routes.test.js`
+- `backend/tests/models.test.js`
+- `docs/audit.md`
+- `docs/api.md`
+- `docs/database.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. A aplicacao passa a registrar eventos de auth e alteracoes de entidades para consulta administrativa.
+
+### Observacoes
+
+A escrita do log e tolerante a falhas. Ainda nao ha pagina visual no frontend para os administradores consultarem logs.
+
+## 2026-06-02
+
+### Tarefa
+
 Implementacao inicial de autenticacao JWT.
 
 ### Ficheiros alterados

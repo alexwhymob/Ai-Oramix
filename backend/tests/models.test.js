@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   Assessment,
   AssessmentAnswer,
+  AuditLog,
   ConsultantNote,
   Customer,
   Pillar,
@@ -79,7 +80,8 @@ describe('Mongoose models', () => {
       Question,
       Report,
       ConsultantNote,
-      User
+      User,
+      AuditLog
     ].map(model => model.modelName)).toEqual([
       'Customer',
       'Assessment',
@@ -88,7 +90,8 @@ describe('Mongoose models', () => {
       'Question',
       'Report',
       'ConsultantNote',
-      'User'
+      'User',
+      'AuditLog'
     ]);
   });
 
@@ -96,5 +99,19 @@ describe('Mongoose models', () => {
     expect(getEntityModel('Customer')).toBe(Customer);
     expect(getEntityModel('Assessment')).toBe(Assessment);
     expect(getEntityModel('Unknown')).toBeNull();
+  });
+
+  it('defines audit log fields for admin activity tracking', () => {
+    const log = new AuditLog({
+      action: 'entity.update',
+      entity: 'Customer',
+      entity_id: 'customer-1',
+      metadata: { changed: ['name'] }
+    });
+
+    expect(log.id).toBeTruthy();
+    expect(log.action).toBe('entity.update');
+    expect(log.metadata).toEqual({ changed: ['name'] });
+    expect(log.created_date).toBeInstanceOf(Date);
   });
 });

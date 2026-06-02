@@ -1,10 +1,24 @@
 import { getUserFromToken, loginUser, registerUser } from '../services/auth.service.js';
+import { writeAuditLog } from '../services/auditLog.service.js';
 
 export async function login(req, res, next) {
   try {
     const result = await loginUser(req.body);
+    await writeAuditLog({
+      req,
+      user: result.user,
+      action: 'auth.login',
+      entity: 'User',
+      entity_id: result.user.id
+    });
     res.json(result);
   } catch (error) {
+    await writeAuditLog({
+      req,
+      action: 'auth.login_failed',
+      entity: 'User',
+      metadata: { email: req.body?.email }
+    });
     next(error);
   }
 }
@@ -12,6 +26,13 @@ export async function login(req, res, next) {
 export async function register(req, res, next) {
   try {
     const result = await registerUser(req.body);
+    await writeAuditLog({
+      req,
+      user: result.user,
+      action: 'auth.register',
+      entity: 'User',
+      entity_id: result.user.id
+    });
     res.status(201).json(result);
   } catch (error) {
     next(error);

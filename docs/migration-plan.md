@@ -109,6 +109,19 @@ Escopo:
 
 Risco: alto. Pode alterar comportamento de acesso.
 
+### Etapa adicional - Auditoria
+
+Estado: concluida
+
+Escopo:
+
+- Criar model `AuditLog`.
+- Registrar login, register e falhas de login.
+- Registrar create/update/delete/bulk create de entidades.
+- Criar endpoint protegido `GET /api/audit-logs`.
+
+Risco: medio. Nao altera frontend visualmente.
+
 ### Fase 8 - Migracao das funcoes Base44
 
 Estado: pendente

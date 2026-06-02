@@ -162,6 +162,16 @@ POST /api/auth/logout
 Authorization: Bearer <token>
 ```
 
+## Audit Logs
+
+Endpoint protegido para administradores e consultores:
+
+```txt
+GET /api/audit-logs
+```
+
+Suporta os mesmos parametros `q`, `limit`, `skip` e `sort_by`.
+
 ## Integracoes
 
 Uso atual:

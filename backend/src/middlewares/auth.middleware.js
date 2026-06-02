@@ -17,6 +17,19 @@ export async function authMiddleware(req, _res, next) {
   }
 }
 
+export async function optionalAuthMiddleware(req, _res, next) {
+  try {
+    const token = extractBearerToken(req.headers.authorization);
+    if (token) {
+      req.user = await getUserFromToken(token);
+    }
+  } catch {
+    req.user = null;
+  }
+
+  next();
+}
+
 export function requireRoles(roles) {
   return (req, _res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
