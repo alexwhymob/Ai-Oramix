@@ -124,7 +124,7 @@ Risco: medio. Nao altera frontend visualmente.
 
 ### Fase 8 - Migracao das funcoes Base44
 
-Estado: pendente
+Estado: em progresso
 
 Escopo:
 
@@ -134,6 +134,13 @@ Escopo:
 - Migrar `sendReport`.
 
 Cada funcao deve ser feita como tarefa separada.
+
+Estado das funcoes:
+
+- `quizSession`: concluida.
+- `createDataSubAssessment`: pendente.
+- `generateReport`: pendente.
+- `sendReport`: pendente.
 
 Risco: alto. Contem regras centrais do produto.
 

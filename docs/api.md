@@ -104,6 +104,26 @@ POST /api/functions/sendReport
 
 Esses endpoints ainda nao estao implementados no backend. O frontend possui o cliente `functions.invoke`, mas as funcoes serao migradas em fases posteriores.
 
+Implementado na Fase 8:
+
+```txt
+POST /api/functions/quizSession
+```
+
+Acoes suportadas:
+
+- `registerCustomer`
+- `adminRegister`
+- `load`
+- `submit`
+- `loadSub`
+- `submitSub`
+- `getResult`
+- `getSubAssessments`
+- `getSubResult`
+
+Funcoes ainda pendentes retornam `501 function_not_migrated`.
+
 ## Health Check
 
 Endpoint criado na Fase 2:

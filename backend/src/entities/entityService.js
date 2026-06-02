@@ -59,7 +59,7 @@ export async function updateEntity(entityName, id, payload) {
   const record = await Model.findOneAndUpdate(
     { id },
     payload,
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
 
   if (!record) {

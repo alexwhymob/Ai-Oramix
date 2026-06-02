@@ -4,6 +4,33 @@
 
 ### Tarefa
 
+Migracao da funcao Base44 `quizSession`.
+
+### Ficheiros alterados
+
+- `backend/src/services/quizSession.service.js`
+- `backend/src/controllers/functions.controller.js`
+- `backend/src/routes/functions.routes.js`
+- `backend/src/app.js`
+- `backend/tests/quizSession.service.test.js`
+- `backend/tests/functions.routes.test.js`
+- `docs/api.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto. O fluxo de registo de cliente, carregamento do quiz, submissao de respostas e resultados passa a existir no backend proprio.
+
+### Observacoes
+
+`createDataSubAssessment`, `generateReport` e `sendReport` ainda retornam `function_not_migrated` e devem ser migradas nas proximas tarefas.
+
+## 2026-06-02
+
+### Tarefa
+
 Adicao de auditoria de atividade.
 
 ### Ficheiros alterados
