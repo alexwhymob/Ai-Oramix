@@ -25,7 +25,6 @@ const assessmentSchema = new mongoose.Schema({
   reviewed_by_consultant: { type: Boolean, default: false }
 }, schemaOptions);
 
-assessmentSchema.index({ customer_id: 1 });
 assessmentSchema.index({ status: 1 });
 assessmentSchema.index({ parent_assessment_id: 1 });
 

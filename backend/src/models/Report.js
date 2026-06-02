@@ -23,7 +23,6 @@ const reportSchema = new mongoose.Schema({
   language: { type: String, enum: ['pt', 'en'], default: 'pt' }
 }, schemaOptions);
 
-reportSchema.index({ assessment_id: 1 });
 reportSchema.index({ status: 1 });
 
 touchUpdatedDate(reportSchema);
