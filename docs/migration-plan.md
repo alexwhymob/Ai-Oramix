@@ -84,7 +84,7 @@ Risco: medio. Conversao de tipos e encoding precisam de validacao.
 
 ### Fase 6 - Camada de API no frontend
 
-Estado: pendente
+Estado: em progresso
 
 Escopo:
 

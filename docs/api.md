@@ -30,6 +30,8 @@ DELETE /api/entities/:entity/:id
 
 Implementado na Fase 4 para entidades registradas explicitamente no backend.
 
+Na Fase 6, o frontend passou a usar esta API por meio de `frontend/src/api/base44Client.js`, mantendo a assinatura `base44.entities.*`.
+
 ## Query Parameters
 
 Parametros esperados:
@@ -100,6 +102,8 @@ POST /api/functions/generateReport
 POST /api/functions/sendReport
 ```
 
+Esses endpoints ainda nao estao implementados no backend. O frontend possui o cliente `functions.invoke`, mas as funcoes serao migradas em fases posteriores.
+
 ## Health Check
 
 Endpoint criado na Fase 2:
@@ -140,6 +144,8 @@ POST /api/auth/register
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
 ```
+
+Autenticacao ainda nao foi migrada. O frontend contem stubs controlados ate a fase JWT.
 
 ## Integracoes
 

@@ -4,6 +4,39 @@
 
 ### Tarefa
 
+Criacao da camada de API local no frontend para entidades.
+
+### Ficheiros alterados
+
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `frontend/vite.config.js`
+- `frontend/src/api/apiClient.js`
+- `frontend/src/api/entitiesClient.js`
+- `frontend/src/api/functionsClient.js`
+- `frontend/src/api/authClient.js`
+- `frontend/src/api/usersClient.js`
+- `frontend/src/api/integrationsClient.js`
+- `frontend/src/api/base44Client.js`
+- `frontend/src/lib/AuthContext.jsx`
+- `docs/api.md`
+- `docs/deployment.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto. O frontend deixa de depender do SDK/plugin Base44 para entidades e passa a usar a nossa API em `/api/entities`.
+
+### Observacoes
+
+Autenticacao, funcoes serverless, convites de usuarios e LLM ainda nao foram migrados. Esses pontos possuem clientes/stubs controlados ate as fases seguintes.
+
+## 2026-06-02
+
+### Tarefa
+
 Criacao dos scripts de importacao CSV para a nossa MongoDB.
 
 ### Ficheiros alterados

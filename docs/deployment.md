@@ -20,11 +20,12 @@ npm run build
 
 Variaveis herdadas do Base44 ainda usadas nesta fase:
 
-```env
-VITE_BASE44_APP_ID=
-VITE_BASE44_APP_BASE_URL=
-VITE_BASE44_FUNCTIONS_VERSION=
+```txt
+VITE_API_BASE_URL=
+VITE_API_PROXY_TARGET=http://localhost:3000
 ```
+
+`VITE_API_BASE_URL` e opcional em desenvolvimento quando o proxy do Vite esta ativo. Em producao, deve apontar para a URL publica do backend.
 
 ## Backend
 

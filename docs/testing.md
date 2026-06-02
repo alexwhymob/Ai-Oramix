@@ -28,7 +28,13 @@ Teste inicial:
 
 ## Frontend
 
-O frontend ainda nao foi alterado funcionalmente. Os testes de frontend devem ser definidos quando a camada de API propria substituir chamadas Base44.
+O frontend possui um adaptador local em `frontend/src/api/base44Client.js`.
+
+Validacoes atuais:
+
+- Build Vite deve concluir sem o plugin Base44.
+- Chamadas `base44.entities.*` devem apontar para `/api/entities`.
+- Autenticacao, funcoes serverless, convites e LLM ainda nao estao migrados.
 
 ## Validacao Manual Minima
 
