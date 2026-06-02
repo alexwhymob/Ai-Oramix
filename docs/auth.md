@@ -12,12 +12,15 @@ Fluxos implementados:
 - Logout client-side.
 - Forgot password com envio de email.
 - Reset password com token de uso unico.
+- Convite de utilizadores por email.
 
-Fluxos ainda nao migrados:
+Fora do escopo atual:
 
 - Google login.
 - OTP.
-- Convite de utilizadores por email.
+
+Fluxos ainda pendentes:
+
 - Refresh tokens.
 
 ## Backend
@@ -31,6 +34,7 @@ POST /api/auth/forgot-password
 POST /api/auth/reset-password
 GET  /api/auth/me
 POST /api/auth/logout
+POST /api/users/invite
 ```
 
 Variavel local obrigatoria:
@@ -71,4 +75,4 @@ Pontos a melhorar em fases futuras:
 - Refresh token.
 - Rate limit em login.
 - Politica de password.
-- Auditoria de eventos de login.
+- Testes ponta a ponta em ambiente local conectado ao Atlas.

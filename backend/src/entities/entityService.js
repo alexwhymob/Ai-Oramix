@@ -14,16 +14,17 @@ export function resolveEntity(entityName) {
   return Model;
 }
 
-export async function listEntities(entityName, query) {
+export async function listEntities(entityName, query, options = {}) {
   const Model = resolveEntity(entityName);
   const { filter, limit, skip, sort } = parseEntityQuery(query);
+  const finalFilter = mergeFilters(filter, options.accessFilter);
 
-  return Model.find(filter).sort(sort).skip(skip).limit(limit).lean();
+  return Model.find(finalFilter).sort(sort).skip(skip).limit(limit).lean();
 }
 
-export async function getEntity(entityName, id) {
+export async function getEntity(entityName, id, options = {}) {
   const Model = resolveEntity(entityName);
-  const record = await Model.findOne({ id }).lean();
+  const record = await Model.findOne(mergeFilters({ id }, options.accessFilter)).lean();
 
   if (!record) {
     const error = new Error(`${entityName} ${id} not found`);
@@ -54,10 +55,10 @@ export async function bulkCreateEntities(entityName, payload) {
   return records.map(record => record.toJSON());
 }
 
-export async function updateEntity(entityName, id, payload) {
+export async function updateEntity(entityName, id, payload, options = {}) {
   const Model = resolveEntity(entityName);
   const record = await Model.findOneAndUpdate(
-    { id },
+    mergeFilters({ id }, options.accessFilter),
     payload,
     { returnDocument: 'after', runValidators: true }
   );
@@ -72,9 +73,9 @@ export async function updateEntity(entityName, id, payload) {
   return record.toJSON();
 }
 
-export async function deleteEntity(entityName, id) {
+export async function deleteEntity(entityName, id, options = {}) {
   const Model = resolveEntity(entityName);
-  const record = await Model.findOneAndDelete({ id }).lean();
+  const record = await Model.findOneAndDelete(mergeFilters({ id }, options.accessFilter)).lean();
 
   if (!record) {
     const error = new Error(`${entityName} ${id} not found`);
@@ -84,4 +85,22 @@ export async function deleteEntity(entityName, id) {
   }
 
   return { success: true };
+}
+
+function mergeFilters(filter, accessFilter = {}) {
+  const normalizedAccessFilter = accessFilter || {};
+  if (Object.keys(normalizedAccessFilter).length === 0) {
+    return filter;
+  }
+
+  if (Object.keys(filter).length === 0) {
+    return normalizedAccessFilter;
+  }
+
+  return {
+    $and: [
+      filter,
+      normalizedAccessFilter
+    ]
+  };
 }

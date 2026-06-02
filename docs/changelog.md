@@ -4,6 +4,38 @@
 
 ### Tarefa
 
+Reforco da autorizacao backend por role nos endpoints de entidades.
+
+### Ficheiros alterados
+
+- `backend/src/entities/entityAccess.js`
+- `backend/src/entities/entityService.js`
+- `backend/src/controllers/entities.controller.js`
+- `backend/src/controllers/functions.controller.js`
+- `backend/tests/entities.routes.test.js`
+- `backend/tests/functions.routes.test.js`
+- `frontend/src/pages/admin/Customers.jsx`
+- `frontend/src/pages/admin/Dashboard.jsx`
+- `docs/auth.md`
+- `docs/api.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto. O backend passa a aplicar regras por role para leitura e escrita de entidades sensiveis, em vez de depender apenas dos filtros do frontend.
+
+### Observacoes
+
+- `Pillar` e `Question` continuam com leitura publica para suportar o quiz.
+- `adminRegister` agora exige `admin` ou `account_manager`.
+- Para `account_manager`, clientes criados administrativamente recebem `account_manager_id` e `created_by_id` automaticamente.
+- Google login e OTP ficam fora do escopo atual.
+
+## 2026-06-03
+
+### Tarefa
+
 Adicao de consentimento de tratamento de dados ao registo publico de customer.
 
 ### Ficheiros alterados

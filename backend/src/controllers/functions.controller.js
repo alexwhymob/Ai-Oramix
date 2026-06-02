@@ -3,6 +3,7 @@ import { createDataSubAssessment } from '../services/subAssessment.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 import { generateReport } from '../services/reportGeneration.service.js';
 import { sendReport } from '../services/reportEmail.service.js';
+import { applyFunctionWriteDefaults, assertFunctionAccess } from '../entities/entityAccess.js';
 
 const AUDIT_ACTIONS = {
   registerCustomer: 'quiz.register_customer',
@@ -21,16 +22,18 @@ export async function invokeFunction(req, res, next) {
     const { functionName } = req.params;
 
     if (functionName === 'quizSession') {
-      const result = await handleQuizSessionAction(req.body);
+      assertFunctionAccess({ functionName, action: req.body?.action, user: req.user });
+      const payload = applyFunctionWriteDefaults({ functionName, payload: req.body, user: req.user });
+      const result = await handleQuizSessionAction(payload);
       await writeAuditLog({
         req,
-        action: AUDIT_ACTIONS[req.body?.action] || 'quiz.unknown',
-        entity: resolveAuditEntity(req.body?.action),
-        entity_id: req.body?.assessmentId || null,
+        action: AUDIT_ACTIONS[payload?.action] || 'quiz.unknown',
+        entity: resolveAuditEntity(payload?.action),
+        entity_id: payload?.assessmentId || null,
         metadata: {
-          action: req.body?.action,
-          hasForm: Boolean(req.body?.form),
-          answersCount: Array.isArray(req.body?.answers) ? req.body.answers.length : undefined
+          action: payload?.action,
+          hasForm: Boolean(payload?.form),
+          answersCount: Array.isArray(payload?.answers) ? payload.answers.length : undefined
         }
       });
       res.json(result);

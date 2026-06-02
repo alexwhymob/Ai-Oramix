@@ -34,7 +34,7 @@ export default function AdminCustomers() {
     enabled: !isAccountManager && !isAiConsultant
   });
   const amUsers = useMemo(() => accountManagers.filter(u => u.role === 'account_manager'), [accountManagers]);
-  const customers = useMemo(() => isAccountManager && user ? allCustomers.filter(c => c.created_by === user.email) : allCustomers, [allCustomers, isAccountManager, user]);
+  const customers = useMemo(() => isAccountManager && user ? allCustomers.filter(c => c.account_manager_id === user.id || c.created_by_id === user.id) : allCustomers, [allCustomers, isAccountManager, user]);
   const { data: assessments = [] } = useQuery({ queryKey: ['all_assessments'], queryFn: () => base44.entities.Assessment.list() });
 
   const mainAssessmentMap = useMemo(() => {

@@ -21,7 +21,7 @@ describe('entity routes', () => {
     const app = createApp();
 
     const response = await request(app)
-      .get('/api/entities/Customer?q={bad-json')
+      .get('/api/entities/Pillar?q={bad-json')
       .expect(400);
 
     expect(response.body.error).toBe('invalid_query');
@@ -50,6 +50,57 @@ describe('entity routes', () => {
       .expect(403);
 
     expect(forbiddenResponse.body.error).toBe('forbidden');
+
+    meSpy.mockRestore();
+  });
+
+  it('requires authentication for customer data', async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .get('/api/entities/Customer')
+      .expect(401);
+
+    expect(response.body.error).toBe('auth_required');
+  });
+
+  it('prevents consultants from creating customers', async () => {
+    const app = createApp();
+    const meSpy = vi.spyOn(authService, 'getUserFromToken');
+
+    meSpy.mockResolvedValueOnce({
+      id: 'consultant-1',
+      email: 'consultant@example.com',
+      role: 'ai_consultant'
+    });
+
+    const response = await request(app)
+      .post('/api/entities/Customer')
+      .set('Authorization', 'Bearer token')
+      .send({ name: 'Ana', email: 'ana@company.com', company: 'ACME', role: 'CEO' })
+      .expect(403);
+
+    expect(response.body.error).toBe('forbidden');
+
+    meSpy.mockRestore();
+  });
+
+  it('prevents account managers from deleting customers through generic entities', async () => {
+    const app = createApp();
+    const meSpy = vi.spyOn(authService, 'getUserFromToken');
+
+    meSpy.mockResolvedValueOnce({
+      id: 'manager-1',
+      email: 'manager@example.com',
+      role: 'account_manager'
+    });
+
+    const response = await request(app)
+      .delete('/api/entities/Customer/customer-1')
+      .set('Authorization', 'Bearer token')
+      .expect(403);
+
+    expect(response.body.error).toBe('forbidden');
 
     meSpy.mockRestore();
   });

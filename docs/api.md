@@ -49,6 +49,19 @@ GET /api/entities/Assessment?q={"status":"completed"}&limit=100&skip=0&sort_by=-
 
 Filtros que usam operadores MongoDB iniciados por `$` ou campos com `.` sao removidos por seguranca nesta fase inicial.
 
+## Autorizacao de Entidades
+
+Regras principais:
+
+- `Pillar` e `Question`: leitura publica para suportar o quiz; escrita apenas para `admin`.
+- `User`: acesso apenas para `admin`.
+- `Customer`: `admin` ve tudo; `ai_consultant` apenas leitura; `account_manager` ve e edita apenas clientes associados por `account_manager_id` ou `created_by_id`.
+- `Assessment`: `admin` e `ai_consultant` veem tudo; `account_manager` ve apenas assessments dos seus clientes.
+- `AssessmentAnswer`: leitura limitada pelo assessment; escrita direta bloqueada para roles nao admin.
+- `Report` e `ConsultantNote`: `admin` e `ai_consultant` podem editar; `account_manager` apenas le dados dos seus clientes.
+
+Chamadas sem permissao retornam `401 auth_required` ou `403 forbidden`.
+
 ## Entidades Iniciais
 
 Endpoints devem existir para:
@@ -245,7 +258,6 @@ POST /api/users/invite
 ```
 
 Autenticacao ainda nao foi migrada. O frontend contem stubs controlados ate a fase JWT.
-
 Implementado na Fase 7 e extendido nas fases seguintes:
 
 ```txt

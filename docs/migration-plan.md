@@ -106,8 +106,14 @@ Escopo:
 - Implementar roles: `admin`, `ai_consultant`, `account_manager`.
 - Substituir `base44.auth`.
 - Proteger rotas administrativas.
+- Reforcar autorizacao de entidades no backend.
 
 Risco: alto. Pode alterar comportamento de acesso.
+
+Notas:
+
+- Google login e OTP ficaram fora do escopo atual.
+- Registos de customer continuam a ser feitos pelo formulario publico.
 
 ### Etapa adicional - Auditoria
 

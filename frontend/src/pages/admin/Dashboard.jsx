@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   const { data: allCustomers = [] } = useQuery({ queryKey: ['all_customers'], queryFn: () => base44.entities.Customer.list() });
 
   // Account Manager only sees their own customers
-  const customers = useMemo(() => isAccountManager && user ? allCustomers.filter(c => c.created_by === user.email) : allCustomers, [allCustomers, isAccountManager, user]);
+  const customers = useMemo(() => isAccountManager && user ? allCustomers.filter(c => c.account_manager_id === user.id || c.created_by_id === user.id) : allCustomers, [allCustomers, isAccountManager, user]);
   const ownCustomerIds = useMemo(() => new Set(customers.map(c => c.id)), [customers]);
   const assessments = useMemo(() => {
     const main = allAssessments.filter(a => a.assessment_type !== 'sub_assessment');
