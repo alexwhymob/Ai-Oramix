@@ -50,11 +50,12 @@ export function isCorporateEmail(email) {
 }
 
 async function registerCustomer(form, { registered_by, status }) {
-  validateCustomerForm(form);
+  validateCustomerForm(form, { requireDataConsent: registered_by === 'self' });
 
   const qr_token = randomUUID();
   const customer = await Customer.create({
     ...form,
+    data_consent_at: form.data_consent ? (form.data_consent_at || new Date().toISOString()) : null,
     qr_token,
     registered_by,
     language: form.language || 'pt'
@@ -76,6 +77,7 @@ async function adminRegister(form) {
   const qr_token = randomUUID();
   const customer = await Customer.create({
     ...form,
+    data_consent_at: form.data_consent ? (form.data_consent_at || new Date().toISOString()) : null,
     qr_token,
     registered_by: 'admin',
     language: form.language || 'pt'
@@ -90,7 +92,7 @@ async function adminRegister(form) {
   return { customer: customer.toJSON() };
 }
 
-function validateCustomerForm(form = {}) {
+function validateCustomerForm(form = {}, { requireDataConsent = false } = {}) {
   if (!isCorporateEmail(form.email)) {
     const error = new Error('non_corporate_email');
     error.status = 422;
@@ -102,6 +104,13 @@ function validateCustomerForm(form = {}) {
     const error = new Error('job_title_required');
     error.status = 422;
     error.code = 'job_title_required';
+    throw error;
+  }
+
+  if (requireDataConsent && form.data_consent !== true) {
+    const error = new Error('data_consent_required');
+    error.status = 422;
+    error.code = 'data_consent_required';
     throw error;
   }
 }

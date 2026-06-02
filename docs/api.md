@@ -127,6 +127,17 @@ Acoes suportadas:
 
 Funcoes ainda nao migradas retornam `501 function_not_migrated`.
 
+`registerCustomer` exige consentimento de tratamento de dados no payload `form`:
+
+```json
+{
+  "data_consent": true,
+  "data_consent_at": "2026-06-03T10:00:00.000Z"
+}
+```
+
+Se o consentimento estiver ausente, a API retorna `422 data_consent_required`.
+
 `createDataSubAssessment` cria uma subavaliacao para o pilar `dados` quando:
 
 - o assessment principal esta `completed`;

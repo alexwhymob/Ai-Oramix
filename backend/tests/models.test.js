@@ -24,6 +24,8 @@ describe('Mongoose models', () => {
     expect(customer.email).toBe('ana@example.com');
     expect(customer.language).toBe('pt');
     expect(customer.registered_by).toBe('self');
+    expect(customer.data_consent).toBe(false);
+    expect(customer.data_consent_at).toBeNull();
     expect(customer.created_date).toBeInstanceOf(Date);
   });
 

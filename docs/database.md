@@ -44,6 +44,8 @@ Campos principais:
 - `phone`
 - `notes`
 - `account_manager_id`
+- `data_consent`
+- `data_consent_at`
 
 Indices:
 

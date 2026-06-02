@@ -10,7 +10,7 @@ import { useLanguage } from '@/lib/useLanguage';
 import { base44 } from '@/api/base44Client';
 import { isCorporateEmail } from '@/lib/blockedEmailDomains';
 
-const SECTORS = ['Tecnologia','Saúde','Indústria','Retalho','Serviços Financeiros','Educação','Energia','Logística','Construção','Outro'];
+const SECTORS = ['Tecnologia','Saude','Industria','Retalho','Servicos Financeiros','Educacao','Energia','Logistica','Construcao','Outro'];
 const SIZES = ['1-10','11-50','51-200','201-500','501-1000','1000+'];
 
 export default function CustomerRegister() {
@@ -18,6 +18,8 @@ export default function CustomerRegister() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [dataConsent, setDataConsent] = useState(false);
+  const [consentError, setConsentError] = useState('');
   const [form, setForm] = useState({ name:'', email:'', company:'', role:'', sector:'', company_size:'', language: lang });
 
   const t = (pt, en) => lang === 'pt' ? pt : en;
@@ -38,10 +40,28 @@ export default function CustomerRegister() {
       setEmailError(t('Por favor use o seu email corporativo.', 'Please use your corporate email address.'));
       return;
     }
+    if (!dataConsent) {
+      setConsentError(t('Tem de autorizar o tratamento de dados para iniciar a avaliacao.', 'You must authorize data processing to start the assessment.'));
+      return;
+    }
+
+    setConsentError('');
     setLoading(true);
-    const res = await base44.functions.invoke('quizSession', { action: 'registerCustomer', form });
+    const res = await base44.functions.invoke('quizSession', {
+      action: 'registerCustomer',
+      form: {
+        ...form,
+        data_consent: true,
+        data_consent_at: new Date().toISOString()
+      }
+    });
+
     if (res.data?.error) {
-      setEmailError(t('Email corporativo obrigatório. Domínios pessoais não são aceites.', 'Corporate email required. Personal email domains are not accepted.'));
+      if (res.data.error === 'data_consent_required') {
+        setConsentError(t('Tem de autorizar o tratamento de dados para iniciar a avaliacao.', 'You must authorize data processing to start the assessment.'));
+      } else {
+        setEmailError(t('Email corporativo obrigatorio. Dominios pessoais nao sao aceites.', 'Corporate email required. Personal email domains are not accepted.'));
+      }
       setLoading(false);
       return;
     }
@@ -67,8 +87,8 @@ export default function CustomerRegister() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t('Registar Avaliação', 'Register for Assessment')}</h1>
-          <p className="text-muted-foreground">{t('Preencha os seus dados para iniciar a avaliação de maturidade em IA.', 'Fill in your details to start the AI readiness assessment.')}</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('Registar Avaliacao', 'Register for Assessment')}</h1>
+          <p className="text-muted-foreground">{t('Preencha os seus dados para iniciar a avaliacao de maturidade em IA.', 'Fill in your details to start the AI readiness assessment.')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl border p-6 shadow-sm space-y-5">
@@ -100,7 +120,7 @@ export default function CustomerRegister() {
               </Select>
             </div>
             <div>
-              <Label>{t('Dimensão da empresa', 'Company size')}</Label>
+              <Label>{t('Dimensao da empresa', 'Company size')}</Label>
               <Select value={form.company_size} onValueChange={v => set('company_size', v)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder={t('Selecionar', 'Select')} /></SelectTrigger>
                 <SelectContent>
@@ -109,24 +129,46 @@ export default function CustomerRegister() {
               </Select>
             </div>
             <div>
-              <Label>{t('Idioma da avaliação', 'Assessment language')}</Label>
+              <Label>{t('Idioma da avaliacao', 'Assessment language')}</Label>
               <Select value={form.language} onValueChange={v => { set('language', v); setLang(v); }}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pt">🇵🇹 Português</SelectItem>
-                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                  <SelectItem value="pt">PT Portugues</SelectItem>
+                  <SelectItem value="en">EN English</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <Button type="submit" className="w-full gap-2 bg-blue-500 hover:bg-blue-600 text-white" size="lg" disabled={loading || !form.name || !form.email || !form.company || !form.role}>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground">{t('Tratamento de dados', 'Data Processing')}</p>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={dataConsent}
+                onChange={e => {
+                  setDataConsent(e.target.checked);
+                  if (e.target.checked) setConsentError('');
+                }}
+                className="mt-0.5 w-4 h-4 accent-blue-500 flex-shrink-0"
+              />
+              <span className="text-sm text-muted-foreground leading-snug">
+                {t(
+                  'Declaro que li e autorizo o tratamento de dados pessoais de acordo com a Politica de Privacidade para fins comerciais.',
+                  'I declare that I have read and authorize the processing of personal data in accordance with the Privacy Policy for commercial purposes.'
+                )}
+              </span>
+            </label>
+            {consentError && <p className="text-xs text-red-500">{consentError}</p>}
+          </div>
+
+          <Button type="submit" className="w-full gap-2 bg-blue-500 hover:bg-blue-600 text-white" size="lg" disabled={loading || !form.name || !form.email || !form.company || !form.role || !dataConsent}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-            {t('Iniciar Avaliação', 'Start Assessment')}
+            {t('Iniciar Avaliacao', 'Start Assessment')}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            {t('Os seus dados são tratados de acordo com o RGPD.', 'Your data is processed in accordance with GDPR.')}
+            {t('Os seus dados sao tratados de acordo com o RGPD.', 'Your data is processed in accordance with GDPR.')}
           </p>
         </form>
       </div>

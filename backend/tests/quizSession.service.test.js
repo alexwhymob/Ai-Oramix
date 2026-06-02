@@ -29,4 +29,19 @@ describe('quizSession service', () => {
       status: 422
     });
   });
+
+  it('requires data consent on customer self-registration before touching database', async () => {
+    await expect(handleQuizSessionAction({
+      action: 'registerCustomer',
+      form: {
+        name: 'Test User',
+        email: 'test@company.com',
+        company: 'ACME',
+        role: 'CEO'
+      }
+    })).rejects.toMatchObject({
+      code: 'data_consent_required',
+      status: 422
+    });
+  });
 });

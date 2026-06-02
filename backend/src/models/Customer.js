@@ -18,7 +18,9 @@ const customerSchema = new mongoose.Schema({
   language: { type: String, enum: ['pt', 'en'], default: 'pt' },
   phone: { type: String, default: null },
   notes: { type: String, default: null },
-  account_manager_id: { type: String, default: null }
+  account_manager_id: { type: String, default: null },
+  data_consent: { type: Boolean, default: false },
+  data_consent_at: { type: String, default: null }
 }, schemaOptions);
 
 customerSchema.index({ email: 1 });

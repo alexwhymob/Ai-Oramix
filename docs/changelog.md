@@ -4,6 +4,32 @@
 
 ### Tarefa
 
+Adicao de consentimento de tratamento de dados ao registo publico de customer.
+
+### Ficheiros alterados
+
+- `backend/src/models/Customer.js`
+- `backend/src/services/quizSession.service.js`
+- `backend/tests/models.test.js`
+- `backend/tests/quizSession.service.test.js`
+- `frontend/src/pages/CustomerRegister.jsx`
+- `docs/api.md`
+- `docs/database.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. O auto-registo publico passa a exigir consentimento explicito e grava `data_consent` e `data_consent_at` no customer.
+
+### Observacoes
+
+- A validacao existe no frontend e no backend.
+- O registo administrativo de customers nao passa a exigir este consentimento.
+
+## 2026-06-03
+
+### Tarefa
+
 Migracao do convite de utilizadores internos a partir da configuracao admin.
 
 ### Ficheiros alterados
