@@ -22,10 +22,13 @@ A nova API deve expor endpoints equivalentes:
 ```txt
 GET    /api/entities/:entity
 POST   /api/entities/:entity
+POST   /api/entities/:entity/bulk
 GET    /api/entities/:entity/:id
 PUT    /api/entities/:entity/:id
 DELETE /api/entities/:entity/:id
 ```
+
+Implementado na Fase 4 para entidades registradas explicitamente no backend.
 
 ## Query Parameters
 
@@ -42,6 +45,8 @@ Exemplo:
 GET /api/entities/Assessment?q={"status":"completed"}&limit=100&skip=0&sort_by=-completed_at
 ```
 
+Filtros que usam operadores MongoDB iniciados por `$` ou campos com `.` sao removidos por seguranca nesta fase inicial.
+
 ## Entidades Iniciais
 
 Endpoints devem existir para:
@@ -54,6 +59,26 @@ Endpoints devem existir para:
 - `Report`
 - `ConsultantNote`
 - `User`
+
+## Erros Comuns
+
+Entidade desconhecida:
+
+```json
+{
+  "error": "entity_not_found",
+  "message": "Entity UnknownEntity not found"
+}
+```
+
+Query invalida:
+
+```json
+{
+  "error": "invalid_query",
+  "message": "Invalid q parameter. Expected JSON object."
+}
+```
 
 ## Funcoes
 

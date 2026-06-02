@@ -57,7 +57,7 @@ Risco: medio. Modelagem incorreta pode afetar migracao de dados.
 
 ### Fase 4 - API generica de entidades
 
-Estado: pendente
+Estado: em progresso
 
 Escopo:
 

@@ -23,6 +23,7 @@ Teste inicial:
 
 - `GET /api/health` deve responder `200` com `{ "status": "ok", "service": "oramix-ai-backend" }`.
 - Models Mongoose devem validar defaults, campos obrigatorios, limites e indices esperados sem ligar a base online.
+- API generica de entidades deve validar entidades permitidas e parametros `q`, `limit`, `skip` e `sort_by`.
 
 ## Frontend
 

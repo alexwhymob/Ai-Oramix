@@ -4,6 +4,36 @@
 
 ### Tarefa
 
+Criacao da API generica de entidades compativel com `base44.entities`.
+
+### Ficheiros alterados
+
+- `backend/src/app.js`
+- `backend/src/entities/entityRegistry.js`
+- `backend/src/entities/entityQuery.js`
+- `backend/src/entities/entityService.js`
+- `backend/src/controllers/entities.controller.js`
+- `backend/src/routes/entities.routes.js`
+- `backend/tests/entityQuery.test.js`
+- `backend/tests/entities.routes.test.js`
+- `backend/tests/models.test.js`
+- `docs/api.md`
+- `docs/testing.md`
+- `docs/migration-plan.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Medio. O backend passa a expor endpoints CRUD genericos em `/api/entities/:entity`. O frontend ainda nao foi alterado.
+
+### Observacoes
+
+A API so permite entidades registradas no backend e sanitiza filtros basicos para evitar operadores MongoDB em query string.
+
+## 2026-06-02
+
+### Tarefa
+
 Adicao da camada MongoDB/Mongoose e models das entidades Base44.
 
 ### Ficheiros alterados

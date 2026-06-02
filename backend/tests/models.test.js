@@ -9,6 +9,7 @@ import {
   Report,
   User
 } from '../src/models/index.js';
+import { getEntityModel } from '../src/entities/entityRegistry.js';
 
 describe('Mongoose models', () => {
   it('applies Base44-compatible defaults to Customer', () => {
@@ -89,5 +90,11 @@ describe('Mongoose models', () => {
       'ConsultantNote',
       'User'
     ]);
+  });
+
+  it('registers models for generic entity endpoints', () => {
+    expect(getEntityModel('Customer')).toBe(Customer);
+    expect(getEntityModel('Assessment')).toBe(Assessment);
+    expect(getEntityModel('Unknown')).toBeNull();
   });
 });
