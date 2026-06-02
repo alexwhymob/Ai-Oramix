@@ -30,6 +30,16 @@ Medio. Foram adicionados scripts manuais de importacao para popular a nossa Mong
 
 Os scripts usam Mongoose e `MONGODB_URI` local. Nao ha qualquer envio de dados para Base44.
 
+### Resultado da importacao
+
+Importacao executada com sucesso para a nossa MongoDB:
+
+- `Pillar`: 14 lidos, 14 inseridos, 0 atualizados, 0 erros.
+- `Question`: 72 lidos, 72 inseridos, 0 atualizados, 0 erros.
+- `AssessmentAnswer`: 307 lidos, 307 inseridos, 0 atualizados, 0 erros.
+
+Foi corrigido o middleware de timestamps em `backend/src/models/baseFields.js` para compatibilidade com a versao atual do Mongoose.
+
 ## 2026-06-02
 
 ### Tarefa

@@ -34,13 +34,11 @@ export const schemaOptions = {
 };
 
 export function touchUpdatedDate(schema) {
-  schema.pre('save', function updateTimestamp(next) {
+  schema.pre('save', function updateTimestamp() {
     this.updated_date = new Date();
-    next();
   });
 
-  schema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], function updateQueryTimestamp(next) {
+  schema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], function updateQueryTimestamp() {
     this.set({ updated_date: new Date() });
-    next();
   });
 }
