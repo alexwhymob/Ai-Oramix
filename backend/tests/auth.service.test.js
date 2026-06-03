@@ -5,6 +5,7 @@ import {
   createResetPasswordService,
   hashPassword,
   hashResetToken,
+  resolveRegistrationRole,
   signAuthToken,
   verifyAuthToken,
   verifyPassword
@@ -31,6 +32,12 @@ describe('auth service', () => {
     expect(payload.sub).toBe('user-1');
     expect(payload.email).toBe('admin@example.com');
     expect(payload.role).toBe('admin');
+  });
+
+  it('does not allow public registration to choose privileged roles', async () => {
+    expect(resolveRegistrationRole('admin')).toBe('account_manager');
+    expect(resolveRegistrationRole('ai_consultant')).toBe('account_manager');
+    expect(resolveRegistrationRole('admin', { allowRoleOverride: true })).toBe('admin');
   });
 
   it('stores a hashed reset token and sends reset email', async () => {

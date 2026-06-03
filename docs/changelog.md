@@ -4,6 +4,35 @@
 
 ### Tarefa
 
+Rodada de testes e hardening de seguranca.
+
+### Ficheiros alterados
+
+- `backend/src/app.js`
+- `backend/src/middlewares/security.middleware.js`
+- `backend/src/services/auth.service.js`
+- `backend/src/scripts/createAdminUser.js`
+- `backend/tests/auth.service.test.js`
+- `backend/tests/security.middleware.test.js`
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `docs/auth.md`
+- `docs/changelog.md`
+
+### Impacto
+
+Alto para seguranca. Foram adicionados headers basicos, limite simples de requests em rotas sensiveis e bloqueio de escalada por role no registo publico.
+
+### Observacoes
+
+- `react-quill` e `lodash` foram removidos do frontend por nao estarem em uso e para eliminar vulnerabilidades reportadas pelo audit.
+- `npm audit --omit=dev --audit-level=moderate` retorna zero vulnerabilidades em backend e frontend.
+- O rate limit atual e em memoria; para deploy multi-instancia deve ser substituido por Redis, WAF ou limite equivalente na infraestrutura.
+
+## 2026-06-03
+
+### Tarefa
+
 Reforco da autorizacao backend por role nos endpoints de entidades.
 
 ### Ficheiros alterados

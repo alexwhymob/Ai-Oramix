@@ -27,6 +27,8 @@ async function main() {
       password,
       full_name: fullName,
       role: 'admin'
+    }, {
+      allowRoleOverride: true
     });
 
     console.log(`ADMIN_USER_CREATED=${result.user.email}`);

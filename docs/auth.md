@@ -76,3 +76,10 @@ Pontos a melhorar em fases futuras:
 - Rate limit em login.
 - Politica de password.
 - Testes ponta a ponta em ambiente local conectado ao Atlas.
+
+## Hardening Atual
+
+- O registo publico ignora qualquer `role` enviado pelo cliente e cria sempre `account_manager`.
+- Roles privilegiadas devem ser criadas por convite admin ou script operacional.
+- Rotas de auth e convite possuem rate limit em memoria.
+- O backend remove `X-Powered-By` e adiciona headers basicos de seguranca.

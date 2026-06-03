@@ -10,21 +10,27 @@ import { integrationsRouter } from './routes/integrations.routes.js';
 import { usersRouter } from './routes/users.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { optionalAuthMiddleware } from './middlewares/auth.middleware.js';
+import { createRateLimiter, securityHeaders } from './middlewares/security.middleware.js';
 
 export function createApp() {
   const app = express();
 
+  app.disable('x-powered-by');
+  app.set('trust proxy', 1);
+  app.use(securityHeaders);
   app.use(cors({
     origin: env.FRONTEND_URL,
     credentials: true
   }));
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
 
   app.use('/api', healthRouter);
+  app.use('/api/auth', createRateLimiter({ max: 30 }));
   app.use('/api/auth', authRouter);
   app.use('/api/audit-logs', auditLogsRouter);
   app.use('/api/functions', functionsRouter);
   app.use('/api/integrations', integrationsRouter);
+  app.use('/api/users', createRateLimiter({ max: 30 }));
   app.use('/api/users', usersRouter);
   app.use('/api/entities', optionalAuthMiddleware);
   app.use('/api/entities', entitiesRouter);

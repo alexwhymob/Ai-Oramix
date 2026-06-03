@@ -46,7 +46,8 @@ export function verifyAuthToken(token) {
   return jwt.verify(token, env.JWT_SECRET);
 }
 
-export async function registerUser({ email, password, full_name, role = 'account_manager' }) {
+export async function registerUser({ email, password, full_name, role = 'account_manager' }, options = {}) {
+  const effectiveRole = resolveRegistrationRole(role, options);
   const existing = await User.findOne({ email: email.toLowerCase() });
   if (existing) {
     const error = new Error('User already exists');
@@ -59,11 +60,15 @@ export async function registerUser({ email, password, full_name, role = 'account
   const user = await User.create({
     email,
     full_name: full_name || email,
-    role,
+    role: effectiveRole,
     password_hash
   });
 
   return createAuthResponse(user);
+}
+
+export function resolveRegistrationRole(role = 'account_manager', options = {}) {
+  return options.allowRoleOverride ? role : 'account_manager';
 }
 
 export async function loginUser({ email, password }) {
