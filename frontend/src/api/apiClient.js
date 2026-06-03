@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 export class ApiError extends Error {
   constructor(message, { status, data } = {}) {
@@ -41,4 +41,21 @@ async function parseResponse(response) {
   } catch {
     return text;
   }
+}
+
+function resolveApiBaseUrl(rawBaseUrl) {
+  if (!rawBaseUrl) {
+    return '/api';
+  }
+
+  const trimmedBaseUrl = rawBaseUrl.trim().replace(/\/+$/, '');
+  if (!trimmedBaseUrl) {
+    return '/api';
+  }
+
+  if (trimmedBaseUrl === '/api' || trimmedBaseUrl.endsWith('/api')) {
+    return trimmedBaseUrl;
+  }
+
+  return `${trimmedBaseUrl}/api`;
 }

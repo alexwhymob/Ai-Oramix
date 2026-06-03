@@ -1,0 +1,15 @@
+[Unit]
+Description=Oramix AI Backend
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/oramix/backend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
