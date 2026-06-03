@@ -22,7 +22,7 @@ Variaveis herdadas do Base44 ainda usadas nesta fase:
 
 ```txt
 VITE_API_BASE_URL=
-VITE_API_PROXY_TARGET=http://localhost:3000
+VITE_API_PROXY_TARGET=http://localhost:3003
 ```
 
 `VITE_API_BASE_URL` e opcional em desenvolvimento quando o proxy do Vite esta ativo. Em producao, deve apontar para a URL publica do backend.
@@ -49,8 +49,8 @@ Variaveis iniciais:
 
 ```txt
 NODE_ENV=development
-PORT=3000
-FRONTEND_URL=http://localhost:5173
+PORT=3003
+FRONTEND_URL=http://localhost:5175
 MONGODB_URI=
 MONGODB_DIRECT_URI=
 MONGODB_DB_NAME=
@@ -89,7 +89,7 @@ Caminho mais simples para a fase atual:
 Se o deploy for num `VPS`, a recomendacao muda para:
 
 1. Frontend buildado e servido por `Nginx`.
-2. Backend Node/Express a correr localmente na VPS em `127.0.0.1:3000`.
+2. Backend Node/Express a correr localmente na VPS em `127.0.0.1:3003`.
 3. `Nginx` a fazer reverse proxy de `/api` para o backend.
 4. MongoDB Atlas mantido externo, como planeado.
 
@@ -149,7 +149,7 @@ O repositorio agora inclui exemplos para VPS:
 Arquitetura recomendada:
 
 - `https://app.seudominio.com` serve o frontend estatico
-- `https://app.seudominio.com/api/*` faz proxy para `http://127.0.0.1:3000/api/*`
+- `https://app.seudominio.com/api/*` faz proxy para `http://127.0.0.1:3003/api/*`
 - o backend liga ao MongoDB Atlas via `MONGODB_URI` ou `MONGODB_DIRECT_URI`
 
 Passos sugeridos:
@@ -179,7 +179,7 @@ Variaveis importantes em VPS:
 
 ```txt
 NODE_ENV=production
-PORT=3000
+PORT=3003
 FRONTEND_URL=https://app.seudominio.com
 MONGODB_URI=...
 MONGODB_DIRECT_URI=...
@@ -191,6 +191,39 @@ OPENAI_API_KEY=...
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=...
 EMAIL_FROM=...
+```
+
+## Docker
+
+O projeto tambem ficou preparado para correr em containers:
+
+- `backend/Dockerfile`
+- `frontend/Dockerfile`
+- `frontend/docker/nginx.conf`
+- `docker-compose.yml`
+
+Portas definidas:
+
+- backend: `3003`
+- frontend: `5175`
+
+Para subir com Docker Compose:
+
+```bash
+docker compose up --build -d
+```
+
+Comportamento:
+
+- o `backend` le variaveis de `backend/.env`
+- o `frontend` e buildado como estatico e servido por `nginx`
+- o `frontend` faz proxy de `/api` para o container `backend:3003`
+
+URLs:
+
+```txt
+http://localhost:5175
+http://localhost:3003/api/health
 ```
 
 ## Escolha de Modelo OpenAI
