@@ -136,7 +136,7 @@ export default function SubAssessmentComplete() {
                   {lang === 'en' ? m.label_en : m.label_pt}
                 </span>
                 {subAssessment.global_score <= m.max && (i === 0 || subAssessment.global_score > DATA_MATURITY[i-1].max) && (
-                  <span className="ml-auto text-xs font-semibold" style={{ color: m.color }}>← {t('O vosso nível', 'Your level')}</span>
+                  <span className="ml-auto text-xs font-semibold" style={{ color: m.color }}>← {t('Estado atual', 'Actual status')}</span>
                 )}
               </div>
             ))}
