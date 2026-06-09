@@ -32,8 +32,20 @@ export default function AssessmentComplete() {
   const answers = resultData?.answers || [];
 
   const { data: allPillars = [] } = useQuery({ queryKey: ['pillars'], queryFn: () => base44.entities.Pillar.list('order') });
-  const pillars = useMemo(() => allPillars.filter(p => !p.code.startsWith('ds_')), [allPillars]);
+  const pillars = useMemo(() => {
+    const mainPillars = allPillars.filter(pillar => !pillar.code.startsWith('ds_'));
+
+    if (assessment?.assessment_template_id) {
+      return mainPillars.filter(pillar => pillar.assessment_template_id === assessment.assessment_template_id);
+    }
+
+    return mainPillars.filter(pillar => !pillar.assessment_template_id);
+  }, [allPillars, assessment?.assessment_template_id]);
   const { data: allQuestions = [] } = useQuery({ queryKey: ['questions'], queryFn: () => base44.entities.Question.list('order') });
+  const mainQuestions = useMemo(() => {
+    const pillarCodes = new Set(pillars.map(pillar => pillar.code));
+    return allQuestions.filter(question => pillarCodes.has(question.pillar_code));
+  }, [allQuestions, pillars]);
   const pillarScores = useMemo(() => { try { return JSON.parse(assessment?.pillar_scores || '[]'); } catch { return []; } }, [assessment?.pillar_scores]);
   const maturity = getMaturityLevel(assessment?.global_score);
   const answersMap = useMemo(() => { const m = {}; answers.forEach(a => { m[a.question_id] = a.value; }); return m; }, [answers]);
@@ -165,7 +177,7 @@ export default function AssessmentComplete() {
           {showReview && (
             <div className="border-t divide-y">
               {pillars.map(pillar => {
-                const pqs = allQuestions.filter(q => q.pillar_code === pillar.code).sort((a, b) => a.order - b.order);
+                const pqs = mainQuestions.filter(q => q.pillar_code === pillar.code).sort((a, b) => a.order - b.order);
                 const open = expandedPillar === pillar.code;
                 return (
                   <div key={pillar.code}>

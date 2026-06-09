@@ -53,8 +53,17 @@ export default function AdminAssessmentDetail() {
   const report = reports[0];
   const allPillarScores = useMemo(() => { try { return JSON.parse(assessment?.pillar_scores || '[]'); } catch { return []; } }, [assessment?.pillar_scores]);
   const pillarScores = useMemo(() => allPillarScores.filter(ps => !ps.code.startsWith('ds_')), [allPillarScores]);
-  const mainPillars = useMemo(() => pillars.filter(p => !p.code.startsWith('ds_')), [pillars]);
-  const mainQuestions = useMemo(() => allQuestions.filter(q => !q.pillar_code.startsWith('ds_')), [allQuestions]);
+  const mainPillars = useMemo(() => {
+    const available = pillars.filter(pillar => !pillar.code.startsWith('ds_'));
+    if (assessment?.assessment_template_id) {
+      return available.filter(pillar => pillar.assessment_template_id === assessment.assessment_template_id);
+    }
+    return available.filter(pillar => !pillar.assessment_template_id);
+  }, [pillars, assessment?.assessment_template_id]);
+  const mainQuestions = useMemo(() => {
+    const pillarCodes = new Set(mainPillars.map(pillar => pillar.code));
+    return allQuestions.filter(question => pillarCodes.has(question.pillar_code));
+  }, [allQuestions, mainPillars]);
   const dsPillars = useMemo(() => pillars.filter(p => p.code.startsWith('ds_')), [pillars]);
   const dsQuestions = useMemo(() => allQuestions.filter(q => q.pillar_code.startsWith('ds_')), [allQuestions]);
   const subPillarScores = useMemo(() => { try { return JSON.parse(subAssessment?.pillar_scores || '[]'); } catch { return []; } }, [subAssessment?.pillar_scores]);

@@ -10,6 +10,7 @@
     "import:questions": "node src/scripts/importCsv/importQuestions.js",
     "import:assessment-answers": "node src/scripts/importCsv/importAssessmentAnswers.js",
     "import:all": "node src/scripts/importCsv/importAll.js",
+    "seed:templates": "node src/scripts/seedAssessmentTemplates.js",
     "create:admin": "node src/scripts/createAdminUser.js",
     "test": "vitest run",
     "test:watch": "vitest"

@@ -1,5 +1,6 @@
 import {
   Assessment,
+  AssessmentTemplate,
   AssessmentAnswer,
   ConsultantNote,
   Customer,
@@ -12,6 +13,7 @@ import {
 export const entityRegistry = {
   Customer,
   Assessment,
+  AssessmentTemplate,
   AssessmentAnswer,
   Pillar,
   Question,

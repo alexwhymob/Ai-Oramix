@@ -10,6 +10,18 @@ services:
       FRONTEND_URL: http://localhost:5175
     ports:
       - "3003:3003"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3003/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
   frontend:
@@ -18,7 +30,14 @@ services:
       args:
         VITE_API_BASE_URL: /api
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "5175:5175"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5175/"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped

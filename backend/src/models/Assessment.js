@@ -4,6 +4,7 @@ import { baseFields, schemaOptions, touchUpdatedDate } from './baseFields.js';
 const assessmentSchema = new mongoose.Schema({
   ...baseFields,
   customer_id: { type: String, required: true, index: true },
+  assessment_template_id: { type: String, default: null, index: true },
   status: {
     type: String,
     enum: ['not_started', 'in_progress', 'completed'],

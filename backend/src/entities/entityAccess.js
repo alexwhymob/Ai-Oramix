@@ -1,7 +1,7 @@
 import { Assessment, Customer } from '../models/index.js';
 import { getEntityModel } from './entityRegistry.js';
 
-const PUBLIC_READ_ENTITIES = new Set(['Pillar', 'Question']);
+const PUBLIC_READ_ENTITIES = new Set(['Pillar', 'Question', 'AssessmentTemplate']);
 const ADMIN_ONLY_ENTITIES = new Set(['User']);
 
 export async function buildEntityAccessFilter({ entityName, action, user }) {

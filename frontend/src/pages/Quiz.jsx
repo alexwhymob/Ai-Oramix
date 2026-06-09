@@ -19,6 +19,7 @@ export default function Quiz() {
   const [answers, setAnswers] = useState(() => { try { return JSON.parse(localStorage.getItem(`quiz_${token}`) || '{}'); } catch { return {}; } });
   const [customer, setCustomer] = useState(null);
   const [assessmentId, setAssessmentId] = useState(null);
+  const [templateId, setTemplateId] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [sessionError, setSessionError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -28,13 +29,26 @@ export default function Quiz() {
     queryKey: ['pillars'],
     queryFn: () => base44.entities.Pillar.list('order'),
   });
-  const pillars = useMemo(() => allPillars.filter(p => !p.code.startsWith('ds_')), [allPillars]);
+  const pillars = useMemo(() => {
+    const mainPillars = allPillars.filter(
+      pillar => !pillar.code.startsWith('ds_') && pillar.assessment_type !== 'sub_assessment'
+    );
+
+    if (templateId) {
+      return mainPillars.filter(pillar => pillar.assessment_template_id === templateId);
+    }
+
+    return mainPillars.filter(pillar => !pillar.assessment_template_id);
+  }, [allPillars, templateId]);
 
   const { data: rawQuestions = [] } = useQuery({
     queryKey: ['questions'],
     queryFn: () => base44.entities.Question.list('order'),
   });
-  const allQuestions = useMemo(() => rawQuestions.filter(q => !q.pillar_code.startsWith('ds_')), [rawQuestions]);
+  const allQuestions = useMemo(() => {
+    const pillarCodes = new Set(pillars.map(pillar => pillar.code));
+    return rawQuestions.filter(question => pillarCodes.has(question.pillar_code));
+  }, [rawQuestions, pillars]);
 
   useEffect(() => {
     if (!token) return;
@@ -42,6 +56,9 @@ export default function Quiz() {
       .then(res => {
         const { customer, assessment, existingAnswers } = res.data;
         setCustomer(customer);
+        if (assessment.assessment_template_id) {
+          setTemplateId(assessment.assessment_template_id);
+        }
         if (assessment.status === 'completed') {
           navigate(`/complete/${assessment.id}`);
           return;

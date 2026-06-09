@@ -9,6 +9,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/lib/useLanguage';
 import { base44 } from '@/api/base44Client';
 import { isCorporateEmail } from '@/lib/blockedEmailDomains';
+import { useQuery } from '@tanstack/react-query';
 
 const SECTORS = ['Tecnologia','Saude','Industria','Retalho','Servicos Financeiros','Educacao','Energia','Logistica','Construcao','Outro'];
 const SIZES = ['1-10','11-50','51-200','201-500','501-1000','1000+'];
@@ -16,11 +17,22 @@ const SIZES = ['1-10','11-50','51-200','201-500','501-1000','1000+'];
 export default function CustomerRegister() {
   const { lang, setLang } = useLanguage();
   const navigate = useNavigate();
+  const urlParams = new URLSearchParams(window.location.search);
+  const templateId = urlParams.get('templateId') || null;
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [dataConsent, setDataConsent] = useState(false);
   const [consentError, setConsentError] = useState('');
   const [form, setForm] = useState({ name:'', email:'', company:'', role:'', sector:'', company_size:'', language: lang });
+  const { data: template } = useQuery({
+    queryKey: ['assessment-template', templateId],
+    queryFn: async () => {
+      if (!templateId) return null;
+      const results = await base44.entities.AssessmentTemplate.filter({ id: templateId });
+      return results[0] || null;
+    },
+    enabled: !!templateId
+  });
 
   const t = (pt, en) => lang === 'pt' ? pt : en;
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -49,6 +61,7 @@ export default function CustomerRegister() {
     setLoading(true);
     const res = await base44.functions.invoke('quizSession', {
       action: 'registerCustomer',
+      templateId,
       form: {
         ...form,
         data_consent: true,
@@ -87,8 +100,17 @@ export default function CustomerRegister() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t('Registar Avaliacao', 'Register for Assessment')}</h1>
-          <p className="text-muted-foreground">{t('Preencha os seus dados para iniciar a avaliacao de maturidade em IA.', 'Fill in your details to start the AI readiness assessment.')}</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {template
+              ? (lang === 'pt' ? template.name_pt : (template.name_en || template.name_pt))
+              : t('Registar Avaliacao', 'Register for Assessment')}
+          </h1>
+          <p className="text-muted-foreground">
+            {template
+              ? ((lang === 'pt' ? template.pitch_pt : (template.pitch_en || template.pitch_pt))
+                  || t('Preencha os seus dados para iniciar a avaliacao.', 'Fill in your details to start the assessment.'))
+              : t('Preencha os seus dados para iniciar a avaliacao de maturidade em IA.', 'Fill in your details to start the AI readiness assessment.')}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl border p-6 shadow-sm space-y-5">

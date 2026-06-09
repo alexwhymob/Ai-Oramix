@@ -350,7 +350,7 @@ function renderConsultantNotes(pw, notes) {
   pw.y += 2;
 }
 
-export async function exportReportPDF(report, assessment, customer, pdfSections = [1,2,3,4,5,6,7,8,9], pdfVisuals = false, visualImages = [], consultantNotes = [], subAssessment = null, subPillarScores = [], subPillars = [], subVisualImages = []) {
+export async function exportReportPDF(report, assessment, customer, pdfSections = [1,2,3,4,5,6,7,8,9], pdfVisuals = false, visualImages = [], consultantNotes = [], subAssessment = null, subPillarScores = [], subPillars = [], subVisualImages = [], template = null) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const lang = report.language || 'pt';
   const sectionTitles = lang === 'en'
@@ -367,10 +367,14 @@ export async function exportReportPDF(report, assessment, customer, pdfSections 
   doc.text(lang === 'pt' ? 'Relatório de Maturidade em IA' : 'AI Readiness Report', 20, 32);
   doc.setFontSize(13); doc.setTextColor(150, 180, 220);
   doc.text(customer.company || '', 20, 44);
+  if (template) {
+    doc.setFontSize(10);
+    doc.setTextColor(170, 190, 215);
+    doc.text(lang === 'en' ? template.name_en || template.name_pt : template.name_pt, 20, 51);
+  }
   doc.setFontSize(10); doc.setTextColor(180, 200, 220);
-  doc.text(`${customer.name} · ${customer.role || ''}`, 20, 53);
-  doc.text(new Date(assessment.completed_at || assessment.created_date).toLocaleDateString(lang === 'pt' ? 'pt-PT' : 'en-GB'), 20, 61);
-
+  doc.text(`${customer.name} · ${customer.role || ''}`, 20, template ? 58 : 53);
+  doc.text(new Date(assessment.completed_at || assessment.created_date).toLocaleDateString(lang === 'pt' ? 'pt-PT' : 'en-GB'), 20, template ? 66 : 61);
   doc.setFillColor(...BLUE);
   doc.roundedRect(130, 26, 60, 45, 4, 4, 'F');
   doc.setTextColor(...WHITE); doc.setFontSize(34);

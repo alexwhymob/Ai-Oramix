@@ -35,13 +35,46 @@ export default function AdminReportEditor() {
   const { data: assessment, refetch: refetchAssessment } = useQuery({ queryKey: ['assessment_r', report?.assessment_id], queryFn: () => base44.entities.Assessment.get(report.assessment_id), enabled: !!report?.assessment_id });
   const { data: customer } = useQuery({ queryKey: ['customer_r', assessment?.customer_id], queryFn: () => base44.entities.Customer.get(assessment.customer_id), enabled: !!assessment?.customer_id });
   const { data: pillars = [] } = useQuery({ queryKey: ['pillars'], queryFn: () => base44.entities.Pillar.list('order') });
+  const { data: templateList = [] } = useQuery({
+    queryKey: ['report_template', assessment?.assessment_template_id],
+    queryFn: () => base44.entities.AssessmentTemplate.filter({ id: assessment.assessment_template_id }),
+    enabled: !!assessment?.assessment_template_id
+  });
   const { data: consultantNotes = [] } = useQuery({ queryKey: ['notes_report', report?.assessment_id], queryFn: () => base44.entities.ConsultantNote.filter({ assessment_id: report.assessment_id }), enabled: !!report?.assessment_id });
   const { data: subAssessments = [] } = useQuery({ queryKey: ['sub_assessments_r', report?.assessment_id], queryFn: () => base44.entities.Assessment.filter({ parent_assessment_id: report.assessment_id }), enabled: !!report?.assessment_id });
   const subAssessment = subAssessments[0];
+  const template = templateList[0] || null;
   const subPillarScores = useMemo(() => { try { return JSON.parse(subAssessment?.pillar_scores || '[]'); } catch { return []; } }, [subAssessment?.pillar_scores]);
   const subPillars = useMemo(() => pillars.filter(p => p.assessment_type === 'sub_assessment'), [pillars]);
+  const mainPillars = useMemo(() => pillars.filter((pillar) => {
+    if (pillar.assessment_type === 'sub_assessment') return false;
+    if (assessment?.assessment_template_id) {
+      return pillar.assessment_template_id === assessment.assessment_template_id;
+    }
+    return !pillar.assessment_template_id;
+  }), [pillars, assessment?.assessment_template_id]);
+  const pillarScores = useMemo(() => {
+    try {
+      const parsed = JSON.parse(assessment?.pillar_scores || '[]');
+      const pillarMap = new Map(mainPillars.map((pillar) => [pillar.code, pillar]));
 
-  const pillarScores = useMemo(() => { try { return JSON.parse(assessment?.pillar_scores || '[]'); } catch { return []; } }, [assessment?.pillar_scores]);
+      return parsed
+        .map((score) => {
+          const pillar = pillarMap.get(score.code);
+          if (!pillar) return null;
+
+          return {
+            ...score,
+            name_pt: pillar.name_pt,
+            name_en: pillar.name_en,
+            weight: pillar.weight
+          };
+        })
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }, [assessment?.pillar_scores, mainPillars]);
 
   const handleToggleReviewed = async () => {
     await base44.entities.Assessment.update(report.assessment_id, { reviewed_by_consultant: !assessment?.reviewed_by_consultant });
@@ -105,7 +138,7 @@ export default function AdminReportEditor() {
         }
       }
     }
-    await exportReportPDF(report, assessment, customer, pdfSections, pdfVisuals, visualImages, consultantNotes, subAssessment, subPillarScores, subPillars, subVisualImages);
+    await exportReportPDF(report, assessment, customer, pdfSections, pdfVisuals, visualImages, consultantNotes, subAssessment, subPillarScores, subPillars, subVisualImages, template);
     toast.success('PDF exported!');
   };
 
@@ -247,6 +280,7 @@ export default function AdminReportEditor() {
               globalScore={assessment.global_score}
               lang={reportLang}
               customer={customer}
+              template={template}
             />
             {subAssessment?.status === 'completed' && subPillarScores.length > 0 && (
               <SubAssessmentVisualsExport
@@ -262,6 +296,7 @@ export default function AdminReportEditor() {
             globalScore={assessment.global_score}
             lang={reportLang}
             customer={customer}
+            template={template}
           />
         </>
       )}

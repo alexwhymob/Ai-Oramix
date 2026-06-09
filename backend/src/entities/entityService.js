@@ -1,5 +1,6 @@
 import { getEntityModel } from './entityRegistry.js';
 import { parseEntityQuery } from './entityQuery.js';
+import { syncAssessmentTemplatePillarCount } from '../services/assessmentTemplate.service.js';
 
 export function resolveEntity(entityName) {
   const Model = getEntityModel(entityName);
@@ -39,6 +40,7 @@ export async function getEntity(entityName, id, options = {}) {
 export async function createEntity(entityName, payload) {
   const Model = resolveEntity(entityName);
   const record = await Model.create(payload);
+  await syncEntitySideEffects(entityName, null, record.toJSON());
   return record.toJSON();
 }
 
@@ -57,6 +59,9 @@ export async function bulkCreateEntities(entityName, payload) {
 
 export async function updateEntity(entityName, id, payload, options = {}) {
   const Model = resolveEntity(entityName);
+  const previousRecord = entityName === 'Pillar'
+    ? await Model.findOne(mergeFilters({ id }, options.accessFilter)).lean()
+    : null;
   const record = await Model.findOneAndUpdate(
     mergeFilters({ id }, options.accessFilter),
     payload,
@@ -70,6 +75,7 @@ export async function updateEntity(entityName, id, payload, options = {}) {
     throw error;
   }
 
+  await syncEntitySideEffects(entityName, previousRecord, record.toJSON());
   return record.toJSON();
 }
 
@@ -84,6 +90,7 @@ export async function deleteEntity(entityName, id, options = {}) {
     throw error;
   }
 
+  await syncEntitySideEffects(entityName, record, null);
   return { success: true };
 }
 
@@ -103,4 +110,19 @@ function mergeFilters(filter, accessFilter = {}) {
       normalizedAccessFilter
     ]
   };
+}
+
+async function syncEntitySideEffects(entityName, previousRecord, nextRecord) {
+  if (entityName !== 'Pillar') {
+    return;
+  }
+
+  const templateIds = new Set([
+    previousRecord?.assessment_template_id,
+    nextRecord?.assessment_template_id
+  ].filter(Boolean));
+
+  await Promise.all(
+    [...templateIds].map(templateId => syncAssessmentTemplatePillarCount(templateId))
+  );
 }

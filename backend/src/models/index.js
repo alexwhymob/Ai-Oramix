@@ -1,5 +1,6 @@
 export { Customer } from './Customer.js';
 export { Assessment } from './Assessment.js';
+export { AssessmentTemplate } from './AssessmentTemplate.js';
 export { AssessmentAnswer } from './AssessmentAnswer.js';
 export { Pillar } from './Pillar.js';
 export { Question } from './Question.js';

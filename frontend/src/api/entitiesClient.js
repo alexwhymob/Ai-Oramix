@@ -3,6 +3,7 @@ import { apiRequest } from './apiClient';
 const ENTITY_NAMES = [
   'Customer',
   'Assessment',
+  'AssessmentTemplate',
   'AssessmentAnswer',
   'Pillar',
   'Question',

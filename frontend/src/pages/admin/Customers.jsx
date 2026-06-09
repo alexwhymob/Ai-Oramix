@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus, Search, QrCode, Edit2, Trash2, ClipboardList, X, Loader2, Database, Award } from 'lucide-react';
+import { Plus, Search, QrCode, Edit2, Trash2, ClipboardList, X, Loader2, Database, Award, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +12,21 @@ import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { base44 } from '@/api/base44Client';
 import { useCurrentUser } from '@/lib/useCurrentUser';
 
-const SECTORS = ['Tecnologia','Saúde','Indústria','Retalho','Serviços Financeiros','Educação','Energia','Logística','Construção','Outro'];
-const SIZES = ['1-10','11-50','51-200','201-500','501-1000','1000+'];
-const EMPTY = { name:'', email:'', company:'', role:'', sector:'', company_size:'', language:'pt', phone:'', notes:'', account_manager_id:'' };
+const SECTORS = ['Tecnologia', 'Saude', 'Industria', 'Retalho', 'Servicos Financeiros', 'Educacao', 'Energia', 'Logistica', 'Construcao', 'Outro'];
+const SIZES = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
+const EMPTY = {
+  name: '',
+  email: '',
+  company: '',
+  role: '',
+  sector: '',
+  company_size: '',
+  language: 'pt',
+  phone: '',
+  notes: '',
+  account_manager_id: '',
+  template_id: ''
+};
 
 export default function AdminCustomers() {
   const { user, isAccountManager, isAiConsultant } = useCurrentUser();
@@ -26,62 +38,158 @@ export default function AdminCustomers() {
   const [deleteCustomer, setDeleteCustomer] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [filterTemplate, setFilterTemplate] = useState('');
+  const [filterSector, setFilterSector] = useState('');
+  const [filterCompletion, setFilterCompletion] = useState('');
 
-  const { data: allCustomers = [] } = useQuery({ queryKey: ['all_customers'], queryFn: () => base44.entities.Customer.list('-created_date') });
+  const { data: allCustomers = [] } = useQuery({
+    queryKey: ['all_customers'],
+    queryFn: () => base44.entities.Customer.list('-created_date')
+  });
   const { data: accountManagers = [] } = useQuery({
     queryKey: ['account_managers'],
     queryFn: () => base44.entities.User.list(),
     enabled: !isAccountManager && !isAiConsultant
   });
-  const amUsers = useMemo(() => accountManagers.filter(u => u.role === 'account_manager'), [accountManagers]);
-  const customers = useMemo(() => isAccountManager && user ? allCustomers.filter(c => c.account_manager_id === user.id || c.created_by_id === user.id) : allCustomers, [allCustomers, isAccountManager, user]);
-  const { data: assessments = [] } = useQuery({ queryKey: ['all_assessments'], queryFn: () => base44.entities.Assessment.list() });
+  const { data: assessments = [] } = useQuery({
+    queryKey: ['all_assessments'],
+    queryFn: () => base44.entities.Assessment.list()
+  });
+  const { data: templates = [] } = useQuery({
+    queryKey: ['all_templates'],
+    queryFn: () => base44.entities.AssessmentTemplate.list('order')
+  });
+
+  const amUsers = useMemo(
+    () => accountManagers.filter(userRecord => userRecord.role === 'account_manager'),
+    [accountManagers]
+  );
+
+  const customers = useMemo(() => (
+    isAccountManager && user
+      ? allCustomers.filter(customer => customer.account_manager_id === user.id || customer.created_by_id === user.id)
+      : allCustomers
+  ), [allCustomers, isAccountManager, user]);
 
   const mainAssessmentMap = useMemo(() => {
-    const m = {};
-    assessments.filter(a => a.assessment_type !== 'sub_assessment').forEach(a => { if (!m[a.customer_id] || a.created_date > m[a.customer_id].created_date) m[a.customer_id] = a; });
-    return m;
+    const map = {};
+    assessments
+      .filter(assessment => assessment.assessment_type !== 'sub_assessment')
+      .forEach(assessment => {
+        if (!map[assessment.customer_id] || assessment.created_date > map[assessment.customer_id].created_date) {
+          map[assessment.customer_id] = assessment;
+        }
+      });
+    return map;
   }, [assessments]);
 
-  // Map parent_assessment_id -> sub-assessment
   const subAssessmentMap = useMemo(() => {
-    const m = {};
-    assessments.filter(a => a.assessment_type === 'sub_assessment' && a.parent_assessment_id).forEach(a => { m[a.parent_assessment_id] = a; });
-    return m;
+    const map = {};
+    assessments
+      .filter(assessment => assessment.assessment_type === 'sub_assessment' && assessment.parent_assessment_id)
+      .forEach(assessment => {
+        map[assessment.parent_assessment_id] = assessment;
+      });
+    return map;
   }, [assessments]);
 
-  const assessmentMap = mainAssessmentMap;
+  const templateMap = useMemo(() => {
+    const map = {};
+    templates.forEach(template => {
+      map[template.id] = template;
+    });
+    return map;
+  }, [templates]);
 
-  const filtered = useMemo(() => customers.filter(c =>
-    !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.company?.toLowerCase().includes(search.toLowerCase()) || c.email?.toLowerCase().includes(search.toLowerCase())
-  ), [customers, search]);
+  const filtered = useMemo(() => customers.filter(customer => {
+    const matchesSearch = !search
+      || customer.name?.toLowerCase().includes(search.toLowerCase())
+      || customer.company?.toLowerCase().includes(search.toLowerCase())
+      || customer.email?.toLowerCase().includes(search.toLowerCase());
 
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+    if (!matchesSearch) return false;
+    if (filterSector && customer.sector !== filterSector) return false;
 
-  const openCreate = () => { setForm(EMPTY); setEditCustomer(null); setSaveError(''); setFormOpen(true); };
-  const openEdit = (c) => { setForm({ name: c.name||'', email: c.email||'', company: c.company||'', role: c.role||'', sector: c.sector||'', company_size: c.company_size||'', language: c.language||'pt', phone: c.phone||'', notes: c.notes||'', account_manager_id: c.account_manager_id||'' }); setEditCustomer(c); setFormOpen(true); };
+    const assessment = mainAssessmentMap[customer.id];
+    if (filterTemplate && assessment?.assessment_template_id !== filterTemplate) return false;
 
-  const [saveError, setSaveError] = useState('');
+    if (filterCompletion) {
+      if (filterCompletion === 'no_assessment') return !assessment;
+      if (!assessment) return false;
+      return assessment.status === filterCompletion;
+    }
+
+    return true;
+  }), [customers, search, filterSector, filterTemplate, filterCompletion, mainAssessmentMap]);
+
+  const activeFiltersCount = [filterTemplate, filterSector, filterCompletion].filter(Boolean).length;
+
+  const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const openCreate = () => {
+    setForm(EMPTY);
+    setEditCustomer(null);
+    setSaveError('');
+    setFormOpen(true);
+  };
+
+  const openEdit = (customer) => {
+    const assessment = mainAssessmentMap[customer.id];
+    setForm({
+      name: customer.name || '',
+      email: customer.email || '',
+      company: customer.company || '',
+      role: customer.role || '',
+      sector: customer.sector || '',
+      company_size: customer.company_size || '',
+      language: customer.language || 'pt',
+      phone: customer.phone || '',
+      notes: customer.notes || '',
+      account_manager_id: customer.account_manager_id || '',
+      template_id: assessment?.assessment_template_id || ''
+    });
+    setEditCustomer(customer);
+    setSaveError('');
+    setFormOpen(true);
+  };
 
   const handleSave = async () => {
     setSaving(true);
     setSaveError('');
+
     if (editCustomer) {
-      await base44.entities.Customer.update(editCustomer.id, form);
+      const { template_id, ...customerPayload } = form;
+      await base44.entities.Customer.update(editCustomer.id, customerPayload);
+
+      const assessment = mainAssessmentMap[editCustomer.id];
+      if (assessment) {
+        await base44.entities.Assessment.update(assessment.id, {
+          assessment_template_id: template_id || null
+        });
+      }
     } else {
-      const res = await base44.functions.invoke('quizSession', { action: 'adminRegister', form });
+      const res = await base44.functions.invoke('quizSession', {
+        action: 'adminRegister',
+        form,
+        templateId: form.template_id || undefined
+      });
+
       if (res.data?.error === 'non_corporate_email') {
         setSaveError('Please use a corporate email address.');
         setSaving(false);
         return;
       }
+
       if (res.data?.error === 'job_title_required') {
         setSaveError('Job title is required.');
         setSaving(false);
         return;
       }
     }
+
     qc.invalidateQueries({ queryKey: ['all_customers'] });
+    qc.invalidateQueries({ queryKey: ['all_assessments'] });
     setFormOpen(false);
     setSaving(false);
   };
@@ -97,20 +205,80 @@ export default function AdminCustomers() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white">Clientes / Customers</h1>
-        {!isAiConsultant && <Button onClick={openCreate} className="bg-blue-500 hover:bg-blue-600 gap-2 text-white">
-          <Plus className="w-4 h-4" />
-          Add Customer
-        </Button>}
+        {!isAiConsultant && (
+          <Button onClick={openCreate} className="bg-blue-500 hover:bg-blue-600 gap-2 text-white">
+            <Plus className="w-4 h-4" />
+            Add Customer
+          </Button>
+        )}
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, company or email..."
-          className="w-full bg-[#152233] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name, company or email..."
+          className="w-full bg-[#152233] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50"
+        />
       </div>
 
-      {/* Table */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <Filter className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+
+        <select
+          value={filterTemplate}
+          onChange={e => setFilterTemplate(e.target.value)}
+          className="bg-[#152233] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-blue-500/50 cursor-pointer"
+        >
+          <option value="">Todos os templates</option>
+          {templates.map(template => (
+            <option key={template.id} value={template.id}>
+              {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filterSector}
+          onChange={e => setFilterSector(e.target.value)}
+          className="bg-[#152233] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-blue-500/50 cursor-pointer"
+        >
+          <option value="">Todos os sectores</option>
+          {SECTORS.map(sector => <option key={sector} value={sector}>{sector}</option>)}
+        </select>
+
+        <select
+          value={filterCompletion}
+          onChange={e => setFilterCompletion(e.target.value)}
+          className="bg-[#152233] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-blue-500/50 cursor-pointer"
+        >
+          <option value="">Todos os estados</option>
+          <option value="completed">Concluido</option>
+          <option value="in_progress">Em curso</option>
+          <option value="not_started">Nao iniciado</option>
+          <option value="no_assessment">Sem avaliacao</option>
+        </select>
+
+        {activeFiltersCount > 0 && (
+          <button
+            onClick={() => {
+              setFilterTemplate('');
+              setFilterSector('');
+              setFilterCompletion('');
+            }}
+            className="flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors ml-1"
+          >
+            <X className="w-3 h-3" />
+            Limpar filtros ({activeFiltersCount})
+          </button>
+        )}
+
+        <span className="ml-auto text-xs text-white/30">
+          {filtered.length} cliente{filtered.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
       <div className="bg-[#152233] border border-white/10 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -119,50 +287,68 @@ export default function AdminCustomers() {
                 <th className="text-left px-4 py-3 font-medium">Customer</th>
                 <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Company</th>
                 <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Sector</th>
+                <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Template</th>
                 <th className="text-left px-4 py-3 font-medium">Status</th>
                 <th className="text-left px-4 py-3 font-medium hidden xl:table-cell">Data Sub-Assessment</th>
                 <th className="text-right px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filtered.map(c => {
-                const a = assessmentMap[c.id];
+              {filtered.map(customer => {
+                const assessment = mainAssessmentMap[customer.id];
                 return (
-                  <tr key={c.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={customer.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3.5">
-                      <div className="font-medium text-white">{c.name}</div>
-                      <div className="text-xs text-white/40">{c.email}</div>
+                      <div className="font-medium text-white">{customer.name}</div>
+                      <div className="text-xs text-white/40">{customer.email}</div>
                     </td>
                     <td className="px-4 py-3.5 hidden md:table-cell">
-                      <div className="text-white/80">{c.company}</div>
-                      <div className="text-xs text-white/40">{c.role}</div>
+                      <div className="text-white/80">{customer.company}</div>
+                      <div className="text-xs text-white/40">{customer.role}</div>
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">{c.sector || '—'}</td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">{customer.sector || '—'}</td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">
+                      {assessment?.assessment_template_id && templateMap[assessment.assessment_template_id]
+                        ? (templateMap[assessment.assessment_template_id].name_pt || templateMap[assessment.assessment_template_id].name_en)
+                        : '—'}
+                    </td>
                     <td className="px-4 py-3.5">
-                      {!a ? <span className="text-xs text-white/30">No assessment</span>
-                        : a.status === 'completed' && a.reviewed_by_consultant
-                          ? <span className="inline-flex items-center gap-1 text-xs text-amber-300 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full font-medium"><Award className="w-3 h-3" /> Reviewed</span>
-                        : a.status === 'completed' ? <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">✓ Completed</span>
-                        : a.status === 'in_progress' ? <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress</span>
-                        : <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">Not Started</span>}
+                      {!assessment ? (
+                        <span className="text-xs text-white/30">No assessment</span>
+                      ) : assessment.status === 'completed' && assessment.reviewed_by_consultant ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-300 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full font-medium">
+                          <Award className="w-3 h-3" />
+                          Reviewed
+                        </span>
+                      ) : assessment.status === 'completed' ? (
+                        <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">✓ Completed</span>
+                      ) : assessment.status === 'in_progress' ? (
+                        <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress</span>
+                      ) : (
+                        <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">Not Started</span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 hidden xl:table-cell">
                       {(() => {
-                        const sub = a ? subAssessmentMap[a.id] : null;
-                        if (!a || a.status !== 'completed') return <span className="text-xs text-white/20">—</span>;
-                        if (!sub) return <span className="text-xs text-white/30">Not triggered</span>;
-                        if (sub.status === 'completed') return (
-                          <div className="flex items-center gap-1.5">
-                            <Database className="w-3 h-3 text-orange-400" />
-                            <span className="text-xs text-orange-300 bg-orange-400/10 px-2 py-0.5 rounded-full">✓ Sub completed</span>
-                          </div>
-                        );
-                        if (sub.status === 'in_progress') return (
-                          <div className="flex items-center gap-1.5">
-                            <Database className="w-3 h-3 text-yellow-400" />
-                            <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress</span>
-                          </div>
-                        );
+                        const subAssessment = assessment ? subAssessmentMap[assessment.id] : null;
+                        if (!assessment || assessment.status !== 'completed') return <span className="text-xs text-white/20">—</span>;
+                        if (!subAssessment) return <span className="text-xs text-white/30">Not triggered</span>;
+                        if (subAssessment.status === 'completed') {
+                          return (
+                            <div className="flex items-center gap-1.5">
+                              <Database className="w-3 h-3 text-orange-400" />
+                              <span className="text-xs text-orange-300 bg-orange-400/10 px-2 py-0.5 rounded-full">✓ Sub completed</span>
+                            </div>
+                          );
+                        }
+                        if (subAssessment.status === 'in_progress') {
+                          return (
+                            <div className="flex items-center gap-1.5">
+                              <Database className="w-3 h-3 text-yellow-400" />
+                              <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress</span>
+                            </div>
+                          );
+                        }
                         return (
                           <div className="flex items-center gap-1.5">
                             <Database className="w-3 h-3 text-orange-500" />
@@ -173,30 +359,49 @@ export default function AdminCustomers() {
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center justify-end gap-1">
-                        {a?.status === 'completed' && (
-                          <Link to={`/admin/assessment/${a.id}`} title="View assessment">
-                            <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-white"><ClipboardList className="w-3.5 h-3.5" /></Button>
+                        {assessment?.status === 'completed' && (
+                          <Link to={`/admin/assessment/${assessment.id}`} title="View assessment">
+                            <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-white">
+                              <ClipboardList className="w-3.5 h-3.5" />
+                            </Button>
                           </Link>
                         )}
-                        {c.qr_token && (
-                          <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-blue-400" onClick={() => setQrCustomer(c)} title="Show QR">
+                        {customer.qr_token && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-7 h-7 text-white/40 hover:text-blue-400"
+                            onClick={() => setQrCustomer(customer)}
+                            title="Show QR"
+                          >
                             <QrCode className="w-3.5 h-3.5" />
                           </Button>
                         )}
-                        {!isAiConsultant && <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-white" onClick={() => openEdit(c)}><Edit2 className="w-3.5 h-3.5" /></Button>}
-                        {!isAiConsultant && !isAccountManager && <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-red-400" onClick={() => setDeleteCustomer(c)}><Trash2 className="w-3.5 h-3.5" /></Button>}
+                        {!isAiConsultant && (
+                          <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-white" onClick={() => openEdit(customer)}>
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                        {!isAiConsultant && !isAccountManager && (
+                          <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-red-400" onClick={() => setDeleteCustomer(customer)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-white/30 text-sm">No customers found</td></tr>}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-white/30 text-sm">No customers found</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Customer Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -212,30 +417,47 @@ export default function AdminCustomers() {
               <Label>Sector</Label>
               <Select value={form.sector} onValueChange={v => set('sector', v)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{SECTORS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{SECTORS.map(sector => <SelectItem key={sector} value={sector}>{sector}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Company Size</Label>
               <Select value={form.company_size} onValueChange={v => set('company_size', v)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{SIZES.map(size => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Language</Label>
               <Select value={form.language} onValueChange={v => set('language', v)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="pt">🇵🇹 Português</SelectItem><SelectItem value="en">🇬🇧 English</SelectItem></SelectContent>
+                <SelectContent>
+                  <SelectItem value="pt">PT Portugues</SelectItem>
+                  <SelectItem value="en">EN English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Assessment Template {!editCustomer && '*'}</Label>
+              <Select value={form.template_id || 'none'} onValueChange={v => set('template_id', v === 'none' ? '' : v)}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select template..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {templates.filter(template => template.active).map(template => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="col-span-2">
               <Label>Account Manager</Label>
-              <Select value={form.account_manager_id} onValueChange={v => set('account_manager_id', v)}>
+              <Select value={form.account_manager_id || 'none'} onValueChange={v => set('account_manager_id', v === 'none' ? '' : v)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Assign account manager..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>— None —</SelectItem>
-                  {amUsers.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
+                  <SelectItem value="none">— None —</SelectItem>
+                  {amUsers.map(userRecord => <SelectItem key={userRecord.id} value={userRecord.id}>{userRecord.full_name || userRecord.email}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -244,7 +466,11 @@ export default function AdminCustomers() {
           {saveError && <p className="text-sm text-red-500">{saveError}</p>}
           <div className="flex gap-2 pt-2">
             <Button variant="outline" onClick={() => setFormOpen(false)} className="flex-1">Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || !form.name || !form.email || !form.company || !form.role} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={saving || !form.name || !form.email || !form.company || !form.role || (!editCustomer && !form.template_id)}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white gap-2"
+            >
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {editCustomer ? 'Save Changes' : 'Create & Generate QR'}
             </Button>
@@ -252,7 +478,6 @@ export default function AdminCustomers() {
         </DialogContent>
       </Dialog>
 
-      {/* QR Dialog */}
       <Dialog open={!!qrCustomer} onOpenChange={() => setQrCustomer(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>QR Code – {qrCustomer?.company}</DialogTitle></DialogHeader>
@@ -261,7 +486,6 @@ export default function AdminCustomers() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirm */}
       <AlertDialog open={!!deleteCustomer} onOpenChange={() => setDeleteCustomer(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

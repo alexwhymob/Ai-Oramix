@@ -96,12 +96,9 @@ export function createGenerateReport(deps = {}) {
       models.Report.findOne({ assessment_id: assessmentId })
     ]);
 
-    const questions = allQuestions.filter(question => {
-      const pillarCode = question.pillar_code || '';
-      return assessmentType === 'sub_assessment'
-        ? pillarCode.startsWith('ds_')
-        : !pillarCode.startsWith('ds_');
-    });
+    const scopedPillars = scopePillarsForAssessment(pillars, assessment);
+    const pillarCodes = new Set(scopedPillars.map(pillar => pillar.code));
+    const questions = allQuestions.filter(question => pillarCodes.has(question.pillar_code));
 
     if (existingReport) {
       existingReport.status = 'generating';
@@ -112,7 +109,7 @@ export function createGenerateReport(deps = {}) {
     const context = buildReportContext({
       assessment,
       customer: customer || {},
-      pillars,
+      pillars: scopedPillars,
       questions,
       answers,
       language
@@ -161,6 +158,27 @@ export function createGenerateReport(deps = {}) {
       sectionsGenerated: selectedSections
     };
   };
+}
+
+function scopePillarsForAssessment(pillars, assessment) {
+  if ((assessment.assessment_type || 'main') === 'sub_assessment') {
+    return pillars.filter(pillar => pillar.code?.startsWith('ds_'));
+  }
+
+  if (assessment.assessment_template_id) {
+    return pillars.filter(
+      pillar =>
+        pillar.assessment_type !== 'sub_assessment'
+        && pillar.assessment_template_id === assessment.assessment_template_id
+    );
+  }
+
+  return pillars.filter(
+    pillar =>
+      pillar.assessment_type !== 'sub_assessment'
+      && !pillar.assessment_template_id
+      && !pillar.code?.startsWith('ds_')
+  );
 }
 
 async function generateSectionGroup({

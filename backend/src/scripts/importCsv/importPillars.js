@@ -21,7 +21,8 @@ export function mapPillarRecord(record) {
     icon: emptyToNull(record.icon),
     description_pt: emptyToNull(record.description_pt),
     description_en: emptyToNull(record.description_en),
-    assessment_type: record.assessment_type || 'main'
+    assessment_type: record.assessment_type || 'main',
+    assessment_template_id: emptyToNull(record.assessment_template_id)
   };
 }
 

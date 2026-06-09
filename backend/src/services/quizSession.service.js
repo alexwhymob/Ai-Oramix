@@ -4,6 +4,10 @@ import {
   AssessmentAnswer,
   Customer
 } from '../models/index.js';
+import {
+  assertAssessmentTemplateExists,
+  getAssessmentTemplateById
+} from './assessmentTemplate.service.js';
 
 const BLOCKED_EMAIL_DOMAINS = [
   'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.fr', 'yahoo.es', 'yahoo.it', 'yahoo.de', 'yahoo.com.br',
@@ -17,9 +21,13 @@ const BLOCKED_EMAIL_DOMAINS = [
 export async function handleQuizSessionAction(payload) {
   switch (payload.action) {
     case 'registerCustomer':
-      return registerCustomer(payload.form, { registered_by: 'self', status: 'in_progress' });
+      return registerCustomer(payload.form, {
+        registered_by: 'self',
+        status: 'in_progress',
+        templateId: payload.templateId
+      });
     case 'adminRegister':
-      return adminRegister(payload.form);
+      return adminRegister(payload.form, payload.templateId);
     case 'load':
       return loadMainSession(payload.token);
     case 'submit':
@@ -49,8 +57,9 @@ export function isCorporateEmail(email) {
   return domain ? !BLOCKED_EMAIL_DOMAINS.includes(domain) : false;
 }
 
-async function registerCustomer(form, { registered_by, status }) {
+async function registerCustomer(form, { registered_by, status, templateId = null }) {
   validateCustomerForm(form, { requireDataConsent: registered_by === 'self' });
+  const template = await assertAssessmentTemplateExists(templateId);
 
   const qr_token = randomUUID();
   const customer = await Customer.create({
@@ -63,6 +72,7 @@ async function registerCustomer(form, { registered_by, status }) {
 
   await Assessment.create({
     customer_id: customer.id,
+    assessment_template_id: template?.id || null,
     status,
     started_at: status === 'in_progress' ? new Date() : null,
     language: form.language || 'pt'
@@ -71,8 +81,9 @@ async function registerCustomer(form, { registered_by, status }) {
   return { qr_token };
 }
 
-async function adminRegister(form) {
+async function adminRegister(form, templateId = null) {
   validateCustomerForm(form);
+  const template = await assertAssessmentTemplateExists(templateId);
 
   const qr_token = randomUUID();
   const customer = await Customer.create({
@@ -85,6 +96,7 @@ async function adminRegister(form) {
 
   await Assessment.create({
     customer_id: customer.id,
+    assessment_template_id: template?.id || null,
     status: 'not_started',
     language: form.language || 'pt'
   });
@@ -143,7 +155,11 @@ async function loadMainSession(token) {
     existingAnswers = await AssessmentAnswer.find({ assessment_id: assessment.id }).lean();
   }
 
-  return { customer, assessment, existingAnswers };
+  const template = assessment.assessment_template_id
+    ? await getAssessmentTemplateById(assessment.assessment_template_id)
+    : null;
+
+  return { customer, assessment, existingAnswers, template };
 }
 
 async function submitAssessment({ assessmentId, answers = [], globalScore, maturityLevel, pillarScores }) {
