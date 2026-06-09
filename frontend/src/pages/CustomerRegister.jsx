@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Brain, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,21 +10,44 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/lib/useLanguage';
 import { base44 } from '@/api/base44Client';
 import { isCorporateEmail } from '@/lib/blockedEmailDomains';
-import { useQuery } from '@tanstack/react-query';
 
-const SECTORS = ['Tecnologia','Saude','Industria','Retalho','Servicos Financeiros','Educacao','Energia','Logistica','Construcao','Outro'];
-const SIZES = ['1-10','11-50','51-200','201-500','501-1000','1000+'];
+const SECTORS = ['Tecnologia', 'Saude', 'Industria', 'Retalho', 'Servicos Financeiros', 'Educacao', 'Energia', 'Logistica', 'Construcao', 'Outro'];
+const SIZES = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
+
+/**
+ * @typedef {Object} CustomerRegisterForm
+ * @property {string} name
+ * @property {string} email
+ * @property {string} company
+ * @property {string} role
+ * @property {string} sector
+ * @property {string} company_size
+ * @property {'pt' | 'en'} language
+ */
 
 export default function CustomerRegister() {
   const { lang, setLang } = useLanguage();
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const templateId = urlParams.get('templateId') || null;
+
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [dataConsent, setDataConsent] = useState(false);
   const [consentError, setConsentError] = useState('');
-  const [form, setForm] = useState({ name:'', email:'', company:'', role:'', sector:'', company_size:'', language: lang });
+  /** @type {[CustomerRegisterForm, import('react').Dispatch<import('react').SetStateAction<CustomerRegisterForm>>]} */
+  const [form, setForm] = useState(
+    /** @type {CustomerRegisterForm} */ ({
+      name: '',
+      email: '',
+      company: '',
+      role: '',
+      sector: '',
+      company_size: '',
+      language: lang === 'en' ? 'en' : 'pt'
+    })
+  );
+
   const { data: template } = useQuery({
     queryKey: ['assessment-template', templateId],
     queryFn: async () => {
@@ -34,24 +58,34 @@ export default function CustomerRegister() {
     enabled: !!templateId
   });
 
-  const t = (pt, en) => lang === 'pt' ? pt : en;
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  /** @param {string} pt @param {string} en */
+  const t = (pt, en) => (lang === 'pt' ? pt : en);
+  /** @param {keyof CustomerRegisterForm} key @param {string} value */
+  const setField = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
 
-  const handleEmailChange = (v) => {
-    set('email', v);
-    if (v && !isCorporateEmail(v)) {
+  useEffect(() => {
+    setField('language', lang === 'en' ? 'en' : 'pt');
+  }, [lang]);
+
+  /** @param {string} value */
+  const handleEmailChange = (value) => {
+    setField('email', value);
+    if (value && !isCorporateEmail(value)) {
       setEmailError(t('Por favor use o seu email corporativo.', 'Please use your corporate email address.'));
-    } else {
-      setEmailError('');
+      return;
     }
+    setEmailError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  /** @param {import('react').FormEvent<HTMLFormElement>} event */
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     if (!isCorporateEmail(form.email)) {
       setEmailError(t('Por favor use o seu email corporativo.', 'Please use your corporate email address.'));
       return;
     }
+
     if (!dataConsent) {
       setConsentError(t('Tem de autorizar o tratamento de dados para iniciar a avaliacao.', 'You must authorize data processing to start the assessment.'));
       return;
@@ -59,26 +93,39 @@ export default function CustomerRegister() {
 
     setConsentError('');
     setLoading(true);
-    const res = await base44.functions.invoke('quizSession', {
-      action: 'registerCustomer',
-      templateId,
-      form: {
-        ...form,
-        data_consent: true,
-        data_consent_at: new Date().toISOString()
-      }
-    });
 
-    if (res.data?.error) {
-      if (res.data.error === 'data_consent_required') {
-        setConsentError(t('Tem de autorizar o tratamento de dados para iniciar a avaliacao.', 'You must authorize data processing to start the assessment.'));
-      } else {
-        setEmailError(t('Email corporativo obrigatorio. Dominios pessoais nao sao aceites.', 'Corporate email required. Personal email domains are not accepted.'));
+    try {
+      const response = await base44.functions.invoke('quizSession', {
+        action: 'registerCustomer',
+        templateId,
+        form: {
+          ...form,
+          data_consent: true,
+          data_consent_at: new Date().toISOString()
+        }
+      });
+
+      if (response.data?.error) {
+        if (response.data.error === 'data_consent_required') {
+          setConsentError(t('Tem de autorizar o tratamento de dados para iniciar a avaliacao.', 'You must authorize data processing to start the assessment.'));
+        } else {
+          setEmailError(t('Email corporativo obrigatorio. Dominios pessoais nao sao aceites.', 'Corporate email required. Personal email domains are not accepted.'));
+        }
+        return;
       }
+
+      if (!response.data?.qr_token) {
+        setEmailError(t('Nao foi possivel iniciar a avaliacao. Tente novamente.', 'Could not start the assessment. Please try again.'));
+        return;
+      }
+
+      navigate(`/quiz/${response.data.qr_token}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setEmailError(message || t('Ocorreu um erro ao iniciar a avaliacao. Tente novamente.', 'An error occurred while starting the assessment. Please try again.'));
+    } finally {
       setLoading(false);
-      return;
     }
-    navigate(`/quiz/${res.data.qr_token}`);
   };
 
   return (
@@ -108,7 +155,7 @@ export default function CustomerRegister() {
           <p className="text-muted-foreground">
             {template
               ? ((lang === 'pt' ? template.pitch_pt : (template.pitch_en || template.pitch_pt))
-                  || t('Preencha os seus dados para iniciar a avaliacao.', 'Fill in your details to start the assessment.'))
+                || t('Preencha os seus dados para iniciar a avaliacao.', 'Fill in your details to start the assessment.'))
               : t('Preencha os seus dados para iniciar a avaliacao de maturidade em IA.', 'Fill in your details to start the AI readiness assessment.')}
           </p>
         </div>
@@ -117,43 +164,78 @@ export default function CustomerRegister() {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label htmlFor="name">{t('Nome completo *', 'Full name *')}</Label>
-              <Input id="name" value={form.name} onChange={e => set('name', e.target.value)} required className="mt-1" placeholder={t('Ana Silva', 'Jane Smith')} />
+              <Input id="name" value={form.name} onChange={(event) => setField('name', event.target.value)} required className="mt-1" placeholder={t('Ana Silva', 'Jane Smith')} />
             </div>
+
             <div className="col-span-2">
               <Label htmlFor="email">{t('Email *', 'Email *')}</Label>
-              <Input id="email" type="email" value={form.email} onChange={e => handleEmailChange(e.target.value)} required className={`mt-1 ${emailError ? 'border-red-500' : ''}`} placeholder="ana@empresa.pt" />
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={(event) => handleEmailChange(event.target.value)}
+                required
+                className={`mt-1 ${emailError ? 'border-red-500' : ''}`}
+                placeholder="ana@empresa.pt"
+              />
               {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
             </div>
+
             <div className="col-span-2">
               <Label htmlFor="company">{t('Empresa *', 'Company *')}</Label>
-              <Input id="company" value={form.company} onChange={e => set('company', e.target.value)} required className="mt-1" placeholder={t('Nome da empresa', 'Company name')} />
+              <Input id="company" value={form.company} onChange={(event) => setField('company', event.target.value)} required className="mt-1" placeholder={t('Nome da empresa', 'Company name')} />
             </div>
+
             <div>
               <Label htmlFor="role">{t('Cargo *', 'Job title *')}</Label>
-              <Input id="role" value={form.role} onChange={e => set('role', e.target.value)} required className="mt-1" placeholder="CEO, CTO..." />
+              <Input id="role" value={form.role} onChange={(event) => setField('role', event.target.value)} required className="mt-1" placeholder="CEO, CTO..." />
             </div>
+
             <div>
               <Label>{t('Setor', 'Sector')}</Label>
-              <Select value={form.sector} onValueChange={v => set('sector', v)}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder={t('Selecionar', 'Select')} /></SelectTrigger>
+              <Select value={form.sector} onValueChange={(value) => setField('sector', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={t('Selecionar', 'Select')} />
+                </SelectTrigger>
                 <SelectContent>
-                  {SECTORS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {SECTORS.map((sector) => (
+                    <SelectItem key={sector} value={sector}>
+                      {sector}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div>
               <Label>{t('Dimensao da empresa', 'Company size')}</Label>
-              <Select value={form.company_size} onValueChange={v => set('company_size', v)}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder={t('Selecionar', 'Select')} /></SelectTrigger>
+              <Select value={form.company_size} onValueChange={(value) => setField('company_size', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={t('Selecionar', 'Select')} />
+                </SelectTrigger>
                 <SelectContent>
-                  {SIZES.map(s => <SelectItem key={s} value={s}>{s} {t('colaboradores', 'employees')}</SelectItem>)}
+                  {SIZES.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size} {t('colaboradores', 'employees')}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div>
               <Label>{t('Idioma da avaliacao', 'Assessment language')}</Label>
-              <Select value={form.language} onValueChange={v => { set('language', v); setLang(v); }}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <Select
+                value={form.language}
+                onValueChange={(value) => {
+                  const nextLang = value === 'en' ? 'en' : 'pt';
+                  setField('language', nextLang);
+                  setLang(nextLang);
+                }}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pt">PT Portugues</SelectItem>
                   <SelectItem value="en">EN English</SelectItem>
@@ -168,16 +250,29 @@ export default function CustomerRegister() {
               <input
                 type="checkbox"
                 checked={dataConsent}
-                onChange={e => {
-                  setDataConsent(e.target.checked);
-                  if (e.target.checked) setConsentError('');
+                onChange={(event) => {
+                  setDataConsent(event.target.checked);
+                  if (event.target.checked) setConsentError('');
                 }}
                 className="mt-0.5 w-4 h-4 accent-blue-500 flex-shrink-0"
               />
               <span className="text-sm text-muted-foreground leading-snug">
-                {t(
-                  'Declaro que li e autorizo o tratamento de dados pessoais de acordo com a Politica de Privacidade para fins comerciais.',
-                  'I declare that I have read and authorize the processing of personal data in accordance with the Privacy Policy for commercial purposes.'
+                {lang === 'pt' ? (
+                  <>
+                    Declaro que li e autorizo o tratamento de dados pessoais de acordo com a{' '}
+                    <a href="http://www.oramix.pt/politica-privacidade/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 underline">
+                      Politica de Privacidade
+                    </a>{' '}
+                    para fins comerciais.
+                  </>
+                ) : (
+                  <>
+                    I declare that I have read and authorize the processing of personal data in accordance with the{' '}
+                    <a href="http://www.oramix.pt/politica-privacidade/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 underline">
+                      Privacy Policy
+                    </a>{' '}
+                    for commercial purposes.
+                  </>
                 )}
               </span>
             </label>
