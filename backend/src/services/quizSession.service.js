@@ -222,11 +222,15 @@ async function loadSubSession(assessmentId) {
     );
   }
 
-  const customer = await Customer.findOne({ id: assessment.customer_id }).lean();
+  const [customer, existingAnswers] = await Promise.all([
+    Customer.findOne({ id: assessment.customer_id }).lean(),
+    AssessmentAnswer.find({ assessment_id: assessmentId }).lean()
+  ]);
 
   return {
     assessment: updatedAssessment.toJSON(),
-    customer: customer || null
+    customer: customer || null,
+    existingAnswers
   };
 }
 
@@ -265,10 +269,14 @@ async function getSubResult(assessmentId) {
     throw error;
   }
 
-  const customer = await Customer.findOne({ id: assessment.customer_id }).lean();
+  const [customer, answers] = await Promise.all([
+    Customer.findOne({ id: assessment.customer_id }).lean(),
+    AssessmentAnswer.find({ assessment_id: assessmentId }).lean()
+  ]);
 
   return {
     assessment,
-    customer: customer || null
+    customer: customer || null,
+    answers
   };
 }

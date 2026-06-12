@@ -5,6 +5,7 @@ const ENTITY_NAMES = [
   'Assessment',
   'AssessmentTemplate',
   'AssessmentAnswer',
+  'PresentationTemplate',
   'Pillar',
   'Question',
   'Report',

@@ -39,6 +39,15 @@ function extractSections(text) {
   return sections;
 }
 
+function getPillarLabel(pillarCode, pillars = [], lang = 'pt') {
+  if (!pillarCode) return '';
+  const pillar = pillars.find((item) => item.code === pillarCode);
+  if (!pillar) return pillarCode;
+  return lang === 'en'
+    ? (pillar.name_en || pillar.name_pt || pillarCode)
+    : (pillar.name_pt || pillar.name_en || pillarCode);
+}
+
 class PdfWriter {
   constructor(doc) {
     this.doc = doc;
@@ -286,7 +295,7 @@ function renderNextSteps(pw, content) {
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
-function renderConsultantNotes(pw, notes) {
+function renderConsultantNotes(pw, notes, pillars = [], lang = 'pt') {
   if (!notes || notes.length === 0) return;
   pw.ensureSpace(10);
   pw.doc.setFontSize(9);
@@ -314,7 +323,7 @@ function renderConsultantNotes(pw, notes) {
 
     // Pillar code
     pw.doc.setFontSize(8); pw.doc.setTextColor(150, 180, 220);
-    pw.doc.text(note.pillar_code || '', MARGIN + 11, y0 + 6.5);
+    pw.doc.text(getPillarLabel(note.pillar_code, pillars, lang), MARGIN + 11, y0 + 6.5);
 
     // Badges: priority, effort, impact
     const badgeData = [
@@ -350,7 +359,7 @@ function renderConsultantNotes(pw, notes) {
   pw.y += 2;
 }
 
-export async function exportReportPDF(report, assessment, customer, pdfSections = [1,2,3,4,5,6,7,8,9], pdfVisuals = false, visualImages = [], consultantNotes = [], subAssessment = null, subPillarScores = [], subPillars = [], subVisualImages = [], template = null) {
+export async function exportReportPDF(report, assessment, customer, pdfSections = [1,2,3,4,5,6,7,8,9], pdfVisuals = false, visualImages = [], consultantNotes = [], subAssessment = null, subPillarScores = [], subPillars = [], subVisualImages = [], template = null, mainPillars = []) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const lang = report.language || 'pt';
   const sectionTitles = lang === 'en'
@@ -426,7 +435,7 @@ export async function exportReportPDF(report, assessment, customer, pdfSections 
     3: renderPillarResults,
     4: renderNumberedCards,
     5: renderGapMap,
-    6: (pw, content) => { renderQuickWins(pw, content); renderConsultantNotes(pw, consultantNotes); },
+    6: (pw, content) => { renderQuickWins(pw, content); renderConsultantNotes(pw, consultantNotes, mainPillars, lang); },
     7: renderRoadmap,
     8: renderUseCases,
     9: renderNumberedCards,
@@ -451,7 +460,7 @@ export async function exportReportPDF(report, assessment, customer, pdfSections 
       if (note.gap_description) parts.push(stripMd(note.gap_description));
       if (note.mitigation) parts.push(stripMd(note.mitigation));
       const body = parts.join('\n\n');
-      const title = note.pillar_code || '';
+      const title = getPillarLabel(note.pillar_code, mainPillars, lang);
 
       pw.ensureSpace(22);
       const startY = pw.y;
@@ -481,7 +490,12 @@ export async function exportReportPDF(report, assessment, customer, pdfSections 
   // ── Annex 02 – Data Sub-Assessment ──
   if (subAssessment && subAssessment.status === 'completed' && subPillarScores.length > 0) {
     pw.newPage();
-    const annexTitle = lang === 'pt' ? 'Anexo 02 – Avaliação de Maturidade de Dados' : 'Annex 02 – Data Maturity Sub-Assessment';
+    const subAssessmentLabel = getPillarLabel(subAssessment.sub_assessment_for_pillar, mainPillars, lang);
+    const annexTitle = subAssessmentLabel
+      ? (lang === 'pt'
+        ? `Anexo 02 – Sub-Avaliação de ${subAssessmentLabel}`
+        : `Annex 02 – ${subAssessmentLabel} Sub-Assessment`)
+      : (lang === 'pt' ? 'Anexo 02 – Avaliação Complementar' : 'Annex 02 – Supplementary Sub-Assessment');
     pw.sectionHeader('B', annexTitle);
 
     // Score banner
@@ -492,7 +506,13 @@ export async function exportReportPDF(report, assessment, customer, pdfSections 
     doc.roundedRect(MARGIN, pw.y, CONTENT_W, 18, 2, 2, 'FD');
     doc.setTextColor(249, 115, 22);
     doc.setFontSize(10);
-    doc.text(lang === 'pt' ? 'Score Global da Sub-Avaliação' : 'Sub-Assessment Global Score', MARGIN + 6, pw.y + 7);
+    doc.text(
+      subAssessmentLabel
+        ? (lang === 'pt' ? `Score Global - ${subAssessmentLabel}` : `${subAssessmentLabel} Global Score`)
+        : (lang === 'pt' ? 'Score Global da Sub-Avaliação' : 'Sub-Assessment Global Score'),
+      MARGIN + 6,
+      pw.y + 7
+    );
     doc.setFontSize(16); doc.setTextColor(...WHITE);
     doc.text(`${subAssessment.global_score?.toFixed(2) || '–'}/5.0`, W - MARGIN - 6, pw.y + 11, { align: 'right' });
     pw.y += 22;
@@ -541,7 +561,13 @@ export async function exportReportPDF(report, assessment, customer, pdfSections 
       doc.setFillColor(249, 115, 22);
       doc.rect(0, 0, 3, 16, 'F');
       doc.setTextColor(...WHITE); doc.setFontSize(10);
-      doc.text(lang === 'pt' ? 'Visuals – Maturidade de Dados' : 'Visuals – Data Maturity', MARGIN, 11);
+      doc.text(
+        subAssessmentLabel
+          ? `Visuals – ${subAssessmentLabel}`
+          : (lang === 'pt' ? 'Visuals – Sub-Avaliação' : 'Visuals – Sub-Assessment'),
+        MARGIN,
+        11
+      );
 
       let vy = 22;
       if (scoreImg) doc.addImage(scoreImg.split(',')[1], 'PNG', MARGIN, vy, 44, 62);

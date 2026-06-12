@@ -1,7 +1,4 @@
-import { Assessment } from '../models/index.js';
-
-const DATA_PILLAR_CODE = 'dados';
-const DATA_SCORE_THRESHOLD = 2.5;
+import { Assessment, Pillar } from '../models/index.js';
 
 export async function createDataSubAssessment({ event, data } = {}) {
   const assessmentId = event?.entity_id;
@@ -26,38 +23,78 @@ export async function createDataSubAssessment({ event, data } = {}) {
   }
 
   const pillarScores = parsePillarScores(assessment.pillar_scores);
-  const dataScore = pillarScores.find(pillar => pillar.code === DATA_PILLAR_CODE)?.score;
-
-  if (dataScore === undefined || dataScore >= DATA_SCORE_THRESHOLD) {
-    return {
-      skipped: true,
-      reason: `Data score ${dataScore} >= ${DATA_SCORE_THRESHOLD}, no sub-assessment needed`
-    };
+  if (!pillarScores.length) {
+    return { skipped: true, reason: 'No pillar scores found' };
   }
 
-  const existing = await Assessment.findOne({ parent_assessment_id: assessmentId }).lean();
-  if (existing) {
-    return {
-      skipped: true,
-      reason: 'Sub-assessment already exists',
-      subAssessmentId: existing.id
-    };
-  }
-
-  const subAssessment = await Assessment.create({
-    customer_id: assessment.customer_id,
-    assessment_type: 'sub_assessment',
-    parent_assessment_id: assessmentId,
-    sub_assessment_for_pillar: DATA_PILLAR_CODE,
-    status: 'not_started',
-    language: assessment.language || 'pt'
-  });
-
-  return {
-    success: true,
-    subAssessmentId: subAssessment.id,
-    dataScore
+  const pillarFilter = {
+    assessment_type: { $ne: 'sub_assessment' },
+    min_score: { $ne: null },
+    sub_assessment_template_id: { $ne: null }
   };
+
+  if (assessment.assessment_template_id) {
+    pillarFilter.assessment_template_id = assessment.assessment_template_id;
+  } else {
+    pillarFilter.$or = [
+      { assessment_template_id: null },
+      { assessment_template_id: { $exists: false } }
+    ];
+  }
+
+  const [configuredPillars, existingSubs] = await Promise.all([
+    Pillar.find(pillarFilter).sort({ order: 1, created_date: 1 }).lean(),
+    Assessment.find({ parent_assessment_id: assessmentId }).lean()
+  ]);
+
+  if (!configuredPillars.length) {
+    return { skipped: true, reason: 'No pillars with min_score configured' };
+  }
+
+  const created = [];
+  const skipped = [];
+
+  for (const pillar of configuredPillars) {
+    const scoreEntry = pillarScores.find(item => item.code === pillar.code);
+    const score = scoreEntry?.score;
+
+    if (score === undefined || score >= pillar.min_score) {
+      skipped.push({
+        pillar: pillar.code,
+        score,
+        reason: 'Score above threshold or not found'
+      });
+      continue;
+    }
+
+    const alreadyExists = existingSubs.some((sub) => sub.sub_assessment_for_pillar === pillar.code);
+    if (alreadyExists) {
+      skipped.push({ pillar: pillar.code, reason: 'Already exists' });
+      continue;
+    }
+
+    const subAssessment = await Assessment.create({
+      customer_id: assessment.customer_id,
+      assessment_type: 'sub_assessment',
+      assessment_template_id: pillar.sub_assessment_template_id,
+      parent_assessment_id: assessmentId,
+      sub_assessment_for_pillar: pillar.code,
+      status: 'not_started',
+      language: assessment.language || 'pt'
+    });
+
+    created.push({
+      subAssessmentId: subAssessment.id,
+      pillar: pillar.code,
+      score
+    });
+  }
+
+  if (!created.length) {
+    return { skipped: true, reason: 'No sub-assessment needed', skippedItems: skipped };
+  }
+
+  return { success: true, created, skipped };
 }
 
 export function parsePillarScores(rawPillarScores) {

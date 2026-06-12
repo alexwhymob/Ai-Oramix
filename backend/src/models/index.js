@@ -2,6 +2,7 @@ export { Customer } from './Customer.js';
 export { Assessment } from './Assessment.js';
 export { AssessmentTemplate } from './AssessmentTemplate.js';
 export { AssessmentAnswer } from './AssessmentAnswer.js';
+export { PresentationTemplate } from './PresentationTemplate.js';
 export { Pillar } from './Pillar.js';
 export { Question } from './Question.js';
 export { Report } from './Report.js';

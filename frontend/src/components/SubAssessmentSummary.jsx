@@ -30,7 +30,7 @@ function getDataMaturity(score) {
   return DATA_MATURITY.find(m => score <= m.max) || DATA_MATURITY[DATA_MATURITY.length - 1];
 }
 
-export default function SubAssessmentSummary({ subAssessment }) {
+export default function SubAssessmentSummary({ subAssessment, title = 'Data AI Readiness Sub-Assessment', dimensionLabels = DIMENSION_LABELS, scoreLabel = 'Data Score /5.0' }) {
   const pillarScores = useMemo(() => {
     try { return JSON.parse(subAssessment?.pillar_scores || '[]'); } catch { return []; }
   }, [subAssessment?.pillar_scores]);
@@ -44,7 +44,7 @@ export default function SubAssessmentSummary({ subAssessment }) {
       <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Database className="w-4 h-4 text-orange-400" />
-          <span className="text-sm font-semibold text-white/70">Data AI Readiness Sub-Assessment</span>
+          <span className="text-sm font-semibold text-white/70">{title}</span>
           {isPending ? (
             <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">
               <Clock className="w-3 h-3" /> Pending
@@ -78,7 +78,7 @@ export default function SubAssessmentSummary({ subAssessment }) {
                 <div className="text-5xl font-black" style={{ color: maturity?.color }}>
                   {subAssessment.global_score?.toFixed(1)}
                 </div>
-                <div className="text-xs text-white/40 mt-0.5">Data Score /5.0</div>
+                <div className="text-xs text-white/40 mt-0.5">{scoreLabel}</div>
               </div>
               <div className="flex-1">
                 <div className="inline-block px-3 py-1 rounded-full text-white text-xs font-semibold mb-2" style={{ background: maturity?.color }}>
@@ -107,7 +107,7 @@ export default function SubAssessmentSummary({ subAssessment }) {
             {pillarScores.map(ps => {
               const col = scoreColor(ps.score);
               const pct = Math.round((ps.score / 5) * 100);
-              const label = DIMENSION_LABELS[ps.code] || ps.code;
+              const label = dimensionLabels[ps.code] || ps.code;
               return (
                 <div key={ps.code}>
                   <div className="flex justify-between items-center mb-0.5">

@@ -1,11 +1,13 @@
 import { createApp } from './app.js';
 import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
+import { ensureDefaultPresentationTemplate } from './services/presentationExport.service.js';
 
 const app = createApp();
 
 try {
   await connectDb();
+  await ensureDefaultPresentationTemplate();
 
   app.listen(env.PORT, () => {
     console.log(`Oramix AI backend listening on port ${env.PORT}`);

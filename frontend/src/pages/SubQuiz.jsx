@@ -24,20 +24,28 @@ export default function SubQuiz() {
   const [showValidation, setShowValidation] = useState(false);
 
   const t = (pt, en) => lang === 'pt' ? pt : en;
+  const subTemplateId = subAssessment?.assessment_template_id || null;
 
   const { data: allPillars = [] } = useQuery({
-    queryKey: ['all_pillars'],
+    queryKey: ['sub_pillars', subTemplateId],
     queryFn: () => base44.entities.Pillar.list('order'),
+    enabled: !!subTemplateId,
   });
 
   const { data: allQuestions = [] } = useQuery({
-    queryKey: ['all_questions'],
+    queryKey: ['all_questions', subTemplateId],
     queryFn: () => base44.entities.Question.list('order'),
+    enabled: !!subTemplateId,
   });
 
-  // Filter to sub-assessment pillars only (ds_ prefix)
-  const pillars = useMemo(() => allPillars.filter(p => p.code.startsWith('ds_')), [allPillars]);
-  const questions = useMemo(() => allQuestions.filter(q => q.pillar_code.startsWith('ds_')), [allQuestions]);
+  const pillars = useMemo(() => {
+    if (!subTemplateId) return [];
+    return allPillars.filter((pillar) => pillar.assessment_template_id === subTemplateId);
+  }, [allPillars, subTemplateId]);
+  const questions = useMemo(() => {
+    const pillarCodes = new Set(pillars.map((pillar) => pillar.code));
+    return allQuestions.filter((question) => pillarCodes.has(question.pillar_code));
+  }, [allQuestions, pillars]);
 
   useEffect(() => {
     if (!assessmentId) return;
@@ -45,6 +53,13 @@ export default function SubQuiz() {
       .then(res => {
         setSubAssessment(res.data.assessment);
         setCustomer(res.data.customer);
+        if (res.data.existingAnswers?.length) {
+          const answerMap = {};
+          res.data.existingAnswers.forEach((answer) => {
+            answerMap[answer.question_id] = answer.value;
+          });
+          setAnswers(answerMap);
+        }
         setLoadingSession(false);
       })
       .catch(() => setLoadingSession(false));

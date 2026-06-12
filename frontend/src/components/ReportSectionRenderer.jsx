@@ -83,7 +83,13 @@ const LEVEL_COLORS = {
   low:    { bg: 'bg-green-500/15',  text: 'text-green-400',  border: 'border-green-500/25',  label: 'Low' },
 };
 
-function ConsultantNoteCards({ notes }) {
+function getPillarLabel(pillarCode, pillars = []) {
+  if (!pillarCode) return '';
+  const pillar = pillars.find((item) => item.code === pillarCode);
+  return pillar?.name_pt || pillar?.name_en || pillarCode;
+}
+
+function ConsultantNoteCards({ notes, pillars = [] }) {
   if (!notes || !notes.length) return null;
   return (
     <div className="mt-4 pt-4 border-t border-white/10">
@@ -92,11 +98,12 @@ function ConsultantNoteCards({ notes }) {
         {notes.map((note, i) => {
           const p = LEVEL_COLORS[note.priority] || LEVEL_COLORS.medium;
           const e = LEVEL_COLORS[note.effort]   || LEVEL_COLORS.medium;
+          const pillarLabel = getPillarLabel(note.pillar_code, pillars);
           return (
             <div key={note.id || i} className="rounded-lg bg-[#0a1520] border border-white/10 p-4">
               <div className="flex flex-wrap gap-2 mb-2">
-                {note.pillar_code && (
-                  <span className="text-xs bg-blue-500/15 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full">{note.pillar_code}</span>
+                {pillarLabel && (
+                  <span className="text-xs bg-blue-500/15 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full">{pillarLabel}</span>
                 )}
                 {note.priority && (
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${p.bg} ${p.text} ${p.border}`}>Priority: {p.label}</span>
@@ -123,14 +130,14 @@ function ConsultantNoteCards({ notes }) {
 }
 
 /* ─── Section 6: Quick Wins ─── */
-function QuickWins({ content, consultantNotes }) {
+function QuickWins({ content, consultantNotes, pillars = [] }) {
   const secs = extractMarkdownSections(content).filter(s => s.heading);
   if (!secs.length) {
     const items = splitBullets(content);
     if (!items.length) return (
       <div>
         <NarrativeSection content={content} />
-        <ConsultantNoteCards notes={consultantNotes} />
+        <ConsultantNoteCards notes={consultantNotes} pillars={pillars} />
       </div>
     );
     return (
@@ -143,7 +150,7 @@ function QuickWins({ content, consultantNotes }) {
             </div>
           ))}
         </div>
-        <ConsultantNoteCards notes={consultantNotes} />
+        <ConsultantNoteCards notes={consultantNotes} pillars={pillars} />
       </div>
     );
   }
@@ -170,7 +177,7 @@ function QuickWins({ content, consultantNotes }) {
           );
         })}
       </div>
-      <ConsultantNoteCards notes={consultantNotes} />
+      <ConsultantNoteCards notes={consultantNotes} pillars={pillars} />
     </div>
   );
 }
@@ -215,7 +222,7 @@ export default function ReportSectionRenderer({ sectionKey, content, extraData }
     case 'section_3': return <PillarResults content={content} />;
     case 'section_4': return <NumberedCards content={content} />;
     case 'section_5': return <GapMapSection content={content} />;
-    case 'section_6': return <QuickWins content={content} consultantNotes={extraData?.consultantNotes} />;
+    case 'section_6': return <QuickWins content={content} consultantNotes={extraData?.consultantNotes} pillars={extraData?.pillars} />;
     case 'section_7': return <Roadmap content={content} />;
     case 'section_8': return <UseCases content={content} />;
     case 'section_9': return <NumberedCards content={content} />;

@@ -62,21 +62,21 @@ export default function AdminCustomers() {
   });
 
   const amUsers = useMemo(
-    () => accountManagers.filter(userRecord => userRecord.role === 'account_manager'),
+    () => accountManagers.filter((userRecord) => userRecord.role === 'account_manager'),
     [accountManagers]
   );
 
   const customers = useMemo(() => (
     isAccountManager && user
-      ? allCustomers.filter(customer => customer.account_manager_id === user.id || customer.created_by_id === user.id)
+      ? allCustomers.filter((customer) => customer.account_manager_id === user.id || customer.created_by_id === user.id)
       : allCustomers
   ), [allCustomers, isAccountManager, user]);
 
   const mainAssessmentMap = useMemo(() => {
     const map = {};
     assessments
-      .filter(assessment => assessment.assessment_type !== 'sub_assessment')
-      .forEach(assessment => {
+      .filter((assessment) => assessment.assessment_type !== 'sub_assessment')
+      .forEach((assessment) => {
         if (!map[assessment.customer_id] || assessment.created_date > map[assessment.customer_id].created_date) {
           map[assessment.customer_id] = assessment;
         }
@@ -87,22 +87,25 @@ export default function AdminCustomers() {
   const subAssessmentMap = useMemo(() => {
     const map = {};
     assessments
-      .filter(assessment => assessment.assessment_type === 'sub_assessment' && assessment.parent_assessment_id)
-      .forEach(assessment => {
-        map[assessment.parent_assessment_id] = assessment;
+      .filter((assessment) => assessment.assessment_type === 'sub_assessment' && assessment.parent_assessment_id)
+      .forEach((assessment) => {
+        if (!map[assessment.parent_assessment_id]) {
+          map[assessment.parent_assessment_id] = [];
+        }
+        map[assessment.parent_assessment_id].push(assessment);
       });
     return map;
   }, [assessments]);
 
   const templateMap = useMemo(() => {
     const map = {};
-    templates.forEach(template => {
+    templates.forEach((template) => {
       map[template.id] = template;
     });
     return map;
   }, [templates]);
 
-  const filtered = useMemo(() => customers.filter(customer => {
+  const filtered = useMemo(() => customers.filter((customer) => {
     const matchesSearch = !search
       || customer.name?.toLowerCase().includes(search.toLowerCase())
       || customer.company?.toLowerCase().includes(search.toLowerCase())
@@ -125,7 +128,7 @@ export default function AdminCustomers() {
 
   const activeFiltersCount = [filterTemplate, filterSector, filterCompletion].filter(Boolean).length;
 
-  const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const openCreate = () => {
     setForm(EMPTY);
@@ -217,7 +220,7 @@ export default function AdminCustomers() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
         <input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by name, company or email..."
           className="w-full bg-[#152233] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50"
         />
@@ -228,11 +231,11 @@ export default function AdminCustomers() {
 
         <select
           value={filterTemplate}
-          onChange={e => setFilterTemplate(e.target.value)}
+          onChange={(event) => setFilterTemplate(event.target.value)}
           className="bg-[#152233] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-blue-500/50 cursor-pointer"
         >
           <option value="">Todos os templates</option>
-          {templates.map(template => (
+          {templates.map((template) => (
             <option key={template.id} value={template.id}>
               {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
             </option>
@@ -241,16 +244,16 @@ export default function AdminCustomers() {
 
         <select
           value={filterSector}
-          onChange={e => setFilterSector(e.target.value)}
+          onChange={(event) => setFilterSector(event.target.value)}
           className="bg-[#152233] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-blue-500/50 cursor-pointer"
         >
           <option value="">Todos os sectores</option>
-          {SECTORS.map(sector => <option key={sector} value={sector}>{sector}</option>)}
+          {SECTORS.map((sector) => <option key={sector} value={sector}>{sector}</option>)}
         </select>
 
         <select
           value={filterCompletion}
-          onChange={e => setFilterCompletion(e.target.value)}
+          onChange={(event) => setFilterCompletion(event.target.value)}
           className="bg-[#152233] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none focus:border-blue-500/50 cursor-pointer"
         >
           <option value="">Todos os estados</option>
@@ -289,13 +292,18 @@ export default function AdminCustomers() {
                 <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Sector</th>
                 <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Template</th>
                 <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium hidden xl:table-cell">Data Sub-Assessment</th>
+                <th className="text-left px-4 py-3 font-medium hidden xl:table-cell">Sub-Assessments</th>
                 <th className="text-right px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filtered.map(customer => {
+              {filtered.map((customer) => {
                 const assessment = mainAssessmentMap[customer.id];
+                const relatedSubs = assessment ? (subAssessmentMap[assessment.id] || []) : [];
+                const completedSubs = relatedSubs.filter((item) => item.status === 'completed').length;
+                const inProgressSubs = relatedSubs.filter((item) => item.status === 'in_progress').length;
+                const pendingSubs = relatedSubs.filter((item) => item.status === 'not_started').length;
+
                 return (
                   <tr key={customer.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3.5">
@@ -306,11 +314,11 @@ export default function AdminCustomers() {
                       <div className="text-white/80">{customer.company}</div>
                       <div className="text-xs text-white/40">{customer.role}</div>
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">{customer.sector || '—'}</td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">{customer.sector || 'â€”'}</td>
                     <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">
                       {assessment?.assessment_template_id && templateMap[assessment.assessment_template_id]
                         ? (templateMap[assessment.assessment_template_id].name_pt || templateMap[assessment.assessment_template_id].name_en)
-                        : '—'}
+                        : 'â€”'}
                     </td>
                     <td className="px-4 py-3.5">
                       {!assessment ? (
@@ -321,7 +329,7 @@ export default function AdminCustomers() {
                           Reviewed
                         </span>
                       ) : assessment.status === 'completed' ? (
-                        <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">✓ Completed</span>
+                        <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">Completed</span>
                       ) : assessment.status === 'in_progress' ? (
                         <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress</span>
                       ) : (
@@ -329,33 +337,26 @@ export default function AdminCustomers() {
                       )}
                     </td>
                     <td className="px-4 py-3.5 hidden xl:table-cell">
-                      {(() => {
-                        const subAssessment = assessment ? subAssessmentMap[assessment.id] : null;
-                        if (!assessment || assessment.status !== 'completed') return <span className="text-xs text-white/20">—</span>;
-                        if (!subAssessment) return <span className="text-xs text-white/30">Not triggered</span>;
-                        if (subAssessment.status === 'completed') {
-                          return (
-                            <div className="flex items-center gap-1.5">
-                              <Database className="w-3 h-3 text-orange-400" />
-                              <span className="text-xs text-orange-300 bg-orange-400/10 px-2 py-0.5 rounded-full">✓ Sub completed</span>
-                            </div>
-                          );
-                        }
-                        if (subAssessment.status === 'in_progress') {
-                          return (
-                            <div className="flex items-center gap-1.5">
-                              <Database className="w-3 h-3 text-yellow-400" />
-                              <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress</span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div className="flex items-center gap-1.5">
-                            <Database className="w-3 h-3 text-orange-500" />
-                            <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">Pending</span>
-                          </div>
-                        );
-                      })()}
+                      {!assessment || assessment.status !== 'completed' ? (
+                        <span className="text-xs text-white/20">â€”</span>
+                      ) : !relatedSubs.length ? (
+                        <span className="text-xs text-white/30">Not triggered</span>
+                      ) : completedSubs === relatedSubs.length ? (
+                        <div className="flex items-center gap-1.5">
+                          <Database className="w-3 h-3 text-orange-400" />
+                          <span className="text-xs text-orange-300 bg-orange-400/10 px-2 py-0.5 rounded-full">Completed: {completedSubs}</span>
+                        </div>
+                      ) : inProgressSubs > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <Database className="w-3 h-3 text-yellow-400" />
+                          <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">In Progress: {inProgressSubs}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <Database className="w-3 h-3 text-orange-500" />
+                          <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">Pending: {pendingSubs}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center justify-end gap-1">
@@ -408,28 +409,28 @@ export default function AdminCustomers() {
             <DialogTitle>{editCustomer ? 'Edit Customer' : 'Add Customer'}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2"><Label>Full Name *</Label><Input value={form.name} onChange={e => set('name', e.target.value)} className="mt-1" /></div>
-            <div className="col-span-2"><Label>Email *</Label><Input type="email" value={form.email} onChange={e => set('email', e.target.value)} className="mt-1" /></div>
-            <div className="col-span-2"><Label>Company *</Label><Input value={form.company} onChange={e => set('company', e.target.value)} className="mt-1" /></div>
-            <div><Label>Job Title *</Label><Input value={form.role} onChange={e => set('role', e.target.value)} className="mt-1" /></div>
-            <div><Label>Phone</Label><Input value={form.phone} onChange={e => set('phone', e.target.value)} className="mt-1" /></div>
+            <div className="col-span-2"><Label>Full Name *</Label><Input value={form.name} onChange={(event) => set('name', event.target.value)} className="mt-1" /></div>
+            <div className="col-span-2"><Label>Email *</Label><Input type="email" value={form.email} onChange={(event) => set('email', event.target.value)} className="mt-1" /></div>
+            <div className="col-span-2"><Label>Company *</Label><Input value={form.company} onChange={(event) => set('company', event.target.value)} className="mt-1" /></div>
+            <div><Label>Job Title *</Label><Input value={form.role} onChange={(event) => set('role', event.target.value)} className="mt-1" /></div>
+            <div><Label>Phone</Label><Input value={form.phone} onChange={(event) => set('phone', event.target.value)} className="mt-1" /></div>
             <div>
               <Label>Sector</Label>
-              <Select value={form.sector} onValueChange={v => set('sector', v)}>
+              <Select value={form.sector} onValueChange={(value) => set('sector', value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{SECTORS.map(sector => <SelectItem key={sector} value={sector}>{sector}</SelectItem>)}</SelectContent>
+                <SelectContent>{SECTORS.map((sector) => <SelectItem key={sector} value={sector}>{sector}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Company Size</Label>
-              <Select value={form.company_size} onValueChange={v => set('company_size', v)}>
+              <Select value={form.company_size} onValueChange={(value) => set('company_size', value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{SIZES.map(size => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectContent>
+                <SelectContent>{SIZES.map((size) => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Language</Label>
-              <Select value={form.language} onValueChange={v => set('language', v)}>
+              <Select value={form.language} onValueChange={(value) => set('language', value)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pt">PT Portugues</SelectItem>
@@ -439,11 +440,11 @@ export default function AdminCustomers() {
             </div>
             <div className="col-span-2">
               <Label>Assessment Template {!editCustomer && '*'}</Label>
-              <Select value={form.template_id || 'none'} onValueChange={v => set('template_id', v === 'none' ? '' : v)}>
+              <Select value={form.template_id || 'none'} onValueChange={(value) => set('template_id', value === 'none' ? '' : value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select template..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— None —</SelectItem>
-                  {templates.filter(template => template.active).map(template => (
+                  <SelectItem value="none">â€” None â€”</SelectItem>
+                  {templates.filter((template) => template.active).map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
                     </SelectItem>
@@ -453,15 +454,15 @@ export default function AdminCustomers() {
             </div>
             <div className="col-span-2">
               <Label>Account Manager</Label>
-              <Select value={form.account_manager_id || 'none'} onValueChange={v => set('account_manager_id', v === 'none' ? '' : v)}>
+              <Select value={form.account_manager_id || 'none'} onValueChange={(value) => set('account_manager_id', value === 'none' ? '' : value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Assign account manager..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— None —</SelectItem>
-                  {amUsers.map(userRecord => <SelectItem key={userRecord.id} value={userRecord.id}>{userRecord.full_name || userRecord.email}</SelectItem>)}
+                  <SelectItem value="none">â€” None â€”</SelectItem>
+                  {amUsers.map((userRecord) => <SelectItem key={userRecord.id} value={userRecord.id}>{userRecord.full_name || userRecord.email}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="col-span-2"><Label>Notes</Label><Input value={form.notes} onChange={e => set('notes', e.target.value)} className="mt-1" placeholder="Internal notes..." /></div>
+            <div className="col-span-2"><Label>Notes</Label><Input value={form.notes} onChange={(event) => set('notes', event.target.value)} className="mt-1" placeholder="Internal notes..." /></div>
           </div>
           {saveError && <p className="text-sm text-red-500">{saveError}</p>}
           <div className="flex gap-2 pt-2">
@@ -480,7 +481,7 @@ export default function AdminCustomers() {
 
       <Dialog open={!!qrCustomer} onOpenChange={() => setQrCustomer(null)}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>QR Code – {qrCustomer?.company}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>QR Code â€“ {qrCustomer?.company}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground text-center">{qrCustomer?.name}</p>
           {qrCustomer?.qr_token && <QRCodeDisplay token={qrCustomer.qr_token} size={200} />}
         </DialogContent>

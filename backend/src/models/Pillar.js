@@ -16,13 +16,16 @@ const pillarSchema = new mongoose.Schema({
     enum: ['main', 'sub_assessment'],
     default: 'main'
   },
-  assessment_template_id: { type: String, default: null, index: true }
+  assessment_template_id: { type: String, default: null, index: true },
+  min_score: { type: Number, default: null },
+  sub_assessment_template_id: { type: String, default: null, index: true }
 }, schemaOptions);
 
 pillarSchema.index({ code: 1 });
 pillarSchema.index({ order: 1 });
 pillarSchema.index({ assessment_type: 1 });
 pillarSchema.index({ assessment_template_id: 1, order: 1 });
+pillarSchema.index({ sub_assessment_template_id: 1 });
 pillarSchema.index(
   { code: 1, assessment_type: 1, assessment_template_id: 1 },
   { unique: true }

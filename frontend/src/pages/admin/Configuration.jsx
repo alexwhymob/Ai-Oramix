@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users, Shield, Loader2, Check, HelpCircle } from 'lucide-react';
 import QuestionManager from '@/components/QuestionManager';
+import PresentationTemplateManager from '@/components/PresentationTemplateManager';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
@@ -81,10 +82,14 @@ export default function AdminConfiguration() {
           <button onClick={() => setActiveTab('questions')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'questions' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
             <HelpCircle className="w-3.5 h-3.5" /> Questions
           </button>
+          <button onClick={() => setActiveTab('presentations')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'presentations' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
+            <Shield className="w-3.5 h-3.5" /> Presentations
+          </button>
         </div>
       </div>
 
       {activeTab === 'questions' && <QuestionManager />}
+      {activeTab === 'presentations' && <PresentationTemplateManager />}
 
       {activeTab === 'users' && <>
       {/* Role reference */}

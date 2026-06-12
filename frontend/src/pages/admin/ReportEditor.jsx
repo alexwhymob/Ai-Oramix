@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Download, Mail, Sparkles, CheckCircle2, Loader2, FileText, Settings2 } from 'lucide-react';
+import { ArrowLeft, Download, Mail, Sparkles, CheckCircle2, Loader2, FileText, Settings2, FileChartColumnIncreasing } from 'lucide-react';
 import { exportReportPDF } from '@/lib/exportPdf';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import html2canvas from 'html2canvas';
@@ -28,6 +28,9 @@ export default function AdminReportEditor() {
   const [emailing, setEmailing] = useState(false);
   const [reportLang, setReportLang] = useState('pt');
   const [showPdfPicker, setShowPdfPicker] = useState(false);
+  const [exportingPpt, setExportingPpt] = useState(false);
+  const [presentationTemplateId, setPresentationTemplateId] = useState('');
+  const [selectedSubAssessmentId, setSelectedSubAssessmentId] = useState('');
   const [pdfSections, setPdfSections] = useState([1,2,3,4,5,6,7,8,9]);
   const [pdfVisuals, setPdfVisuals] = useState(true);
 
@@ -42,23 +45,44 @@ export default function AdminReportEditor() {
   });
   const { data: consultantNotes = [] } = useQuery({ queryKey: ['notes_report', report?.assessment_id], queryFn: () => base44.entities.ConsultantNote.filter({ assessment_id: report.assessment_id }), enabled: !!report?.assessment_id });
   const { data: subAssessments = [] } = useQuery({ queryKey: ['sub_assessments_r', report?.assessment_id], queryFn: () => base44.entities.Assessment.filter({ parent_assessment_id: report.assessment_id }), enabled: !!report?.assessment_id });
-  const subAssessment = subAssessments[0];
+  const { data: presentationTemplates = [] } = useQuery({
+    queryKey: ['presentation_templates_active'],
+    queryFn: () => base44.entities.PresentationTemplate.filter({ active: true }, 'sort_order')
+  });
+  const selectedSubAssessment = subAssessments.find((item) => item.id === selectedSubAssessmentId) || null;
+  const subAssessment = selectedSubAssessment || subAssessments.find((item) => item.status === 'completed') || subAssessments[0] || null;
   const template = templateList[0] || null;
+  const selectedPresentationTemplate = presentationTemplates.find((item) => item.id === presentationTemplateId) || null;
   const subPillarScores = useMemo(() => { try { return JSON.parse(subAssessment?.pillar_scores || '[]'); } catch { return []; } }, [subAssessment?.pillar_scores]);
+  const rawPillarScores = useMemo(() => { try { return JSON.parse(assessment?.pillar_scores || '[]'); } catch { return []; } }, [assessment?.pillar_scores]);
   const subPillars = useMemo(() => pillars.filter(p => p.assessment_type === 'sub_assessment'), [pillars]);
-  const mainPillars = useMemo(() => pillars.filter((pillar) => {
-    if (pillar.assessment_type === 'sub_assessment') return false;
+  const mainPillars = useMemo(() => {
+    const nonSubPillars = pillars.filter((pillar) => pillar.assessment_type !== 'sub_assessment');
+
     if (assessment?.assessment_template_id) {
-      return pillar.assessment_template_id === assessment.assessment_template_id;
+      return nonSubPillars.filter((pillar) => pillar.assessment_template_id === assessment.assessment_template_id);
     }
-    return !pillar.assessment_template_id;
-  }), [pillars, assessment?.assessment_template_id]);
+
+    const defaultPillars = nonSubPillars.filter((pillar) => !pillar.assessment_template_id);
+    if (defaultPillars.length > 0) {
+      return defaultPillars;
+    }
+
+    const scoreCodes = new Set(rawPillarScores.map((score) => score?.code).filter(Boolean));
+    if (scoreCodes.size > 0) {
+      const matchedByCode = nonSubPillars.filter((pillar) => scoreCodes.has(pillar.code));
+      if (matchedByCode.length > 0) {
+        return matchedByCode;
+      }
+    }
+
+    return nonSubPillars;
+  }, [pillars, assessment?.assessment_template_id, rawPillarScores]);
   const pillarScores = useMemo(() => {
     try {
-      const parsed = JSON.parse(assessment?.pillar_scores || '[]');
       const pillarMap = new Map(mainPillars.map((pillar) => [pillar.code, pillar]));
 
-      return parsed
+      return rawPillarScores
         .map((score) => {
           const pillar = pillarMap.get(score.code);
           if (!pillar) return null;
@@ -74,7 +98,34 @@ export default function AdminReportEditor() {
     } catch {
       return [];
     }
-  }, [assessment?.pillar_scores, mainPillars]);
+  }, [rawPillarScores, mainPillars]);
+  const getPillarLabel = (pillarCode) => {
+    if (!pillarCode) return null;
+    const pillar = pillars.find((item) => item.code === pillarCode);
+    return pillar?.name_pt || pillar?.name_en || pillarCode;
+  };
+
+  useEffect(() => {
+    if (presentationTemplateId || presentationTemplates.length === 0) return;
+    const preferred = presentationTemplates.find((item) => item.is_default) || presentationTemplates[0];
+    if (preferred) {
+      setPresentationTemplateId(preferred.id);
+    }
+  }, [presentationTemplates, presentationTemplateId]);
+
+  useEffect(() => {
+    if (!subAssessments.length) {
+      setSelectedSubAssessmentId('');
+      return;
+    }
+
+    if (selectedSubAssessmentId && subAssessments.some((item) => item.id === selectedSubAssessmentId)) {
+      return;
+    }
+
+    const preferred = subAssessments.find((item) => item.status === 'completed') || subAssessments[0];
+    setSelectedSubAssessmentId(preferred?.id || '');
+  }, [subAssessments, selectedSubAssessmentId]);
 
   const handleToggleReviewed = async () => {
     await base44.entities.Assessment.update(report.assessment_id, { reviewed_by_consultant: !assessment?.reviewed_by_consultant });
@@ -138,7 +189,21 @@ export default function AdminReportEditor() {
         }
       }
     }
-    await exportReportPDF(report, assessment, customer, pdfSections, pdfVisuals, visualImages, consultantNotes, subAssessment, subPillarScores, subPillars, subVisualImages, template);
+    await exportReportPDF(
+      report,
+      assessment,
+      customer,
+      pdfSections,
+      pdfVisuals,
+      visualImages,
+      consultantNotes,
+      subAssessment,
+      subPillarScores,
+      subPillars,
+      subVisualImages,
+      template,
+      mainPillars
+    );
     toast.success('PDF exported!');
   };
 
@@ -155,6 +220,47 @@ export default function AdminReportEditor() {
       toast.error('Failed to send email: ' + (err?.data?.message || err.message));
     }
     setEmailing(false);
+  };
+
+  const handleExportPPT = async () => {
+    if (!report || !assessment || !customer) return;
+
+    setExportingPpt(true);
+    try {
+      const res = await base44.functions.invoke('exportPresentation', {
+        assessmentId: report.assessment_id,
+        language: reportLang,
+        presentationTemplateId: presentationTemplateId || undefined
+      });
+
+      if (!res.data?.success || !res.data?.contentBase64) {
+        toast.error('Failed to export PowerPoint');
+        return;
+      }
+
+      const byteCharacters = atob(res.data.contentBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i += 1) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], {
+        type: res.data.mimeType || 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = res.data.fileName || 'presentation.pptx';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success('PowerPoint exported!');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Failed to export PowerPoint');
+    } finally {
+      setExportingPpt(false);
+    }
   };
 
   if (isLoading) return <div className="p-6 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>;
@@ -181,6 +287,36 @@ export default function AdminReportEditor() {
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">
+          {subAssessments.length > 1 && (
+            <Select value={selectedSubAssessmentId} onValueChange={setSelectedSubAssessmentId}>
+              <SelectTrigger className="bg-[#152233] border-white/10 text-white h-8 min-w-52 text-xs">
+                <SelectValue placeholder="Sub-Assessment" />
+              </SelectTrigger>
+              <SelectContent>
+                {subAssessments.map((item, index) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {`Sub-Assessment ${index + 1} - ${getPillarLabel(item.sub_assessment_for_pillar) || item.id.slice(0, 8)}${item.status === 'completed' ? ' (Completed)' : item.status === 'in_progress' ? ' (In progress)' : ' (Pending)'}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {presentationTemplates.length > 0 && (
+            <Select value={presentationTemplateId} onValueChange={setPresentationTemplateId}>
+              <SelectTrigger className="bg-[#152233] border-white/10 text-white h-8 min-w-52 text-xs">
+                <SelectValue placeholder="PPT Template" />
+              </SelectTrigger>
+              <SelectContent>
+                {presentationTemplates.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}{item.is_default ? ' (Default)' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <Select value={reportLang} onValueChange={setReportLang}>
             <SelectTrigger className="bg-[#152233] border-white/10 text-white h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="pt">🇵🇹 PT</SelectItem><SelectItem value="en">🇬🇧 EN</SelectItem></SelectContent>
@@ -194,6 +330,13 @@ export default function AdminReportEditor() {
           {completedSections > 0 && !isAiConsultant && (
             <Button size="sm" onClick={() => setShowPdfPicker(true)} variant="outline" className="border-white/20 text-white hover:bg-white/10 gap-1.5">
               <Download className="w-3.5 h-3.5" /> Export PDF
+            </Button>
+          )}
+
+          {completedSections > 0 && !isAiConsultant && (
+            <Button size="sm" onClick={handleExportPPT} disabled={exportingPpt} variant="outline" className="border-white/20 text-white hover:bg-white/10 gap-1.5">
+              {exportingPpt ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileChartColumnIncreasing className="w-3.5 h-3.5" />}
+              Export PPT
             </Button>
           )}
 
@@ -311,10 +454,11 @@ export default function AdminReportEditor() {
             content={report[`section_${n}`]}
             onSave={(value) => updateSection(`section_${n}`, value)}
             sectionKey={`section_${n}`}
-            extraData={n === 6 ? { consultantNotes } : undefined}
+            extraData={n === 6 ? { consultantNotes, pillars: mainPillars } : undefined}
           />
         ))}
       </div>
     </div>
   );
 }
+

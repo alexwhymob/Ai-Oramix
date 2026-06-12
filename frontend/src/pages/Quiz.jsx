@@ -108,11 +108,7 @@ export default function Quiz() {
       maturityLevel: maturity.key,
       pillarScores,
     });
-    // Trigger sub-assessment creation if data pillar score < 2.5
-    const dataScore = pillarScores.find(p => p.code === 'dados')?.score;
-    if (dataScore !== undefined && dataScore < 2.5) {
-      await base44.functions.invoke('createDataSubAssessment', { event: { entity_id: assessmentId } });
-    }
+    await base44.functions.invoke('createDataSubAssessment', { event: { entity_id: assessmentId } });
     localStorage.removeItem(`quiz_${token}`);
     navigate(`/complete/${assessmentId}`);
   };

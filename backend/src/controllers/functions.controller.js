@@ -3,6 +3,7 @@ import { createDataSubAssessment } from '../services/subAssessment.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 import { generateReport } from '../services/reportGeneration.service.js';
 import { sendReport } from '../services/reportEmail.service.js';
+import { exportPresentation } from '../services/presentationExport.service.js';
 import { applyFunctionWriteDefaults, assertFunctionAccess } from '../entities/entityAccess.js';
 
 const AUDIT_ACTIONS = {
@@ -42,15 +43,19 @@ export async function invokeFunction(req, res, next) {
 
     if (functionName === 'createDataSubAssessment') {
       const result = await createDataSubAssessment(req.body);
+      const createdCount = Array.isArray(result.created) ? result.created.length : 0;
+      const firstCreatedId = result.subAssessmentId || result.created?.[0]?.subAssessmentId || null;
       await writeAuditLog({
         req,
-        action: result.success ? 'sub_assessment.create_data' : 'sub_assessment.skip_data',
+        action: result.success ? 'sub_assessment.create' : 'sub_assessment.skip',
         entity: 'Assessment',
-        entity_id: result.subAssessmentId || req.body?.event?.entity_id || null,
+        entity_id: firstCreatedId || req.body?.event?.entity_id || null,
         metadata: {
           parentAssessmentId: req.body?.event?.entity_id,
           reason: result.reason,
-          dataScore: result.dataScore
+          createdCount,
+          created: result.created,
+          skipped: result.skippedItems || result.skipped
         }
       });
       res.json(result);
@@ -85,6 +90,23 @@ export async function invokeFunction(req, res, next) {
           to: result.to,
           provider: result.provider,
           messageId: result.messageId
+        }
+      });
+      res.json(result);
+      return;
+    }
+
+    if (functionName === 'exportPresentation') {
+      const result = await exportPresentation(req.body, { actor: req.user });
+      await writeAuditLog({
+        req,
+        action: 'report.export_presentation',
+        entity: 'Assessment',
+        entity_id: req.body?.assessmentId || null,
+        metadata: {
+          presentationTemplateId: req.body?.presentationTemplateId || null,
+          language: req.body?.language || 'pt',
+          fileName: result.fileName
         }
       });
       res.json(result);
