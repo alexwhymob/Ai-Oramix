@@ -1,18 +1,32 @@
 import {
+  AssessmentTemplate,
   Assessment,
   Customer,
+  MaturityLevel,
+  MaturityPreset,
+  NotificationTemplate,
   Report
 } from '../models/index.js';
 import { sendEmail } from './email/emailClient.js';
 import { getMaturityLabel } from './reportGeneration.service.js';
+import { resolveMaturityForAssessment } from './maturity.service.js';
+import {
+  buildTemplateVariables,
+  buildTemplateVariablesWithMaturity,
+  renderNotificationTemplate
+} from './notificationTemplate.service.js';
 
 export const sendReport = createSendReport();
 
 export function createSendReport(deps = {}) {
   const models = {
     Assessment: deps.Assessment || Assessment,
+    AssessmentTemplate: deps.AssessmentTemplate || AssessmentTemplate,
     Customer: deps.Customer || Customer,
-    Report: deps.Report || Report
+    MaturityLevel: Object.keys(deps).length > 0 ? (deps.MaturityLevel ?? null) : MaturityLevel,
+    MaturityPreset: Object.keys(deps).length > 0 ? (deps.MaturityPreset ?? null) : MaturityPreset,
+    Report: deps.Report || Report,
+    NotificationTemplate: deps.NotificationTemplate || NotificationTemplate
   };
   const email = deps.email || { sendEmail };
 
@@ -36,9 +50,12 @@ export function createSendReport(deps = {}) {
       throw error;
     }
 
-    const [customer, report] = await Promise.all([
+    const [customer, report, assessmentTemplate] = await Promise.all([
       models.Customer.findOne({ id: assessment.customer_id }).lean(),
-      models.Report.findOne({ assessment_id: assessmentId }).lean()
+      models.Report.findOne({ assessment_id: assessmentId }).lean(),
+      assessment.assessment_template_id
+        ? models.AssessmentTemplate.findOne({ id: assessment.assessment_template_id }).lean()
+        : null
     ]);
 
     if (!customer?.email) {
@@ -55,15 +72,36 @@ export function createSendReport(deps = {}) {
       throw error;
     }
 
-    const message = buildReportReadyEmail({
+    const maturity = await resolveMaturityForAssessment({
       assessment,
-      customer,
-      appUrl: payload.appUrl
+      assessmentTemplate,
+      language: customer?.language === 'en' ? 'en' : 'pt',
+      models
     });
+
+    const notificationTemplate = await models.NotificationTemplate.findOne?.({ key: 'report_ready', is_active: true })?.lean?.();
+    const message = notificationTemplate
+      ? renderNotificationTemplate(
+        notificationTemplate,
+        buildTemplateVariablesWithMaturity({
+          assessment,
+          customer,
+          appUrl: payload.appUrl,
+          maturityLabel: maturity.label
+        }),
+        customer.language === 'en' ? 'en' : 'pt'
+      )
+      : buildReportReadyEmail({
+        assessment,
+        customer,
+        appUrl: payload.appUrl,
+        maturityLabel: maturity.label
+      });
     const delivery = await email.sendEmail({
       to: customer.email,
       subject: message.subject,
-      text: message.text
+      text: message.text,
+      ...(message.html ? { html: message.html } : {})
     });
 
     return {
@@ -75,10 +113,10 @@ export function createSendReport(deps = {}) {
   };
 }
 
-export function buildReportReadyEmail({ assessment, customer, appUrl = null }) {
+export function buildReportReadyEmail({ assessment, customer, appUrl = null, maturityLabel = null }) {
   const language = customer.language === 'en' ? 'en' : 'pt';
   const isPt = language === 'pt';
-  const maturityLabel = getMaturityLabel(assessment.global_score, language);
+  const resolvedMaturityLabel = maturityLabel || getMaturityLabel(assessment.global_score, language);
   const score = formatScore(assessment.global_score);
 
   const subject = isPt
@@ -100,7 +138,7 @@ export function buildReportReadyEmail({ assessment, customer, appUrl = null }) {
       'O seu Relatorio de Maturidade em IA esta pronto.',
       '',
       `Score Global: ${score}/5.0`,
-      `Nivel de Maturidade: ${maturityLabel}`,
+      `Nivel de Maturidade: ${resolvedMaturityLabel}`,
       '',
       accessLine,
       '',
@@ -113,7 +151,7 @@ export function buildReportReadyEmail({ assessment, customer, appUrl = null }) {
       'Your AI Readiness Report is ready.',
       '',
       `Global Score: ${score}/5.0`,
-      `Maturity Level: ${maturityLabel}`,
+      `Maturity Level: ${resolvedMaturityLabel}`,
       '',
       accessLine,
       '',

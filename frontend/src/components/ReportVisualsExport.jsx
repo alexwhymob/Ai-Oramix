@@ -1,11 +1,14 @@
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, XAxis, YAxis, Cell } from 'recharts';
 import { getMaturityLevel } from '@/lib/scoring';
+import { getLevelDisplayColor, useMaturityData } from '@/lib/useMaturity';
 
 const scoreColor = (s) => s < 2 ? '#ef4444' : s < 3 ? '#f97316' : s < 3.6 ? '#eab308' : s < 4.3 ? '#22c55e' : '#3b82f6';
 
 export default function ReportVisualsExport({ pillarScores = [], globalScore, lang = 'pt', customer, template = null }) {
-  const level = getMaturityLevel(globalScore);
-  const color = scoreColor(globalScore);
+  const { resolveLevel } = useMaturityData();
+  const presetId = template?.maturity_preset_id || null;
+  const level = resolveLevel(globalScore, presetId);
+  const color = getLevelDisplayColor(level, scoreColor(globalScore));
   const pct = (globalScore / 5) * 100;
   const r = 56;
   const circ = 2 * Math.PI * r;
@@ -20,7 +23,8 @@ export default function ReportVisualsExport({ pillarScores = [], globalScore, la
 
   const barData = pillarScores.map((p) => ({
     shortName: ((lang === 'en' ? p.name_en : p.name_pt) || p.code).slice(0, 18),
-    score: parseFloat((p.score || 0).toFixed(2))
+    score: parseFloat((p.score || 0).toFixed(2)),
+    color: getLevelDisplayColor(resolveLevel(p.score, presetId), scoreColor(p.score))
   }));
 
   const bg = '#0f1d2e';
@@ -83,7 +87,7 @@ export default function ReportVisualsExport({ pillarScores = [], globalScore, la
             <YAxis type="category" dataKey="shortName" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} width={120} axisLine={false} tickLine={false} />
             <Bar dataKey="score" radius={[0, 6, 6, 0]} label={{ position: 'right', fill: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 600, formatter: (value) => `${value}/5` }}>
               {barData.map((entry, index) => (
-                <Cell key={index} fill={scoreColor(entry.score)} />
+                <Cell key={index} fill={entry.color} />
               ))}
             </Bar>
           </BarChart>
@@ -93,7 +97,7 @@ export default function ReportVisualsExport({ pillarScores = [], globalScore, la
       <div style={{ padding: '0 16px 16px' }}>
         <div id="vx-grid" style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: 16, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           {pillarScores.map((p) => {
-            const entryColor = scoreColor(p.score);
+            const entryColor = getLevelDisplayColor(resolveLevel(p.score, presetId), scoreColor(p.score));
             const entryPct = Math.round((p.score / 5) * 100);
 
             return (

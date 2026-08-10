@@ -5,9 +5,15 @@ import {
   AuditLog,
   ConsultantNote,
   Customer,
+  HtmlReportConfig,
+  MaturityLevel,
+  MaturityPreset,
   Pillar,
+  NotificationTemplate,
   Question,
   Report,
+  ReportSection,
+  ReportTemplate,
   User
 } from '../src/models/index.js';
 import { getEntityModel } from '../src/entities/entityRegistry.js';
@@ -81,6 +87,12 @@ describe('Mongoose models', () => {
       Pillar,
       Question,
       Report,
+      ReportTemplate,
+      ReportSection,
+      NotificationTemplate,
+      MaturityPreset,
+      MaturityLevel,
+      HtmlReportConfig,
       ConsultantNote,
       User,
       AuditLog
@@ -91,6 +103,12 @@ describe('Mongoose models', () => {
       'Pillar',
       'Question',
       'Report',
+      'ReportTemplate',
+      'ReportSection',
+      'NotificationTemplate',
+      'MaturityPreset',
+      'MaturityLevel',
+      'HtmlReportConfig',
       'ConsultantNote',
       'User',
       'AuditLog'

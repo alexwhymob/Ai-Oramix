@@ -130,6 +130,20 @@ describe('report generation service', () => {
         findOne: vi.fn().mockResolvedValue(reportDocument),
         create: vi.fn()
       },
+      ReportTemplate: {
+        findOne: vi.fn().mockReturnValue({
+          sort: vi.fn().mockReturnValue({
+            lean: vi.fn().mockResolvedValue(null)
+          })
+        })
+      },
+      ReportSection: {
+        find: vi.fn().mockReturnValue({
+          sort: vi.fn().mockReturnValue({
+            lean: vi.fn().mockResolvedValue([])
+          })
+        })
+      },
       llm: {
         generateStructuredObject: vi.fn().mockResolvedValue({ section_1: '## Summary' })
       },

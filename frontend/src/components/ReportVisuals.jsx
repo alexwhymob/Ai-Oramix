@@ -1,15 +1,17 @@
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { getMaturityLevel } from '@/lib/scoring';
+import { getLevelDisplayColor, useMaturityData } from '@/lib/useMaturity';
 
 const scoreColor = (s) => s < 2 ? '#ef4444' : s < 3 ? '#f97316' : s < 3.6 ? '#eab308' : s < 4.3 ? '#22c55e' : '#3b82f6';
 
-function ScoreRing({ score, lang = 'pt' }) {
+function ScoreRing({ score, lang = 'pt', presetId = null }) {
+  const { resolveLevel } = useMaturityData();
   const pct = (score / 5) * 100;
   const r = 38;
   const circ = 2 * Math.PI * r;
   const dash = (pct / 100) * circ;
-  const color = scoreColor(score);
-  const level = getMaturityLevel(score);
+  const level = resolveLevel(score, presetId);
+  const color = getLevelDisplayColor(level, scoreColor(score));
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -42,7 +44,9 @@ function ScoreRing({ score, lang = 'pt' }) {
 }
 
 export default function ReportVisuals({ pillarScores = [], globalScore, lang = 'pt', customer, template = null }) {
+  const { resolveLevel } = useMaturityData();
   const templateLabel = template ? (lang === 'en' ? template.name_en || template.name_pt : template.name_pt) : null;
+  const presetId = template?.maturity_preset_id || null;
 
   const radarData = pillarScores.map((p) => ({
     subject: (lang === 'en' ? p.name_en : p.name_pt)?.slice(0, 10) || p.code,
@@ -54,7 +58,8 @@ export default function ReportVisuals({ pillarScores = [], globalScore, lang = '
     name: (lang === 'en' ? p.name_en : p.name_pt) || p.code,
     shortName: ((lang === 'en' ? p.name_en : p.name_pt) || p.code).slice(0, 14),
     score: parseFloat((p.score || 0).toFixed(2)),
-    weight: p.weight
+    weight: p.weight,
+    color: getLevelDisplayColor(resolveLevel(p.score, presetId), scoreColor(p.score))
   }));
 
   const CustomBarLabel = ({ x, y, width, value }) => (
@@ -75,7 +80,7 @@ export default function ReportVisuals({ pillarScores = [], globalScore, lang = '
       <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         <div className="flex flex-col items-center gap-3">
           <div className="text-xs text-white/40 font-medium uppercase tracking-wider">Global Score</div>
-          <ScoreRing score={globalScore} lang={lang} />
+          <ScoreRing score={globalScore} lang={lang} presetId={presetId} />
           {customer && (
             <div className="text-center">
               <div className="text-sm font-bold text-white">{customer.company}</div>
@@ -111,7 +116,7 @@ export default function ReportVisuals({ pillarScores = [], globalScore, lang = '
               />
               <Bar dataKey="score" radius={[0, 4, 4, 0]} label={<CustomBarLabel />}>
                 {barData.map((entry, index) => (
-                  <Cell key={index} fill={scoreColor(entry.score)} />
+                  <Cell key={index} fill={entry.color} />
                 ))}
               </Bar>
             </BarChart>
@@ -121,7 +126,7 @@ export default function ReportVisuals({ pillarScores = [], globalScore, lang = '
 
       <div className="px-5 pb-5 grid grid-cols-2 sm:grid-cols-3 gap-2">
         {pillarScores.map((p) => {
-          const color = scoreColor(p.score);
+          const color = getLevelDisplayColor(resolveLevel(p.score, presetId), scoreColor(p.score));
           const pct = Math.round((p.score / 5) * 100);
 
           return (

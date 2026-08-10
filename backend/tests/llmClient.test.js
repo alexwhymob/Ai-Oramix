@@ -3,10 +3,10 @@ import { createProviderClient } from '../src/services/llm/llmClient.js';
 import { generateStructuredObjectWithOpenAI } from '../src/services/llm/openai.provider.js';
 
 describe('llm client', () => {
-  it('rejects unsupported providers with a clear error', () => {
+  it('requires ANTHROPIC_API_KEY for the anthropic provider', () => {
     expect(() => createProviderClient({
       LLM_PROVIDER: 'anthropic'
-    })).toThrow(/not implemented yet/);
+    })).toThrow(/ANTHROPIC_API_KEY is required/);
   });
 
   it('requires OPENAI_API_KEY for the openai provider', () => {

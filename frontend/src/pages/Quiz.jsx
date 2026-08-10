@@ -8,7 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import QuestionCard from '@/components/QuestionCard';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/lib/useLanguage';
-import { calculateScores, getMaturityLevel } from '@/lib/scoring';
+import { calculateScores } from '@/lib/scoring';
+import { useMaturityData } from '@/lib/useMaturity';
 import { base44 } from '@/api/base44Client';
 
 export default function Quiz() {
@@ -24,6 +25,7 @@ export default function Quiz() {
   const [sessionError, setSessionError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const { resolveLevel } = useMaturityData();
 
   const { data: allPillars = [] } = useQuery({
     queryKey: ['pillars'],
@@ -44,6 +46,11 @@ export default function Quiz() {
   const { data: rawQuestions = [] } = useQuery({
     queryKey: ['questions'],
     queryFn: () => base44.entities.Question.list('order'),
+  });
+  const { data: assessmentTemplate } = useQuery({
+    queryKey: ['assessment-template', templateId],
+    queryFn: () => base44.entities.AssessmentTemplate.get(templateId),
+    enabled: !!templateId
   });
   const allQuestions = useMemo(() => {
     const pillarCodes = new Set(pillars.map(pillar => pillar.code));
@@ -95,7 +102,7 @@ export default function Quiz() {
     if (!assessmentId) return;
     setSubmitting(true);
     const { pillarScores, globalScore } = calculateScores(pillars, allQuestions, answers);
-    const maturity = getMaturityLevel(globalScore);
+    const maturity = resolveLevel(globalScore, assessmentTemplate?.maturity_preset_id);
     const answerRecords = Object.entries(answers).map(([questionId, value]) => {
       const q = allQuestions.find(q => q.id === questionId);
       return { assessment_id: assessmentId, question_id: questionId, question_code: q?.code, pillar_code: q?.pillar_code, value };

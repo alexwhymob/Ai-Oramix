@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, Shield, Loader2, Check, HelpCircle } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Bot, Check, Edit2, HelpCircle, Loader2, Mail, Power, Shield, UserPlus, Users } from 'lucide-react';
 import QuestionManager from '@/components/QuestionManager';
+import NotificationManager from '@/components/NotificationManager';
 import PresentationTemplateManager from '@/components/PresentationTemplateManager';
+import AiProviderSettings from '@/components/AiProviderSettings';
+import MaturityPresetManager from '@/components/MaturityPresetManager';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { useCurrentUser } from '@/lib/useCurrentUser';
@@ -24,16 +30,36 @@ const ROLE_PERMS = {
 export default function AdminConfiguration() {
   const { user: currentUser, isAdmin } = useCurrentUser();
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [savingId, setSavingId] = useState(null);
+  const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('ai_consultant');
   const [inviting, setInviting] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', role: 'ai_consultant', active: true });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['all_users'],
     queryFn: () => base44.entities.User.list(),
     enabled: isAdmin,
   });
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((left, right) => {
+      if ((left.active ?? true) !== (right.active ?? true)) {
+        return (left.active ?? true) ? -1 : 1;
+      }
+      return String(left.full_name || left.email).localeCompare(String(right.full_name || right.email));
+    });
+  }, [users]);
+
+  const initialTab = ['users', 'questions', 'provider-ai', 'maturity', 'notifications', 'presentations'].includes(searchParams.get('tab'))
+    ? searchParams.get('tab')
+    : 'users';
+  const initialTemplateId = searchParams.get('templateId') || 'all';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   if (!isAdmin) {
     return (
@@ -46,19 +72,12 @@ export default function AdminConfiguration() {
     );
   }
 
-  const handleRoleChange = async (userId, newRole) => {
-    setSavingId(userId);
-    await base44.entities.User.update(userId, { role: newRole });
-    qc.invalidateQueries({ queryKey: ['all_users'] });
-    setSavingId(null);
-    toast.success('Role updated');
-  };
-
   const handleInvite = async () => {
     if (!inviteEmail) return;
     setInviting(true);
     try {
-      await base44.users.inviteUser(inviteEmail, inviteRole);
+      await base44.users.inviteUser(inviteEmail, inviteRole, inviteName);
+      setInviteName('');
       setInviteEmail('');
       toast.success(`Invitation sent to ${inviteEmail}`);
       qc.invalidateQueries({ queryKey: ['all_users'] });
@@ -67,7 +86,53 @@ export default function AdminConfiguration() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState('users');
+  const handleToggleActive = async (user) => {
+    setSavingId(user.id);
+    try {
+      await base44.users.updateUser(user.id, { active: !(user.active ?? true) });
+      toast.success((user.active ?? true) ? 'User inactivated' : 'User activated');
+      qc.invalidateQueries({ queryKey: ['all_users'] });
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleResendInvite = async (user) => {
+    setSavingId(user.id);
+    try {
+      await base44.users.resendInvite(user.id, {
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role
+      });
+      toast.success(`Invitation resent to ${user.email}`);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const openEditUser = (user) => {
+    setEditingUser(user);
+    setEditForm({
+      full_name: user.full_name || '',
+      email: user.email || '',
+      role: user.role || 'ai_consultant',
+      active: user.active ?? true
+    });
+  };
+
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+    setSavingEdit(true);
+    try {
+      await base44.users.updateUser(editingUser.id, editForm);
+      toast.success('User updated');
+      setEditingUser(null);
+      qc.invalidateQueries({ queryKey: ['all_users'] });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -82,112 +147,193 @@ export default function AdminConfiguration() {
           <button onClick={() => setActiveTab('questions')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'questions' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
             <HelpCircle className="w-3.5 h-3.5" /> Questions
           </button>
+          <button onClick={() => setActiveTab('provider-ai')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'provider-ai' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
+            <Bot className="w-3.5 h-3.5" /> Provider AI
+          </button>
+          <button onClick={() => setActiveTab('maturity')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'maturity' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
+            <Shield className="w-3.5 h-3.5" /> Maturity
+          </button>
+          <button onClick={() => setActiveTab('notifications')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'notifications' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
+            <Mail className="w-3.5 h-3.5" /> Notifications
+          </button>
           <button onClick={() => setActiveTab('presentations')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'presentations' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
             <Shield className="w-3.5 h-3.5" /> Presentations
           </button>
         </div>
       </div>
 
-      {activeTab === 'questions' && <QuestionManager />}
+      {activeTab === 'questions' && <QuestionManager initialTemplateId={initialTemplateId} />}
+      {activeTab === 'provider-ai' && <AiProviderSettings />}
+      {activeTab === 'maturity' && <MaturityPresetManager />}
+      {activeTab === 'notifications' && <NotificationManager />}
       {activeTab === 'presentations' && <PresentationTemplateManager />}
 
-      {activeTab === 'users' && <>
-      {/* Role reference */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {ROLES.map(r => (
-          <div key={r.value} className="bg-[#152233] border border-white/10 rounded-xl p-4">
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium mb-3 ${r.color} ${r.bg}`}>
-              <Shield className="w-3 h-3" /> {r.label}
-            </div>
-            <ul className="space-y-1">
-              {ROLE_PERMS[r.value].map((p, i) => (
-                <li key={i} className="text-xs text-white/50 flex gap-2">
-                  <Check className="w-3 h-3 text-white/30 flex-shrink-0 mt-0.5" /> {p}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      {/* Invite user */}
-      {isAdmin && (
-        <div className="bg-[#152233] border border-white/10 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-white/70 mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4" /> Invite New User
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={e => setInviteEmail(e.target.value)}
-              placeholder="Email address..."
-              className="flex-1 min-w-48 bg-[#0D1B2A] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50"
-            />
-            <Select value={inviteRole} onValueChange={setInviteRole}>
-              <SelectTrigger className="bg-[#0D1B2A] border-white/10 text-white w-44 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleInvite} disabled={inviting || !inviteEmail} className="bg-blue-500 hover:bg-blue-600 text-white gap-2">
-              {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-              Send Invite
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* User list */}
-
-      <div className="bg-[#152233] border border-white/10 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/10 flex items-center gap-2">
-          <Users className="w-4 h-4 text-white/60" />
-          <h2 className="text-sm font-semibold text-white">Internal Users</h2>
-          <span className="text-xs text-white/30 ml-1">{users.length} users</span>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {users.map(u => {
-              const roleInfo = ROLES.find(r => r.value === u.role) || ROLES[0];
-              const isSelf = u.id === currentUser?.id;
-              return (
-                <div key={u.id} className="px-5 py-4 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold text-blue-400">{(u.full_name || u.email || '?')[0].toUpperCase()}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white truncate">{u.full_name || '—'}</div>
-                    <div className="text-xs text-white/40 truncate">{u.email}</div>
-                  </div>
-                  {isAdmin && !isSelf ? (
-                    <div className="flex items-center gap-2">
-                      {savingId === u.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />}
-                      <Select value={u.role || 'admin'} onValueChange={v => handleRoleChange(u.id, v)}>
-                        <SelectTrigger className={`bg-[#0D1B2A] border-white/10 w-40 text-xs h-8 ${roleInfo.color}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ) : (
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${roleInfo.color} ${roleInfo.bg}`}>
-                      {roleInfo.label}{isSelf ? ' (you)' : ''}
-                    </span>
-                  )}
+      {activeTab === 'users' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {ROLES.map((role) => (
+              <div key={role.value} className="bg-[#152233] border border-white/10 rounded-xl p-4">
+                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium mb-3 ${role.color} ${role.bg}`}>
+                  <Shield className="w-3 h-3" /> {role.label}
                 </div>
-              );
-            })}
-            {users.length === 0 && <div className="px-5 py-8 text-center text-white/30 text-sm">No users found</div>}
+                <ul className="space-y-1">
+                  {ROLE_PERMS[role.value].map((permission, index) => (
+                    <li key={index} className="text-xs text-white/50 flex gap-2">
+                      <Check className="w-3 h-3 text-white/30 flex-shrink-0 mt-0.5" /> {permission}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
-      </>}
+
+          <div className="bg-[#152233] border border-white/10 rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-white/70 mb-4 flex items-center gap-2">
+              <UserPlus className="w-4 h-4" /> Invite New User
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              <input
+                type="text"
+                value={inviteName}
+                onChange={(event) => setInviteName(event.target.value)}
+                placeholder="Full name..."
+                className="flex-1 min-w-40 bg-[#0D1B2A] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50"
+              />
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                placeholder="Email address..."
+                className="flex-1 min-w-48 bg-[#0D1B2A] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50"
+              />
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger className="bg-[#0D1B2A] border-white/10 text-white w-44 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleInvite} disabled={inviting || !inviteEmail} className="bg-blue-500 hover:bg-blue-600 text-white gap-2">
+                {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                Send Invite
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-[#152233] border border-white/10 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/10 flex items-center gap-2">
+              <Users className="w-4 h-4 text-white/60" />
+              <h2 className="text-sm font-semibold text-white">Internal Users</h2>
+              <span className="text-xs text-white/30 ml-1">{sortedUsers.length} users</span>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {sortedUsers.map((user) => {
+                  const roleInfo = ROLES.find((role) => role.value === user.role) || ROLES[0];
+                  const isSelf = user.id === currentUser?.id;
+                  return (
+                    <div key={user.id} className="px-5 py-4 flex items-center gap-4">
+                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-blue-400">{(user.full_name || user.email || '?')[0].toUpperCase()}</span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">{user.full_name || '-'}</div>
+                        <div className="text-xs text-white/40 truncate">{user.email}</div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleInfo.color} ${roleInfo.bg}`}>
+                            {roleInfo.label}{isSelf ? ' (you)' : ''}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${(user.active ?? true) ? 'bg-green-500/10 text-green-300' : 'bg-yellow-500/10 text-yellow-300'}`}>
+                            {(user.active ?? true) ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {savingId === user.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />}
+                        <Button variant="ghost" size="icon" onClick={() => openEditUser(user)} className="text-white/60 hover:text-white" title="Edit user">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleResendInvite(user)} className="text-white/60 hover:text-blue-300" title="Resend invite">
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleActive(user)}
+                          disabled={isSelf}
+                          className={isSelf ? 'text-white/20 cursor-not-allowed' : 'text-white/60 hover:text-yellow-300'}
+                          title={(user.active ?? true) ? 'Inactivate user' : 'Activate user'}
+                        >
+                          <Power className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {sortedUsers.length === 0 && <div className="px-5 py-8 text-center text-white/30 text-sm">No users found</div>}
+              </div>
+            )}
+          </div>
+
+          <Dialog open={Boolean(editingUser)} onOpenChange={(open) => !open && setEditingUser(null)}>
+            <DialogContent className="bg-[#152233] border border-white/10 text-white">
+              <DialogHeader>
+                <DialogTitle>Edit Internal User</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-white/50 block mb-1">Full name</label>
+                  <Input value={editForm.full_name} onChange={(event) => setEditForm((prev) => ({ ...prev, full_name: event.target.value }))} className="bg-[#0D1B2A] border-white/10 text-white" />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 block mb-1">Email</label>
+                  <Input type="email" value={editForm.email} onChange={(event) => setEditForm((prev) => ({ ...prev, email: event.target.value }))} className="bg-[#0D1B2A] border-white/10 text-white" />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 block mb-1">Role</label>
+                  <Select value={editForm.role} onValueChange={(value) => setEditForm((prev) => ({ ...prev, role: value }))}>
+                    <SelectTrigger className="bg-[#0D1B2A] border-white/10 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLES.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 block mb-1">Status</label>
+                  <Select value={editForm.active ? 'active' : 'inactive'} onValueChange={(value) => setEditForm((prev) => ({ ...prev, active: value === 'active' }))}>
+                    <SelectTrigger className="bg-[#0D1B2A] border-white/10 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setEditingUser(null)} className="text-white/50">Cancel</Button>
+                <Button onClick={handleSaveUser} disabled={savingEdit || !editForm.full_name || !editForm.email} className="bg-blue-500 hover:bg-blue-600 text-white gap-2">
+                  {savingEdit && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </div>
   );
 }

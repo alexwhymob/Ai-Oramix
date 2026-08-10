@@ -3,6 +3,7 @@ import { AssessmentTemplate, Pillar } from '../models/index.js';
 
 const DEFAULT_TEMPLATE = {
   code: 'ai-readiness',
+  template_type: 'assessment',
   name_pt: 'AI Readiness Assessment',
   name_en: 'AI Readiness Assessment',
   tagline_pt: 'Avaliacao base de prontidao para adocao de IA',

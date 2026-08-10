@@ -6,7 +6,7 @@ import { User } from '../models/index.js';
 import { sendEmail } from './email/emailClient.js';
 
 const TOKEN_EXPIRES_IN = '8h';
-const PUBLIC_USER_FIELDS = 'id email full_name role created_date updated_date created_by_id';
+const PUBLIC_USER_FIELDS = 'id email full_name role active created_date updated_date created_by_id';
 const PASSWORD_RESET_EXPIRES_IN_MS = 60 * 60 * 1000;
 
 export function requireJwtSecret() {
@@ -82,6 +82,7 @@ export async function loginUser({ email, password }) {
     throw error;
   }
 
+  assertUserIsActive(user);
   return createAuthResponse(user);
 }
 
@@ -96,6 +97,7 @@ export async function getUserFromToken(token) {
     throw error;
   }
 
+  assertUserIsActive(user);
   return user.toJSON();
 }
 
@@ -223,6 +225,7 @@ export function createInviteUserService(deps = {}) {
         email: normalizedEmail,
         full_name: full_name.trim() || normalizedEmail,
         role,
+        active: true,
         password_hash: null
       });
     } else {
@@ -259,6 +262,80 @@ export function createInviteUserService(deps = {}) {
       invited_user: sanitizeUser(user)
     };
   };
+}
+
+export async function updateInternalUser(userId, payload = {}, options = {}) {
+  const actor = options.actor || null;
+  const normalizedPayload = normalizeInternalUserPayload(payload);
+  const user = await User.findOne({ id: userId });
+
+  if (!user) {
+    const error = new Error('User not found');
+    error.status = 404;
+    error.code = 'user_not_found';
+    throw error;
+  }
+
+  if (actor?.id === user.id && normalizedPayload.active === false) {
+    const error = new Error('You cannot deactivate your own account');
+    error.status = 400;
+    error.code = 'cannot_deactivate_self';
+    throw error;
+  }
+
+  if (normalizedPayload.email && normalizedPayload.email !== user.email) {
+    const existingUser = await User.findOne({ email: normalizedPayload.email });
+    if (existingUser && existingUser.id !== user.id) {
+      const error = new Error('Email is already in use');
+      error.status = 409;
+      error.code = 'user_exists';
+      throw error;
+    }
+  }
+
+  Object.assign(user, normalizedPayload);
+  await user.save();
+
+  return sanitizeUser(user);
+}
+
+function normalizeInternalUserPayload(payload = {}) {
+  const nextPayload = {};
+
+  if (typeof payload.full_name === 'string' && payload.full_name.trim()) {
+    nextPayload.full_name = payload.full_name.trim();
+  }
+
+  if (typeof payload.email === 'string' && payload.email.trim()) {
+    nextPayload.email = payload.email.toLowerCase().trim();
+  }
+
+  if (typeof payload.role === 'string') {
+    if (!['admin', 'ai_consultant', 'account_manager'].includes(payload.role)) {
+      const error = new Error('Invalid role');
+      error.status = 400;
+      error.code = 'invalid_role';
+      throw error;
+    }
+    nextPayload.role = payload.role;
+  }
+
+  if (typeof payload.active === 'boolean') {
+    nextPayload.active = payload.active;
+  }
+
+  return nextPayload;
+}
+
+function assertUserIsActive(user) {
+  if (user?.active !== false) {
+    return;
+  }
+
+  const error = new Error('User account is inactive');
+  error.status = 403;
+  error.code = 'user_inactive';
+  throw error;
 }
 
 export function hashResetToken(token) {

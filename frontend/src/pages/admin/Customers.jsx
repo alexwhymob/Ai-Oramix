@@ -314,11 +314,11 @@ export default function AdminCustomers() {
                       <div className="text-white/80">{customer.company}</div>
                       <div className="text-xs text-white/40">{customer.role}</div>
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">{customer.sector || 'â€”'}</td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">{customer.sector || '—'}</td>
                     <td className="px-4 py-3.5 hidden lg:table-cell text-white/60">
                       {assessment?.assessment_template_id && templateMap[assessment.assessment_template_id]
                         ? (templateMap[assessment.assessment_template_id].name_pt || templateMap[assessment.assessment_template_id].name_en)
-                        : 'â€”'}
+                        : '—'}
                     </td>
                     <td className="px-4 py-3.5">
                       {!assessment ? (
@@ -338,7 +338,7 @@ export default function AdminCustomers() {
                     </td>
                     <td className="px-4 py-3.5 hidden xl:table-cell">
                       {!assessment || assessment.status !== 'completed' ? (
-                        <span className="text-xs text-white/20">â€”</span>
+                        <span className="text-xs text-white/20">—</span>
                       ) : !relatedSubs.length ? (
                         <span className="text-xs text-white/30">Not triggered</span>
                       ) : completedSubs === relatedSubs.length ? (
@@ -443,7 +443,7 @@ export default function AdminCustomers() {
               <Select value={form.template_id || 'none'} onValueChange={(value) => set('template_id', value === 'none' ? '' : value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select template..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">â€” None â€”</SelectItem>
+                  <SelectItem value="none">— None —</SelectItem>
                   {templates.filter((template) => template.active).map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
@@ -457,7 +457,7 @@ export default function AdminCustomers() {
               <Select value={form.account_manager_id || 'none'} onValueChange={(value) => set('account_manager_id', value === 'none' ? '' : value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Assign account manager..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">â€” None â€”</SelectItem>
+                  <SelectItem value="none">— None —</SelectItem>
                   {amUsers.map((userRecord) => <SelectItem key={userRecord.id} value={userRecord.id}>{userRecord.full_name || userRecord.email}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -481,7 +481,7 @@ export default function AdminCustomers() {
 
       <Dialog open={!!qrCustomer} onOpenChange={() => setQrCustomer(null)}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>QR Code â€“ {qrCustomer?.company}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>QR Code – {qrCustomer?.company}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground text-center">{qrCustomer?.name}</p>
           {qrCustomer?.qr_token && <QRCodeDisplay token={qrCustomer.qr_token} size={200} />}
         </DialogContent>

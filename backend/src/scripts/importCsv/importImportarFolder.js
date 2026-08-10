@@ -16,6 +16,7 @@ function mapTemplateRecord(record) {
   return {
     id: record.id,
     code: record.code,
+    template_type: emptyToNull(record.template_type) || 'assessment',
     name_pt: record.name_pt,
     name_en: emptyToNull(record.name_en),
     tagline_pt: emptyToNull(record.tagline_pt),

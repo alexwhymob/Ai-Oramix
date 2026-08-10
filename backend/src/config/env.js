@@ -12,6 +12,7 @@ const envSchema = z.object({
   LLM_PROVIDER: z.enum(['openai', 'google', 'anthropic']).default('openai'),
   LLM_MODEL: z.string().min(1).default('gpt-5.4'),
   OPENAI_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
   EMAIL_PROVIDER: z.enum(['resend', 'smtp']).default('resend'),
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).default('Oramix AI Readiness <onboarding@resend.dev>')

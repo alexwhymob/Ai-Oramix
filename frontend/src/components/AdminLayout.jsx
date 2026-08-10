@@ -36,7 +36,10 @@ export default function AdminLayout() {
   const navItems = [
   { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Dashboard' },
   { to: '/admin/customers', icon: <Users className="w-4 h-4" />, label: 'Clientes / Customers' },
-  ...(['admin'].includes(user.role) ? [{ to: '/admin/assessment-templates', icon: <Layers3 className="w-4 h-4" />, label: 'Assessment Templates' }] : []),
+  ...(['admin'].includes(user.role) ? [
+    { to: '/admin/assessment-templates', icon: <Layers3 className="w-4 h-4" />, label: 'Assessment Templates' },
+    { to: '/admin/report-templates', icon: <Layers3 className="w-4 h-4" />, label: 'Report Templates' }
+  ] : []),
   ...(['admin', 'ai_consultant'].includes(user.role) ? [{ to: '/admin/audit-logs', icon: <Activity className="w-4 h-4" />, label: 'Audit Logs' }] : []),
   { to: '/admin/configuration', icon: <Settings className="w-4 h-4" />, label: 'Configuration' }];
 

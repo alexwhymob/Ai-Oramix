@@ -39,6 +39,11 @@ export default function AdminAssessmentDetail() {
   const [selectedSections, setSelectedSections] = useState(ALL_SECTIONS.map((item) => item.key));
 
   const { data: assessment, refetch: refetchAssessment } = useQuery({ queryKey: ['assessment', id], queryFn: () => base44.entities.Assessment.get(id) });
+  const { data: assessmentTemplate } = useQuery({
+    queryKey: ['assessment-template', assessment?.assessment_template_id],
+    queryFn: () => base44.entities.AssessmentTemplate.get(assessment.assessment_template_id),
+    enabled: !!assessment?.assessment_template_id
+  });
   const { data: customers = [] } = useQuery({ queryKey: ['customer_a', assessment?.customer_id], queryFn: () => base44.entities.Customer.filter({ id: assessment.customer_id }), enabled: !!assessment?.customer_id });
   const { data: pillars = [] } = useQuery({ queryKey: ['pillars'], queryFn: () => base44.entities.Pillar.list('order') });
   const { data: allQuestions = [] } = useQuery({ queryKey: ['questions'], queryFn: () => base44.entities.Question.list('order') });
@@ -271,7 +276,7 @@ export default function AdminAssessmentDetail() {
           <div className="text-5xl font-black text-brand-blue">{globalScore?.toFixed(1)}</div>
           <div>
             <div className="text-white/40 text-xs mb-1">Global Score /5.0</div>
-            <ScoreBadge score={globalScore} lang="en" size="lg" />
+            <ScoreBadge score={globalScore} lang="en" size="lg" presetId={assessmentTemplate?.maturity_preset_id} />
           </div>
         </div>
         <div className="bg-[#152233] border border-white/10 rounded-xl p-4">
@@ -280,10 +285,10 @@ export default function AdminAssessmentDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {pillarScores.map((score) => {
-          const pillar = mainPillars.find((item) => item.code === score.code) || score;
-          return <PillarScoreCard key={score.code} pillar={pillar} score={score.score} lang="en" dark />;
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {pillarScores.map((score) => {
+            const pillar = mainPillars.find((item) => item.code === score.code) || score;
+          return <PillarScoreCard key={score.code} pillar={pillar} score={score.score} lang="en" dark presetId={assessmentTemplate?.maturity_preset_id} />;
         })}
       </div>
 

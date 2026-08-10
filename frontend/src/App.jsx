@@ -23,6 +23,7 @@ import AdminReportEditor from './pages/admin/ReportEditor';
 import AdminConfiguration from './pages/admin/Configuration';
 import AdminAuditLogs from './pages/admin/AuditLogs';
 import AdminAssessmentTemplates from './pages/admin/AssessmentTemplates';
+import AdminReportTemplates from './pages/admin/ReportTemplates';
 import SubQuiz from './pages/SubQuiz';
 import SubAssessmentComplete from './pages/SubAssessmentComplete';
 
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/report/:id" element={<AdminReportEditor />} />
         <Route path="/admin/configuration" element={<AdminConfiguration />} />
         <Route path="/admin/assessment-templates" element={<AdminAssessmentTemplates />} />
+        <Route path="/admin/report-templates" element={<AdminReportTemplates />} />
         <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

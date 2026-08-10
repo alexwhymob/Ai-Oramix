@@ -5,11 +5,14 @@ import {
   createResetPasswordService,
   hashPassword,
   hashResetToken,
+  loginUser,
   resolveRegistrationRole,
   signAuthToken,
+  updateInternalUser,
   verifyAuthToken,
   verifyPassword
 } from '../src/services/auth.service.js';
+import { User } from '../src/models/index.js';
 
 describe('auth service', () => {
   it('hashes and verifies passwords', async () => {
@@ -138,5 +141,74 @@ describe('auth service', () => {
     expect(createdUser.reset_password_expires_at).toBeInstanceOf(Date);
     expect(save).toHaveBeenCalledOnce();
     expect(sendEmail).toHaveBeenCalledOnce();
+  });
+
+  it('does not allow inactive users to log in', async () => {
+    const findOneSpy = vi.spyOn(User, 'findOne').mockResolvedValue({
+      id: 'user-3',
+      email: 'inactive@example.com',
+      password_hash: await hashPassword('secret-password'),
+      active: false
+    });
+
+    await expect(loginUser({
+      email: 'inactive@example.com',
+      password: 'secret-password'
+    })).rejects.toMatchObject({
+      code: 'user_inactive',
+      status: 403
+    });
+
+    findOneSpy.mockRestore();
+  });
+
+  it('updates an internal user and blocks self deactivation', async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const user = {
+      id: 'user-4',
+      email: 'consultant@example.com',
+      full_name: 'Consultant',
+      role: 'ai_consultant',
+      active: true,
+      save,
+      toJSON() {
+        return {
+          id: this.id,
+          email: this.email,
+          full_name: this.full_name,
+          role: this.role,
+          active: this.active
+        };
+      }
+    };
+
+    const findOneSpy = vi.spyOn(User, 'findOne');
+    findOneSpy
+      .mockResolvedValueOnce(user)
+      .mockResolvedValueOnce(null);
+
+    const result = await updateInternalUser('user-4', {
+      email: 'new-consultant@example.com',
+      full_name: 'Updated Consultant',
+      role: 'account_manager',
+      active: true
+    }, {
+      actor: { id: 'admin-1' }
+    });
+
+    expect(result.email).toBe('new-consultant@example.com');
+    expect(result.role).toBe('account_manager');
+    expect(save).toHaveBeenCalledOnce();
+
+    findOneSpy.mockResolvedValueOnce(user);
+
+    await expect(updateInternalUser('user-4', { active: false }, {
+      actor: { id: 'user-4' }
+    })).rejects.toMatchObject({
+      code: 'cannot_deactivate_self',
+      status: 400
+    });
+
+    findOneSpy.mockRestore();
   });
 });

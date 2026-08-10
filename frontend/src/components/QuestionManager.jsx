@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, ChevronDown, ChevronUp, Pencil, X, Check, Loader2, Layers, Database } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Pencil, X, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -15,33 +15,32 @@ const EMPTY_PILLAR = {
   description_pt: '',
   description_en: '',
   assessment_type: 'main',
-  assessment_template_id: ''
+  assessment_template_id: '',
+  min_score: '',
+  sub_assessment_template_id: ''
 };
 
 function PillarForm({ initial = EMPTY_PILLAR, onSave, onCancel, saving, templates = [] }) {
   const [form, setForm] = useState(initial);
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const subAssessmentTemplates = templates.filter((template) => (template.template_type || 'assessment') === 'sub_assessment');
+  const selectedTemplate = templates.find((template) => template.id === form.assessment_template_id) || null;
+  const resolvedAssessmentType = selectedTemplate
+    ? (selectedTemplate.template_type === 'sub_assessment' ? 'sub_assessment' : 'main')
+    : (form.assessment_type || 'main');
 
   return (
     <div className="bg-[#0D1B2A] border border-white/10 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Code *" value={form.code} onChange={v => set('code', v)} placeholder="e.g. DATA" />
         <div>
-          <label className="text-xs text-white/40 mb-1 block">Type</label>
-          <div className="flex gap-2">
-            {['main', 'sub_assessment'].map(type => (
-              <button
-                key={type}
-                onClick={() => set('assessment_type', type)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  form.assessment_type === type
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-[#152233] text-white/50 border-white/10 hover:text-white/70'
-                }`}
-              >
-                {type === 'main' ? 'Main' : 'Sub-Assessment'}
-              </button>
-            ))}
+          <label className="text-xs text-white/40 mb-1 block">Pillar Type</label>
+          <div className={`w-full rounded-lg border px-3 py-2 text-sm font-medium ${
+            resolvedAssessmentType === 'sub_assessment'
+              ? 'border-orange-500/20 bg-orange-500/10 text-orange-300'
+              : 'border-blue-500/20 bg-blue-500/10 text-blue-300'
+          }`}>
+            {resolvedAssessmentType === 'sub_assessment' ? 'Sub-Assessment' : 'Main Assessment'}
           </div>
         </div>
       </div>
@@ -62,16 +61,62 @@ function PillarForm({ initial = EMPTY_PILLAR, onSave, onCancel, saving, template
           <label className="text-xs text-white/40 mb-1 block">Assessment Template</label>
           <select
             value={form.assessment_template_id || ''}
-            onChange={e => set('assessment_template_id', e.target.value)}
+            onChange={e => {
+              const templateId = e.target.value;
+              const template = templates.find((item) => item.id === templateId) || null;
+              set('assessment_template_id', templateId);
+              if (template) {
+                set('assessment_type', template.template_type === 'sub_assessment' ? 'sub_assessment' : 'main');
+              }
+            }}
             className="w-full bg-[#152233] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50"
           >
             <option value="">— No template (legacy / shared) —</option>
             {templates.map(template => (
               <option key={template.id} value={template.id}>
-                {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
+                [{(template.template_type || 'assessment') === 'sub_assessment' ? 'SUB' : 'MAIN'}] {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {resolvedAssessmentType === 'main' && (
+        <div className="border border-orange-500/20 bg-orange-500/5 rounded-lg p-3 space-y-3">
+          <p className="text-xs text-orange-400 font-medium">Sub-Assessment Trigger</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-white/40 mb-1 block">Minimum Score (1-5)</label>
+              <input
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={form.min_score ?? ''}
+                onChange={e => set('min_score', e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="e.g. 2.5"
+                className="w-full bg-[#152233] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-orange-500/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/40 mb-1 block">Sub-Assessment Template</label>
+              <select
+                value={form.sub_assessment_template_id || ''}
+                onChange={e => set('sub_assessment_template_id', e.target.value)}
+                className="w-full bg-[#152233] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/50"
+              >
+                <option value="">-- None --</option>
+                {subAssessmentTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name_pt}{template.name_en ? ` / ${template.name_en}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <p className="text-[10px] text-white/25">
+            If the pillar score is below the minimum defined here, a sub-assessment will be created automatically using the selected template.
+          </p>
         </div>
       )}
 
@@ -284,13 +329,12 @@ function PillarBlock({ pillar, questions, onDeletePillar, onEditPillar, onSaveQu
   );
 }
 
-export default function QuestionManager() {
+export default function QuestionManager({ initialTemplateId = 'all' }) {
   const qc = useQueryClient();
   const [addingPillar, setAddingPillar] = useState(false);
   const [editingPillar, setEditingPillar] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('main');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('all');
+  const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId || 'all');
 
   const { data: templates = [] } = useQuery({
     queryKey: ['assessment-templates-all'],
@@ -307,8 +351,7 @@ export default function QuestionManager() {
     queryFn: () => base44.entities.Question.list('order', 500),
   });
 
-  const allMainPillars = pillars.filter(pillar => pillar.assessment_type !== 'sub_assessment').sort((a, b) => a.order - b.order);
-  const allSubPillars = pillars.filter(pillar => pillar.assessment_type === 'sub_assessment').sort((a, b) => a.order - b.order);
+  const selectedTemplate = templates.find((template) => template.id === selectedTemplateId) || null;
 
   const filterByTemplate = (list) => {
     if (selectedTemplateId === 'all') return list;
@@ -316,18 +359,25 @@ export default function QuestionManager() {
     return list.filter(pillar => pillar.assessment_template_id === selectedTemplateId);
   };
 
-  const mainPillars = filterByTemplate(allMainPillars);
-  const subPillars = filterByTemplate(allSubPillars);
-  const shownPillars = activeSection === 'main' ? mainPillars : subPillars;
+  const shownPillars = filterByTemplate([...pillars]).sort((a, b) => a.order - b.order);
 
   const handleSavePillar = async (form, id = null) => {
     setSaving(true);
+    const payload = {
+      ...form,
+      min_score: form.min_score === '' || form.min_score === null ? null : Number(form.min_score),
+      weight: form.weight === '' ? 0 : Number(form.weight),
+      order: form.order === '' ? 0 : Number(form.order),
+      sub_assessment_template_id: form.sub_assessment_template_id || null,
+      assessment_template_id: form.assessment_template_id || null
+    };
+
     if (id) {
-      await base44.entities.Pillar.update(id, form);
+      await base44.entities.Pillar.update(id, payload);
       toast.success('Pillar updated');
       setEditingPillar(null);
     } else {
-      await base44.entities.Pillar.create(form);
+      await base44.entities.Pillar.create(payload);
       toast.success('Pillar created');
       setAddingPillar(false);
     }
@@ -386,18 +436,15 @@ export default function QuestionManager() {
           </select>
         </div>
 
-        <div className="flex gap-1 bg-[#152233] border border-white/10 rounded-lg p-1">
-          <button onClick={() => setActiveSection('main')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeSection === 'main' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
-            <Layers className="w-3.5 h-3.5" />
-            Main
-            <span className="text-xs opacity-60">({mainPillars.length})</span>
-          </button>
-          <button onClick={() => setActiveSection('sub')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeSection === 'sub' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
-            <Database className="w-3.5 h-3.5" />
-            Sub-Assessment
-            <span className="text-xs opacity-60">({subPillars.length})</span>
-          </button>
-        </div>
+        {selectedTemplate && (
+          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+            (selectedTemplate.template_type || 'assessment') === 'sub_assessment'
+              ? 'bg-orange-500/15 text-orange-300'
+              : 'bg-blue-500/15 text-blue-300'
+          }`}>
+            {(selectedTemplate.template_type || 'assessment') === 'sub_assessment' ? 'Sub-Assessment Template' : 'Assessment Template'}
+          </span>
+        )}
 
         <div className="ml-auto">
           <Button size="sm" onClick={() => { setAddingPillar(true); setEditingPillar(null); }} className="bg-blue-500 hover:bg-blue-600 text-white gap-1.5">
@@ -411,7 +458,7 @@ export default function QuestionManager() {
         <PillarForm
           initial={{
             ...EMPTY_PILLAR,
-            assessment_type: activeSection === 'sub' ? 'sub_assessment' : 'main',
+            assessment_type: selectedTemplate?.template_type === 'sub_assessment' ? 'sub_assessment' : 'main',
             assessment_template_id: selectedTemplateId !== 'all' && selectedTemplateId !== 'unassigned' ? selectedTemplateId : ''
           }}
           onSave={form => handleSavePillar(form)}
@@ -433,7 +480,7 @@ export default function QuestionManager() {
 
       {shownPillars.length === 0 ? (
         <div className="bg-[#152233] border border-white/10 rounded-xl px-5 py-12 text-center text-white/25 text-sm">
-          No {activeSection === 'sub' ? 'sub-assessment' : 'main'} pillars{selectedTemplateId !== 'all' ? ' for this template' : ''}. Add one above.
+          No pillars{selectedTemplateId !== 'all' ? ' for this template' : ''}. Add one above.
         </div>
       ) : (
         <div className="space-y-3">

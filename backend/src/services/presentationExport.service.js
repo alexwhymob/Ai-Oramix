@@ -4,12 +4,15 @@ import {
   AssessmentTemplate,
   ConsultantNote,
   Customer,
+  MaturityLevel,
+  MaturityPreset,
   Pillar,
   PresentationTemplate,
   Report
 } from '../models/index.js';
 import { generateStructuredObject } from './llm/llmClient.js';
 import { buildDetailedAnswers, getMaturityLabel, parsePillarScores } from './reportGeneration.service.js';
+import { resolveMaturityForAssessment } from './maturity.service.js';
 
 const DEFAULT_PRESENTATION_TEMPLATE = {
   code: 'default-executive',
@@ -53,6 +56,8 @@ export function createExportPresentation(deps = {}) {
     AssessmentTemplate: deps.AssessmentTemplate || AssessmentTemplate,
     ConsultantNote: deps.ConsultantNote || ConsultantNote,
     Customer: deps.Customer || Customer,
+    MaturityLevel: Object.keys(deps).length > 0 ? (deps.MaturityLevel ?? null) : MaturityLevel,
+    MaturityPreset: Object.keys(deps).length > 0 ? (deps.MaturityPreset ?? null) : MaturityPreset,
     Pillar: deps.Pillar || Pillar,
     PresentationTemplate: deps.PresentationTemplate || PresentationTemplate,
     Report: deps.Report || Report
@@ -109,6 +114,12 @@ export function createExportPresentation(deps = {}) {
     const scopedPillars = scopePillarsForPresentation(pillars, assessment, rawPillarScores);
     const pillarScores = enrichPillarScores(rawPillarScores, scopedPillars);
     const template = presentationTemplate || DEFAULT_PRESENTATION_TEMPLATE;
+    const maturity = await resolveMaturityForAssessment({
+      assessment,
+      assessmentTemplate,
+      language,
+      models
+    });
 
     const pptx = new pptxgen();
     pptx.layout = 'LAYOUT_WIDE';
@@ -126,6 +137,7 @@ export function createExportPresentation(deps = {}) {
       consultantNotes,
       customer,
       language,
+      maturityLabel: maturity.label,
       pillarScores,
       report,
       scopedPillars,
@@ -138,6 +150,7 @@ export function createExportPresentation(deps = {}) {
       consultantNotes,
       customer,
       language,
+      maturityLabel: maturity.label,
       pillarScores,
       report,
       scopedPillars
@@ -259,11 +272,12 @@ function buildPresentationData({
   consultantNotes,
   customer,
   language,
+  maturityLabel,
   pillarScores,
   report,
   scopedPillars
 }) {
-  const maturityLabel = getMaturityLabel(assessment.global_score, language);
+  const resolvedMaturityLabel = maturityLabel || getMaturityLabel(assessment.global_score, language);
   const sectionSummary = toBulletList(report.section_1, {
     maxItems: 5,
     maxLength: 150,
@@ -298,7 +312,7 @@ function buildPresentationData({
     consultantNotes,
     customer,
     language,
-    maturityLabel,
+    maturityLabel: resolvedMaturityLabel,
     pillarScores,
     report,
     scopedPillars,
@@ -1084,6 +1098,7 @@ async function buildPresentationNarratives({
   consultantNotes,
   customer,
   language,
+  maturityLabel,
   pillarScores,
   report,
   scopedPillars,
@@ -1163,6 +1178,7 @@ async function buildPresentationNarratives({
         consultantNotes,
         customer,
         language,
+        maturityLabel,
         pillarScores,
         report,
         scopedPillars
@@ -1187,6 +1203,7 @@ function buildPresentationNarrativeContext({
   consultantNotes,
   customer,
   language,
+  maturityLabel,
   pillarScores,
   report,
   scopedPillars
@@ -1213,7 +1230,7 @@ function buildPresentationNarrativeContext({
       ? (assessmentTemplate?.name_en || assessmentTemplate?.name_pt || 'Assessment')
       : (assessmentTemplate?.name_pt || assessmentTemplate?.name_en || 'Assessment')}`,
     `Global score: ${formatScore(assessment.global_score)}/5.0`,
-    `Maturity label: ${getMaturityLabel(assessment.global_score, language)}`,
+    `Maturity label: ${maturityLabel || getMaturityLabel(assessment.global_score, language)}`,
     `Pillar scores: ${pillarSummary}`,
     '',
     'Existing report excerpts:',

@@ -33,7 +33,12 @@ export default function AssessmentLanding() {
         throw new Error('not_found');
       }
 
-      return results[0];
+      const template = results[0];
+      if ((template.template_type || 'assessment') !== 'assessment') {
+        throw new Error('not_found');
+      }
+
+      return template;
     }
   });
 

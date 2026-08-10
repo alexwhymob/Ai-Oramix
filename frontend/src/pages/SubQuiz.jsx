@@ -8,7 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import QuestionCard from '@/components/QuestionCard';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/lib/useLanguage';
-import { calculateScores, getMaturityLevel } from '@/lib/scoring';
+import { calculateScores } from '@/lib/scoring';
+import { useMaturityData } from '@/lib/useMaturity';
 import { base44 } from '@/api/base44Client';
 
 export default function SubQuiz() {
@@ -22,6 +23,7 @@ export default function SubQuiz() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const { resolveLevel } = useMaturityData();
 
   const t = (pt, en) => lang === 'pt' ? pt : en;
   const subTemplateId = subAssessment?.assessment_template_id || null;
@@ -36,6 +38,11 @@ export default function SubQuiz() {
     queryKey: ['all_questions', subTemplateId],
     queryFn: () => base44.entities.Question.list('order'),
     enabled: !!subTemplateId,
+  });
+  const { data: assessmentTemplate } = useQuery({
+    queryKey: ['assessment-template', subTemplateId],
+    queryFn: () => base44.entities.AssessmentTemplate.get(subTemplateId),
+    enabled: !!subTemplateId
   });
 
   const pillars = useMemo(() => {
@@ -76,7 +83,7 @@ export default function SubQuiz() {
     if (!allAnswered) { setShowValidation(true); return; }
     setSubmitting(true);
     const { pillarScores, globalScore } = calculateScores(pillars, questions, answers);
-    const maturity = getMaturityLevel(globalScore);
+    const maturity = resolveLevel(globalScore, assessmentTemplate?.maturity_preset_id);
     const answerRecords = Object.entries(answers).map(([questionId, value]) => {
       const q = questions.find(q => q.id === questionId);
       return { assessment_id: assessmentId, question_id: questionId, question_code: q?.code, pillar_code: q?.pillar_code, value };

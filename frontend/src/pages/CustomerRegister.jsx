@@ -48,12 +48,17 @@ export default function CustomerRegister() {
     })
   );
 
-  const { data: template } = useQuery({
+  const { data: template, isLoading: isLoadingTemplate } = useQuery({
     queryKey: ['assessment-template', templateId],
     queryFn: async () => {
       if (!templateId) return null;
       const results = await base44.entities.AssessmentTemplate.filter({ id: templateId });
-      return results[0] || null;
+      const resolvedTemplate = results[0] || null;
+      if (!resolvedTemplate) return null;
+      if ((resolvedTemplate.template_type || 'assessment') !== 'assessment') {
+        return null;
+      }
+      return resolvedTemplate;
     },
     enabled: !!templateId
   });
@@ -66,6 +71,13 @@ export default function CustomerRegister() {
   useEffect(() => {
     setField('language', lang === 'en' ? 'en' : 'pt');
   }, [lang]);
+
+  useEffect(() => {
+    if (!templateId || isLoadingTemplate) return;
+    if (template === null) {
+      navigate('/', { replace: true });
+    }
+  }, [templateId, isLoadingTemplate, template, navigate]);
 
   /** @param {string} value */
   const handleEmailChange = (value) => {
@@ -95,6 +107,11 @@ export default function CustomerRegister() {
     setLoading(true);
 
     try {
+      if (templateId && !template) {
+        navigate('/', { replace: true });
+        return;
+      }
+
       const response = await base44.functions.invoke('quizSession', {
         action: 'registerCustomer',
         templateId,

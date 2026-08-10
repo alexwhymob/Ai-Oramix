@@ -18,7 +18,7 @@ import PillarScoreCard from '@/components/PillarScoreCard';
 import QuestionCard from '@/components/QuestionCard';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/lib/useLanguage';
-import { getMaturityLevel } from '@/lib/scoring';
+import { useMaturityData } from '@/lib/useMaturity';
 import { base44 } from '@/api/base44Client';
 
 export default function AssessmentComplete() {
@@ -30,6 +30,7 @@ export default function AssessmentComplete() {
   const [showScrollPopup, setShowScrollPopup] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
   const t = (pt, en) => (lang === 'pt' ? pt : en);
+  const { resolveLevel } = useMaturityData();
 
   const { data: resultData } = useQuery({
     queryKey: ['quiz_result', assessmentId],
@@ -57,6 +58,12 @@ export default function AssessmentComplete() {
     return mainPillars.filter((pillar) => !pillar.assessment_template_id);
   }, [allPillars, templateId]);
 
+  const { data: assessmentTemplate } = useQuery({
+    queryKey: ['assessment-template', templateId],
+    queryFn: () => base44.entities.AssessmentTemplate.get(templateId),
+    enabled: !!templateId
+  });
+
   const { data: allQuestions = [] } = useQuery({
     queryKey: ['questions'],
     queryFn: () => base44.entities.Question.list('order')
@@ -75,7 +82,7 @@ export default function AssessmentComplete() {
     }
   }, [assessment?.pillar_scores]);
 
-  const maturity = getMaturityLevel(assessment?.global_score);
+  const maturity = resolveLevel(assessment?.global_score, assessmentTemplate?.maturity_preset_id);
   const answersMap = useMemo(() => {
     const map = {};
     answers.forEach((answer) => {
@@ -159,7 +166,7 @@ export default function AssessmentComplete() {
               <div className="text-sm text-muted-foreground">{t('Score global /5.0', 'Global score /5.0')}</div>
             </div>
             <div className="flex-1 space-y-3 text-center sm:text-left">
-              <ScoreBadge score={assessment.global_score} lang={lang} size="lg" />
+              <ScoreBadge score={assessment.global_score} lang={lang} size="lg" presetId={assessmentTemplate?.maturity_preset_id} />
               <p className="text-sm text-muted-foreground">
                 {lang === 'pt' ? maturity.recommendation_pt : maturity.recommendation_en}
               </p>
@@ -177,7 +184,7 @@ export default function AssessmentComplete() {
           <div className="space-y-3">
             {pillarScores.map((score) => {
               const pillar = pillars.find((item) => item.code === score.code) || score;
-              return <PillarScoreCard key={score.code} pillar={pillar} score={score.score} lang={lang} />;
+              return <PillarScoreCard key={score.code} pillar={pillar} score={score.score} lang={lang} presetId={assessmentTemplate?.maturity_preset_id} />;
             })}
           </div>
         </div>

@@ -23,6 +23,7 @@ export async function apiRequest(path, options = {}) {
   const data = await parseResponse(response);
 
   if (!response.ok) {
+    handleAuthFailure(response.status, path, Boolean(token));
     throw new ApiError(data?.message || response.statusText, {
       status: response.status,
       data
@@ -30,6 +31,36 @@ export async function apiRequest(path, options = {}) {
   }
 
   return data;
+}
+
+function handleAuthFailure(status, path, hasToken) {
+  if (!hasToken || ![401, 403].includes(status)) {
+    return;
+  }
+
+  if (isAuthRoute(path) || isPublicAuthScreen()) {
+    window.localStorage.removeItem('oramix_access_token');
+    return;
+  }
+
+  const fromUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.localStorage.removeItem('oramix_access_token');
+  window.location.href = `/login?from=${encodeURIComponent(fromUrl)}`;
+}
+
+function isAuthRoute(path) {
+  return [
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/reset-password'
+  ].some((authPath) => path.startsWith(authPath));
+}
+
+function isPublicAuthScreen() {
+  return ['/login', '/forgot-password', '/reset-password', '/register'].some((route) =>
+    window.location.pathname.startsWith(route)
+  );
 }
 
 async function parseResponse(response) {

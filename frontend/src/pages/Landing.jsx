@@ -15,6 +15,7 @@ export default function Landing() {
     queryKey: ['assessment-templates'],
     queryFn: () => base44.entities.AssessmentTemplate.filter({ active: true }, 'order', 20)
   });
+  const visibleTemplates = templates.filter((template) => (template.template_type || 'assessment') === 'assessment');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0D1B2A] via-[#122034] to-[#0D1B2A] text-white">
@@ -62,11 +63,11 @@ export default function Landing() {
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
           </div>
-        ) : templates.length === 0 ? (
+        ) : visibleTemplates.length === 0 ? (
           <FallbackAssessmentCard lang={lang} onStart={() => navigate('/register')} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {templates.map((template) => (
+            {visibleTemplates.map((template) => (
               <TemplateCard
                 key={template.id}
                 template={template}

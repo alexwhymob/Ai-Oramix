@@ -2,7 +2,16 @@ import { Assessment, Customer } from '../models/index.js';
 import { getEntityModel } from './entityRegistry.js';
 
 const PUBLIC_READ_ENTITIES = new Set(['Pillar', 'Question', 'AssessmentTemplate']);
-const ADMIN_ONLY_ENTITIES = new Set(['User', 'PresentationTemplate']);
+const ADMIN_ONLY_ENTITIES = new Set([
+  'User',
+  'PresentationTemplate',
+  'ReportTemplate',
+  'ReportSection',
+  'NotificationTemplate',
+  'MaturityPreset',
+  'MaturityLevel',
+  'HtmlReportConfig'
+]);
 
 export async function buildEntityAccessFilter({ entityName, action, user }) {
   assertKnownEntity(entityName);

@@ -6,26 +6,13 @@ import { Button } from '@/components/ui/button';
 import QuestionCard from '@/components/QuestionCard';
 import { useLanguage } from '@/lib/useLanguage';
 import { base44 } from '@/api/base44Client';
-
-const DATA_MATURITY = [
-  { max: 1, label_pt: 'Dados Brutos', label_en: 'Raw Data', color: '#ef4444' },
-  { max: 2, label_pt: 'Dados Reconhecidos', label_en: 'Recognised Data', color: '#f97316' },
-  { max: 3, label_pt: 'Dados Geridos', label_en: 'Managed Data', color: '#eab308' },
-  { max: 4, label_pt: 'Dados Preparados', label_en: 'Prepared Data', color: '#22c55e' },
-  { max: 5, label_pt: 'Dados AI-ready', label_en: 'AI-ready Data', color: '#3b82f6' }
-];
-
-function getDataMaturity(score) {
-  return DATA_MATURITY.find((item) => score <= item.max) || DATA_MATURITY[DATA_MATURITY.length - 1];
-}
-
-function scoreColor(score) {
-  return score < 2 ? '#ef4444' : score < 3 ? '#f97316' : score < 3.6 ? '#eab308' : score < 4.3 ? '#22c55e' : '#3b82f6';
-}
+import { getScoreColor } from '@/lib/scoring';
+import { getLevelDisplayColor, useMaturityData } from '@/lib/useMaturity';
 
 export default function SubAssessmentComplete() {
   const { assessmentId } = useParams();
   const { lang } = useLanguage();
+  const { resolveLevel, resolvePresetId, presets } = useMaturityData();
   const [showReview, setShowReview] = useState(false);
   const [expandedPillar, setExpandedPillar] = useState(null);
   const t = (pt, en) => (lang === 'pt' ? pt : en);
@@ -43,6 +30,19 @@ export default function SubAssessmentComplete() {
   const { data: allPillars = [] } = useQuery({
     queryKey: ['all_pillars'],
     queryFn: () => base44.entities.Pillar.list('order')
+  });
+  const { data: allQuestions = [] } = useQuery({
+    queryKey: ['questions'],
+    queryFn: () => base44.entities.Question.list('order')
+  });
+  const { data: assessmentTemplate } = useQuery({
+    queryKey: ['assessment-template', subAssessment?.assessment_template_id],
+    queryFn: () => base44.entities.AssessmentTemplate.get(subAssessment.assessment_template_id),
+    enabled: !!subAssessment?.assessment_template_id
+  });
+  const { data: allLevels = [] } = useQuery({
+    queryKey: ['maturity-levels'],
+    queryFn: () => base44.entities.MaturityLevel.list('order', 500)
   });
 
   const pillarScores = useMemo(() => {
@@ -66,11 +66,6 @@ export default function SubAssessmentComplete() {
     return allPillars.filter((pillar) => pillar.assessment_type === 'sub_assessment');
   }, [allPillars, pillarScores, subAssessment?.assessment_template_id]);
 
-  const { data: allQuestions = [] } = useQuery({
-    queryKey: ['questions'],
-    queryFn: () => base44.entities.Question.list('order')
-  });
-
   const answersMap = useMemo(() => {
     const map = {};
     answers.forEach((answer) => {
@@ -79,7 +74,29 @@ export default function SubAssessmentComplete() {
     return map;
   }, [answers]);
 
-  const maturity = subAssessment ? getDataMaturity(subAssessment.global_score) : null;
+  const presetId = resolvePresetId(assessmentTemplate?.maturity_preset_id);
+  const maturity = subAssessment ? resolveLevel(subAssessment.global_score, assessmentTemplate?.maturity_preset_id) : null;
+  const maturityColor = getLevelDisplayColor(maturity, subAssessment ? getScoreColor(subAssessment.global_score) : '#3b82f6');
+  const maturityScale = useMemo(() => {
+    const resolved = presetId ? allLevels.filter((level) => level.preset_id === presetId) : [];
+    const sorted = [...resolved].sort((left, right) => {
+      if ((left.order || 0) !== (right.order || 0)) {
+        return (left.order || 0) - (right.order || 0);
+      }
+      return (left.level || 0) - (right.level || 0);
+    });
+
+    if (sorted.length > 0) {
+      return sorted;
+    }
+
+    return [];
+  }, [allLevels, presetId]);
+
+  const activePresetName = useMemo(
+    () => presets.find((preset) => preset.id === presetId)?.name || null,
+    [presetId, presets]
+  );
 
   if (!subAssessment) {
     return (
@@ -126,18 +143,18 @@ export default function SubAssessmentComplete() {
         <div className="bg-white rounded-2xl border shadow-sm p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <div className="text-center flex-shrink-0">
-              <div className="text-6xl font-black" style={{ color: maturity?.color }}>
+              <div className="text-6xl font-black" style={{ color: maturityColor }}>
                 {subAssessment.global_score?.toFixed(1)}
               </div>
               <div className="text-sm text-muted-foreground">{t('Score /5.0', 'Score /5.0')}</div>
             </div>
             <div className="flex-1 space-y-2 text-center sm:text-left">
-              <div
-                className="inline-block px-4 py-1.5 rounded-full text-white text-sm font-semibold"
-                style={{ background: maturity?.color }}
-              >
+              <div className="inline-block px-4 py-1.5 rounded-full text-white text-sm font-semibold" style={{ background: maturityColor }}>
                 {lang === 'en' ? maturity?.label_en : maturity?.label_pt}
               </div>
+              {activePresetName && (
+                <div className="text-xs text-muted-foreground">{activePresetName}</div>
+              )}
               <p className="text-sm text-muted-foreground">
                 {t(
                   'Este score reflete a maturidade especifica desta area na sua organizacao.',
@@ -156,7 +173,7 @@ export default function SubAssessmentComplete() {
             {pillarScores.map((score) => {
               const pillar = pillars.find((item) => item.code === score.code) || score;
               const percentage = Math.round((score.score / 5) * 100);
-              const color = scoreColor(score.score);
+              const color = getLevelDisplayColor(resolveLevel(score.score, assessmentTemplate?.maturity_preset_id), getScoreColor(score.score));
 
               return (
                 <div key={score.code}>
@@ -180,40 +197,47 @@ export default function SubAssessmentComplete() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border shadow-sm p-5">
-          <h3 className="font-semibold text-sm mb-4 text-muted-foreground uppercase tracking-wide">
-            {t('Escala de maturidade', 'Maturity scale')}
-          </h3>
-          <div className="space-y-2">
-            {DATA_MATURITY.map((item, index) => {
-              const isActive = subAssessment.global_score <= item.max
-                && (index === 0 || subAssessment.global_score > DATA_MATURITY[index - 1].max);
+        {maturityScale.length > 0 && (
+          <div className="bg-white rounded-2xl border shadow-sm p-5">
+            <h3 className="font-semibold text-sm mb-4 text-muted-foreground uppercase tracking-wide">
+              {t('Escala de maturidade', 'Maturity scale')}
+            </h3>
+            <div className="space-y-2">
+              {maturityScale.map((item, index) => {
+                const itemColor = getLevelDisplayColor(item, '#3b82f6');
+                const isActive = maturity?.level === item.level;
 
-              return (
-                <div
-                  key={item.max}
-                  className={`flex items-center gap-3 p-2.5 rounded-lg transition-all ${isActive ? 'ring-2' : ''}`}
-                  style={isActive ? { background: `${item.color}15`, ringColor: item.color } : {}}
-                >
+                return (
                   <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ background: item.color }}
+                    key={item.id || `${item.level}-${item.min_score}`}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg transition-all ${isActive ? 'ring-2' : ''}`}
+                    style={isActive ? { background: `${itemColor}15`, ringColor: itemColor } : {}}
                   >
-                    {index + 1}
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                      style={{ background: itemColor }}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <div className={`text-sm font-medium ${isActive ? 'font-bold' : 'text-muted-foreground'}`}>
+                        {lang === 'en' ? item.label_en || item.label_pt : item.label_pt}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {Number(item.min_score).toFixed(2)} - {Number(item.max_score).toFixed(2)}
+                      </div>
+                    </div>
+                    {isActive && (
+                      <span className="ml-auto text-xs font-semibold" style={{ color: itemColor }}>
+                        {t('Estado atual', 'Current status')}
+                      </span>
+                    )}
                   </div>
-                  <span className={`text-sm font-medium ${isActive ? 'font-bold' : 'text-muted-foreground'}`}>
-                    {lang === 'en' ? item.label_en : item.label_pt}
-                  </span>
-                  {isActive && (
-                    <span className="ml-auto text-xs font-semibold" style={{ color: item.color }}>
-                      {t('Estado atual', 'Current status')}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden mt-6">
           <button

@@ -30,4 +30,28 @@ describe('user routes', () => {
 
     meSpy.mockRestore();
   });
+
+  it('requires admin access for AI provider configuration routes', async () => {
+    const app = createApp();
+
+    await request(app)
+      .get('/api/users/ai-provider-config')
+      .expect(401);
+
+    const meSpy = vi.spyOn(authService, 'getUserFromToken');
+    meSpy.mockResolvedValueOnce({
+      id: 'user-1',
+      email: 'manager@example.com',
+      role: 'account_manager',
+      active: true
+    });
+
+    const forbiddenResponse = await request(app)
+      .get('/api/users/ai-provider-config')
+      .set('Authorization', 'Bearer token')
+      .expect(403);
+
+    expect(forbiddenResponse.body.error).toBe('forbidden');
+    meSpy.mockRestore();
+  });
 });

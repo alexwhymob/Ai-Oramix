@@ -1,12 +1,16 @@
 import {
   Assessment,
   AssessmentAnswer,
+  AssessmentTemplate,
   Customer,
   Pillar,
   Question,
-  Report
+  Report,
+  ReportSection,
+  ReportTemplate
 } from '../models/index.js';
 import { generateStructuredObject } from './llm/llmClient.js';
+import { resolveMaturityForAssessment } from './maturity.service.js';
 
 const DEFAULT_SECTIONS = [
   'section_1',
@@ -37,10 +41,9 @@ const SECTION_DESCRIPTIONS = {
   section_8: 'AI Use Cases: 2-3 specific justified AI use cases prioritized by the assessment results, with business value. Return Markdown only.',
   section_9: 'Next Steps: concrete engagement proposal and support plan from Oramix. Return Markdown only.'
 };
-
-const MATURITY_LABELS = {
-  pt: ['Nao Preparado', 'Emergente', 'Em Desenvolvimento', 'Preparado', 'Avancado'],
-  en: ['Not Ready', 'Emerging', 'Developing', 'Ready', 'Advanced']
+const DEFAULT_REPORT_TEMPLATE = {
+  system_prompt: null,
+  style_guide: null
 };
 
 export const generateReport = createGenerateReport();
@@ -49,10 +52,16 @@ export function createGenerateReport(deps = {}) {
   const models = {
     Assessment: deps.Assessment || Assessment,
     AssessmentAnswer: deps.AssessmentAnswer || AssessmentAnswer,
+    AssessmentTemplate: deps.AssessmentTemplate || AssessmentTemplate,
     Customer: deps.Customer || Customer,
+    MaturityLevel: Object.keys(deps).length > 0 ? (deps.MaturityLevel ?? null) : undefined,
+    MaturityPreset: Object.keys(deps).length > 0 ? (deps.MaturityPreset ?? null) : undefined,
     Pillar: deps.Pillar || Pillar,
     Question: deps.Question || Question,
     Report: deps.Report || Report
+    ,
+    ReportTemplate: deps.ReportTemplate || ReportTemplate,
+    ReportSection: deps.ReportSection || ReportSection
   };
   const llm = deps.llm || { generateStructuredObject };
   const now = deps.now || (() => new Date());
@@ -88,13 +97,20 @@ export function createGenerateReport(deps = {}) {
     }
 
     const assessmentType = assessment.assessment_type || 'main';
-    const [customer, pillars, allQuestions, answers, existingReport] = await Promise.all([
+    const [customer, pillars, allQuestions, answers, existingReport, activeReportTemplate, assessmentTemplate] = await Promise.all([
       models.Customer.findOne({ id: assessment.customer_id }).lean(),
       models.Pillar.find({ assessment_type: assessmentType }).sort({ order: 1 }).lean(),
       models.Question.find({}).sort({ order: 1 }).lean(),
       models.AssessmentAnswer.find({ assessment_id: assessmentId }).lean(),
-      models.Report.findOne({ assessment_id: assessmentId })
+      models.Report.findOne({ assessment_id: assessmentId }),
+      models.ReportTemplate.findOne({ is_active: true }).sort({ is_default: -1, order: 1 }).lean(),
+      assessment.assessment_template_id
+        ? models.AssessmentTemplate.findOne({ id: assessment.assessment_template_id }).lean()
+        : null
     ]);
+    const templateSections = activeReportTemplate
+      ? await models.ReportSection.find({ report_template_id: activeReportTemplate.id }).sort({ order: 1 }).lean()
+      : [];
 
     const scopedPillars = scopePillarsForAssessment(pillars, assessment);
     const pillarCodes = new Set(scopedPillars.map(pillar => pillar.code));
@@ -106,8 +122,16 @@ export function createGenerateReport(deps = {}) {
       await existingReport.save();
     }
 
+    const maturity = await resolveMaturityForAssessment({
+      assessment,
+      assessmentTemplate,
+      language,
+      models
+    });
+
     const context = buildReportContext({
       assessment,
+      maturityLabel: maturity.label,
       customer: customer || {},
       pillars: scopedPillars,
       questions,
@@ -116,13 +140,11 @@ export function createGenerateReport(deps = {}) {
     });
 
     const langLabel = language === 'en' ? 'English' : 'Portuguese (European Portuguese)';
-    const systemPrompt = [
-      'You are a senior AI readiness consultant writing client-facing reports for Oramix.',
-      `Write in ${langLabel}.`,
-      'Be specific, practical, and evidence-based.',
-      'Do not use code fences.',
-      'Return each section as Markdown text only.'
-    ].join(' ');
+    const sectionDefinitions = buildSectionDefinitions(templateSections);
+    const systemPrompt = buildSystemPrompt({
+      langLabel,
+      reportTemplate: activeReportTemplate || DEFAULT_REPORT_TEMPLATE
+    });
 
     const sectionResults = await Promise.all(
       SECTION_GROUPS.map((group, index) => generateSectionGroup({
@@ -132,6 +154,7 @@ export function createGenerateReport(deps = {}) {
         context,
         systemPrompt,
         language,
+        sectionDefinitions,
         llm
       }))
     );
@@ -188,6 +211,7 @@ async function generateSectionGroup({
   context,
   systemPrompt,
   language,
+  sectionDefinitions,
   llm
 }) {
   const filtered = group.filter(section => selectedSections.includes(section));
@@ -195,12 +219,12 @@ async function generateSectionGroup({
     return {};
   }
 
-  const schema = buildSectionSchema(filtered);
+  const schema = buildSectionSchema(filtered, sectionDefinitions);
   const userPrompt = [
     'Generate a JSON object that matches the provided schema exactly.',
     'Each property value must be a Markdown string.',
     `Language: ${language}.`,
-    buildSectionsPrompt(filtered),
+    buildSectionsPrompt(filtered, sectionDefinitions),
     '',
     'Assessment context:',
     context
@@ -214,13 +238,13 @@ async function generateSectionGroup({
   });
 }
 
-export function buildSectionSchema(sectionKeys) {
+export function buildSectionSchema(sectionKeys, sectionDefinitions = SECTION_DESCRIPTIONS) {
   const properties = {};
 
   for (const key of sectionKeys) {
     properties[key] = {
       type: 'string',
-      description: SECTION_DESCRIPTIONS[key]
+      description: sectionDefinitions[key]?.description || SECTION_DESCRIPTIONS[key]
     };
   }
 
@@ -232,15 +256,16 @@ export function buildSectionSchema(sectionKeys) {
   };
 }
 
-export function buildSectionsPrompt(sectionKeys) {
+export function buildSectionsPrompt(sectionKeys, sectionDefinitions = SECTION_DESCRIPTIONS) {
   return [
     'Generate these report sections:',
-    ...sectionKeys.map(sectionKey => `- ${sectionKey}: ${SECTION_DESCRIPTIONS[sectionKey]}`)
+    ...sectionKeys.map(sectionKey => `- ${sectionKey}: ${sectionDefinitions[sectionKey]?.description || SECTION_DESCRIPTIONS[sectionKey]}`)
   ].join('\n');
 }
 
 export function buildReportContext({
   assessment,
+  maturityLabel,
   customer,
   pillars,
   questions,
@@ -259,7 +284,7 @@ export function buildReportContext({
   const contactName = customer.name || 'N/A';
   const contactRole = customer.role || 'N/A';
   const dateLocale = language === 'en' ? 'en-GB' : 'pt-PT';
-  const maturityLabel = getMaturityLabel(assessment.global_score, language);
+  const resolvedMaturityLabel = maturityLabel || getMaturityLabel(assessment.global_score, language);
   const pillarSummary = pillarScores.length > 0
     ? pillarScores.map(pillar => {
       const pillarName = language === 'en'
@@ -276,7 +301,7 @@ export function buildReportContext({
     `CONTACT: ${contactName} (${contactRole})`,
     `DATE: ${formatDate(assessment.completed_at || assessment.created_date, dateLocale)}`,
     `GLOBAL SCORE: ${formatScore(assessment.global_score)}/5.0`,
-    `MATURITY: ${maturityLabel}`,
+    `MATURITY: ${resolvedMaturityLabel}`,
     `PILLAR SCORES: ${pillarSummary}`,
     'DETAILED ANSWERS:',
     detailedAnswers
@@ -333,13 +358,11 @@ export function parsePillarScores(rawPillarScores) {
 
 export function getMaturityLabel(score, language = 'pt') {
   if (score === null || score === undefined) return 'N/A';
-
-  const labels = MATURITY_LABELS[language] || MATURITY_LABELS.pt;
-  if (score < 2) return labels[0];
-  if (score < 3) return labels[1];
-  if (score < 3.6) return labels[2];
-  if (score < 4.3) return labels[3];
-  return labels[4];
+  if (score < 2) return language === 'en' ? 'Not Ready' : 'Nao Preparado';
+  if (score < 3) return language === 'en' ? 'Emerging' : 'Emergente';
+  if (score < 3.6) return language === 'en' ? 'Developing' : 'Em Desenvolvimento';
+  if (score < 4.3) return language === 'en' ? 'Ready' : 'Preparado';
+  return language === 'en' ? 'Advanced' : 'Avancado';
 }
 
 function normalizeSections(sections) {
@@ -384,4 +407,44 @@ function formatScore(score) {
 function formatDate(dateValue, locale) {
   if (!dateValue) return 'N/A';
   return new Date(dateValue).toLocaleDateString(locale);
+}
+
+function buildSectionDefinitions(templateSections = []) {
+  const custom = {};
+
+  for (const section of templateSections) {
+    if (!section?.key) continue;
+    custom[section.key] = {
+      title: section.title || section.key,
+      description: section.prompt || SECTION_DESCRIPTIONS[section.key] || `Generate ${section.key}`
+    };
+  }
+
+  return new Proxy(custom, {
+    get(target, property) {
+      if (typeof property !== 'string') return undefined;
+      if (target[property]) return target[property];
+      return {
+        title: property,
+        description: SECTION_DESCRIPTIONS[property]
+      };
+    }
+  });
+}
+
+function buildSystemPrompt({ langLabel, reportTemplate }) {
+  const defaults = [
+    'You are a senior AI readiness consultant writing client-facing reports for Oramix.',
+    `Write in ${langLabel}.`,
+    'Be specific, practical, and evidence-based.',
+    'Do not use code fences.',
+    'Return each section as Markdown text only.'
+  ];
+
+  const parts = [
+    reportTemplate?.system_prompt?.trim() || defaults.join(' '),
+    reportTemplate?.style_guide?.trim() ? `Style guide:\n${reportTemplate.style_guide.trim()}` : null
+  ].filter(Boolean);
+
+  return parts.join('\n\n');
 }

@@ -1,7 +1,8 @@
-import { getMaturityLevel } from '@/lib/scoring';
+import { useMaturityData } from '@/lib/useMaturity';
 
-export default function ScoreBadge({ score, lang = 'pt', size = 'md' }) {
-  const level = getMaturityLevel(score);
+export default function ScoreBadge({ score, lang = 'pt', size = 'md', presetId = null }) {
+  const { resolveLevel } = useMaturityData();
+  const level = resolveLevel(score, presetId);
   const sizeClass = size === 'lg' ? 'text-base px-4 py-2' : 'text-sm px-3 py-1';
 
   return (

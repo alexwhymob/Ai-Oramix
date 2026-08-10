@@ -1,10 +1,12 @@
-import { getScoreColor, getMaturityLevel } from '@/lib/scoring';
+import { getScoreColor } from '@/lib/scoring';
+import { getLevelDisplayColor, useMaturityData } from '@/lib/useMaturity';
 
-export default function PillarScoreCard({ pillar, score, lang = 'pt', dark = false }) {
+export default function PillarScoreCard({ pillar, score, lang = 'pt', dark = false, presetId = null }) {
+  const { resolveLevel } = useMaturityData();
   const name = lang === 'en' ? pillar.name_en || pillar.name_pt : pillar.name_pt;
   const pct = Math.round(score / 5 * 100);
-  const color = getScoreColor(score);
-  const level = getMaturityLevel(score);
+  const level = resolveLevel(score, presetId);
+  const color = getLevelDisplayColor(level, getScoreColor(score));
 
   if (dark) return (
     <div className="p-4 rounded-xl border border-white/10 bg-[#152233]">

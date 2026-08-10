@@ -3,6 +3,7 @@ import {
   buildReportReadyEmail,
   createSendReport
 } from '../src/services/reportEmail.service.js';
+import { renderNotificationTemplate } from '../src/services/notificationTemplate.service.js';
 
 describe('report email service', () => {
   it('builds a Portuguese report-ready email', () => {
@@ -65,6 +66,11 @@ describe('report email service', () => {
           })
         })
       },
+      NotificationTemplate: {
+        findOne: vi.fn().mockReturnValue({
+          lean: vi.fn().mockResolvedValue(null)
+        })
+      },
       email: { sendEmail }
     });
 
@@ -83,5 +89,22 @@ describe('report email service', () => {
       to: 'ana@example.com',
       subject: 'Your AI Readiness Report is ready - Oramix'
     }));
+  });
+
+  it('renders a notification template with variables', () => {
+    const rendered = renderNotificationTemplate({
+      subject_pt: 'Relatorio pronto - {{company}}',
+      subject_en: 'Report ready - {{company}}',
+      body_pt: '<p>Ola {{customer_name}}</p>',
+      body_en: '<p>Hello {{customer_name}}</p>',
+      from_email: 'Oramix <test@oramix.pt>'
+    }, {
+      company: 'Oramix',
+      customer_name: 'Ana'
+    }, 'pt');
+
+    expect(rendered.subject).toBe('Relatorio pronto - Oramix');
+    expect(rendered.html).toContain('Ana');
+    expect(rendered.text).toContain('Ola Ana');
   });
 });
