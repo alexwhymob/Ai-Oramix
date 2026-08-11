@@ -57,6 +57,65 @@ Alto para seguranca e operacao. A autenticacao passou a ter sessao gerida por co
 - O bloqueio progressivo esta em memoria; em deploy com varias replicas deve ser movido para Redis ou MongoDB.
 - Segredos, API keys e arquivos `.env*` permanecem fora do repositorio.
 
+## 2026-08-10
+
+### Commit `0b69786` - Templates, relatorios, utilizadores e providers
+
+- Adicionados modelos e servicos de maturidade, templates de relatorio, notificacoes e configuracao HTML.
+- Adicionado suporte ao provider Anthropic e configuracao administrativa de providers LLM.
+- Melhorada a gestao administrativa de utilizadores e permissoes.
+- Refinados os fluxos de relatorio, e-mail, questions, assessments e sub-assessments.
+- Adicionados componentes administrativos para providers AI, presets de maturidade, notificacoes e templates de relatorio.
+
+### Commit `eae0fa1` - Favicon proprio
+
+- Ajustado o favicon SVG proprio da aplicacao.
+
+## 2026-06-12
+
+### Commit `8ffa91c` - Exportacao PPT e templates de apresentacao
+
+- Adicionado o modelo e o gestor de `PresentationTemplate`.
+- Implementada a exportacao de apresentacoes PPT com dados, graficos, radar, resumo e secoes configuraveis.
+- Melhorados os fluxos de conclusao de assessment, sub-assessment, report editor e exportacao PDF.
+- Reforcado o tratamento de sub-assessments e a apresentacao dos resultados no frontend.
+
+## 2026-06-09
+
+### Commit `83a544c` - Suporte a multiplos formularios
+
+- Adicionado suporte a varios `AssessmentTemplate` na mesma aplicacao.
+- Assessments e pilares passaram a poder ser associados a templates.
+- Adicionada a gestao administrativa de templates e o seed inicial.
+- A pagina publica passou a apresentar apenas templates de assessment disponiveis.
+- Atualizados quiz, registo, clientes, resultados, report editor e componentes visuais para trabalhar com templates.
+
+### Commit `4e257a5` - Importacao de novos formularios
+
+- Adicionado o importador da pasta `importar` para templates, pilares e questions.
+- Atualizados os campos do registo de customer e as configuracoes do frontend.
+- Incluidos os novos CSVs de `AssessmentTemplate`, `Pillar` e `Question`.
+
+### Commit `d2365dd` - Ajuste de texto
+
+- Corrigido texto apresentado na conclusao do sub-assessment.
+
+## 2026-06-03
+
+### Commit `c83fc59` - Docker local
+
+- Adicionados Dockerfiles para backend e frontend.
+- Criado `docker-compose.yml` para subir os dois servicos localmente.
+- Ajustadas as portas do backend para `3003` e frontend para `5175`.
+- Adicionado proxy do frontend para a API e configuracoes de health check/deploy.
+
+### Commit `e7fcbee` - Deploy em VPS
+
+- Adicionada documentacao de deployment.
+- Criadas configuracoes de exemplo para Nginx e systemd.
+- Adicionados `.nvmrc`, `render.yaml` e configuracao Vercel.
+- Ajustado o cliente da API para diferentes ambientes de deploy.
+
 ## 2026-06-03
 
 ### Tarefa
