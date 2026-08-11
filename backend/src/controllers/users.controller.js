@@ -1,4 +1,4 @@
-import { inviteUser, updateInternalUser } from '../services/auth.service.js';
+import { inviteUser, unlockUserLogin, updateInternalUser } from '../services/auth.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 import {
   getLlmProviderAdminConfig,
@@ -63,6 +63,31 @@ export async function resendInvite(req, res, next) {
       }
     });
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function unlockLogin(req, res, next) {
+  try {
+    const justification = String(req.body?.justification || '').trim();
+    if (justification.length < 5 || justification.length > 500) {
+      const error = new Error('A justification with 5 to 500 characters is required.');
+      error.status = 400;
+      error.code = 'unlock_justification_required';
+      throw error;
+    }
+
+    const result = await unlockUserLogin(req.params.userId);
+    await writeAuditLog({
+      req,
+      user: req.user,
+      action: 'security.login_unlocked',
+      entity: 'User',
+      entity_id: result.id,
+      metadata: { justification }
+    });
+    res.json({ success: true, user: result });
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Bot, Check, Edit2, HelpCircle, Loader2, Mail, Power, Shield, UserPlus, Users } from 'lucide-react';
+import { Bot, Check, Edit2, HelpCircle, KeyRound, Loader2, Mail, Power, Shield, UserPlus, Users } from 'lucide-react';
 import QuestionManager from '@/components/QuestionManager';
 import NotificationManager from '@/components/NotificationManager';
 import PresentationTemplateManager from '@/components/PresentationTemplateManager';
@@ -106,6 +106,20 @@ export default function AdminConfiguration() {
         role: user.role
       });
       toast.success(`Invitation resent to ${user.email}`);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleUnlockLogin = async (user) => {
+    const justification = window.prompt(`Justification for unlocking ${user.email}:`);
+    if (!justification?.trim()) return;
+
+    setSavingId(user.id);
+    try {
+      await base44.users.unlockLogin(user.id, justification.trim());
+      toast.success(`Login unlocked for ${user.email}`);
+      qc.invalidateQueries({ queryKey: ['all_users'] });
     } finally {
       setSavingId(null);
     }
@@ -237,6 +251,7 @@ export default function AdminConfiguration() {
                 {sortedUsers.map((user) => {
                   const roleInfo = ROLES.find((role) => role.value === user.role) || ROLES[0];
                   const isSelf = user.id === currentUser?.id;
+                  const isLoginLocked = user.login_locked_until && new Date(user.login_locked_until) > new Date();
                   return (
                     <div key={user.id} className="px-5 py-4 flex items-center gap-4">
                       <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
@@ -253,6 +268,11 @@ export default function AdminConfiguration() {
                           <span className={`text-xs px-2 py-0.5 rounded-full ${(user.active ?? true) ? 'bg-green-500/10 text-green-300' : 'bg-yellow-500/10 text-yellow-300'}`}>
                             {(user.active ?? true) ? 'Active' : 'Inactive'}
                           </span>
+                          {isLoginLocked && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-300">
+                              Login blocked ({user.login_failed_attempts || 0} failures)
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -264,6 +284,11 @@ export default function AdminConfiguration() {
                         <Button variant="ghost" size="icon" onClick={() => handleResendInvite(user)} className="text-white/60 hover:text-blue-300" title="Resend invite">
                           <Mail className="w-4 h-4" />
                         </Button>
+                        {isLoginLocked && (
+                          <Button variant="ghost" size="icon" onClick={() => handleUnlockLogin(user)} className="text-white/60 hover:text-green-300" title="Unlock login">
+                            <KeyRound className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"

@@ -1,3 +1,5 @@
+import dns from 'node:dns/promises';
+import net from 'node:net';
 import pptxgen from 'pptxgenjs';
 import {
   Assessment,
@@ -350,18 +352,75 @@ async function loadPresentationAssets(template) {
 
 async function imageUrlToData(url) {
   if (!url) return null;
-  if (url.startsWith('data:')) return url;
+  if (url.startsWith('data:image/')) {
+    return url.length <= 5 * 1024 * 1024 ? url : null;
+  }
 
   try {
-    const response = await fetch(url);
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'https:') return null;
+    if (await resolvesToPrivateAddress(parsedUrl.hostname)) return null;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let response;
+    try {
+      response = await fetch(parsedUrl, { signal: controller.signal, redirect: 'error' });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!response.ok) return null;
-    const contentType = response.headers.get('content-type') || 'image/png';
+    const contentType = (response.headers.get('content-type') || '').split(';')[0].toLowerCase();
+    if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(contentType)) return null;
+    const contentLength = Number(response.headers.get('content-length') || 0);
+    if (contentLength > 5 * 1024 * 1024) return null;
     const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength > 5 * 1024 * 1024) return null;
     const buffer = Buffer.from(arrayBuffer);
+    if (!hasExpectedImageSignature(buffer, contentType)) return null;
     return `data:${contentType};base64,${buffer.toString('base64')}`;
   } catch {
     return null;
   }
+}
+
+function hasExpectedImageSignature(buffer, contentType) {
+  if (contentType === 'image/png') return buffer.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'));
+  if (contentType === 'image/jpeg') return buffer.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'));
+  if (contentType === 'image/gif') {
+    const signature = buffer.subarray(0, 6).toString('ascii');
+    return signature === 'GIF87a' || signature === 'GIF89a';
+  }
+  if (contentType === 'image/webp') return buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+  return false;
+}
+
+async function resolvesToPrivateAddress(hostname) {
+  const normalizedHost = hostname.toLowerCase();
+  if (normalizedHost === 'localhost' || normalizedHost.endsWith('.local')) return true;
+
+  const addresses = net.isIP(normalizedHost)
+    ? [{ address: normalizedHost }]
+    : await dns.lookup(normalizedHost, { all: true });
+
+  return addresses.some(({ address }) => isPrivateAddress(address));
+}
+
+function isPrivateAddress(address) {
+  if (net.isIPv4(address)) {
+    const [a, b] = address.split('.').map(Number);
+    return a === 10
+      || a === 127
+      || (a === 169 && b === 254)
+      || (a === 172 && b >= 16 && b <= 31)
+      || (a === 192 && b === 168);
+  }
+
+  const normalized = address.toLowerCase();
+  return normalized === '::1'
+    || normalized.startsWith('fc')
+    || normalized.startsWith('fd')
+    || normalized.startsWith('fe80:');
 }
 
 function addCoverSlide(pptx, template, data, assets) {

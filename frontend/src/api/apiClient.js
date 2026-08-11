@@ -1,4 +1,5 @@
 const API_BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+let refreshPromise = null;
 
 export class ApiError extends Error {
   constructor(message, { status, data } = {}) {
@@ -9,21 +10,29 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest(path, options = {}) {
-  const token = window.localStorage.getItem('oramix_access_token');
+export async function apiRequest(path, options = {}, canRefresh = true) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {})
     },
+    credentials: 'include',
     ...options
   });
 
   const data = await parseResponse(response);
 
   if (!response.ok) {
-    handleAuthFailure(response.status, path, Boolean(token));
+    if (response.status === 401 && canRefresh && shouldTryRefresh(path)) {
+      try {
+        await refreshSession();
+        return apiRequest(path, options, false);
+      } catch {
+        // Fall through to the normal authentication failure redirect.
+      }
+    }
+
+    handleAuthFailure(response.status, path);
     throw new ApiError(data?.message || response.statusText, {
       status: response.status,
       data
@@ -33,19 +42,40 @@ export async function apiRequest(path, options = {}) {
   return data;
 }
 
-function handleAuthFailure(status, path, hasToken) {
-  if (!hasToken || ![401, 403].includes(status)) {
+function handleAuthFailure(status, path) {
+  if (![401, 403].includes(status)) {
     return;
   }
 
   if (isAuthRoute(path) || isPublicAuthScreen()) {
-    window.localStorage.removeItem('oramix_access_token');
     return;
   }
 
   const fromUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-  window.localStorage.removeItem('oramix_access_token');
   window.location.href = `/login?from=${encodeURIComponent(fromUrl)}`;
+}
+
+function shouldTryRefresh(path) {
+  return !isAuthRoute(path) && !isPublicAuthScreen();
+}
+
+async function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(async (response) => {
+      if (!response.ok) {
+        throw new ApiError('Session refresh failed', { status: response.status });
+      }
+      return parseResponse(response);
+    }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
 }
 
 function isAuthRoute(path) {
@@ -53,7 +83,10 @@ function isAuthRoute(path) {
     '/auth/login',
     '/auth/register',
     '/auth/forgot-password',
-    '/auth/reset-password'
+    '/auth/reset-password',
+    '/auth/logout',
+    '/auth/refresh',
+    '/auth/me'
   ].some((authPath) => path.startsWith(authPath));
 }
 

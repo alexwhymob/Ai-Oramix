@@ -24,7 +24,7 @@ const DEFAULT_NOTIFICATION_TEMPLATES = [
       '<p>{{app_access_line}}</p>',
       '<p>Best regards,<br />Oramix Team</p>'
     ].join(''),
-    from_email: 'Oramix AI Readiness <aireadiness@oramix.pt>',
+    from_email: 'Oramix Assessment Platform <aireadiness@oramix.pt>',
     is_active: true,
     order: 1
   },
@@ -38,7 +38,7 @@ const DEFAULT_NOTIFICATION_TEMPLATES = [
     subject_en: 'We received your assessment - {{company}}',
     body_pt: '<p>Ola {{customer_name}}, recebemos a sua avaliacao. Em breve entraremos em contacto.</p>',
     body_en: '<p>Hello {{customer_name}}, we received your assessment. We will contact you shortly.</p>',
-    from_email: 'Oramix AI Readiness <aireadiness@oramix.pt>',
+    from_email: 'Oramix Assessment Platform <aireadiness@oramix.pt>',
     is_active: true,
     order: 2
   }

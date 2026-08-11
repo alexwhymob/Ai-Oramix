@@ -1,7 +1,5 @@
 import { apiRequest } from './apiClient';
 
-const TOKEN_KEY = 'oramix_access_token';
-
 export function createAuthClient() {
   return {
     me: () => apiRequest('/auth/me'),
@@ -10,14 +8,16 @@ export function createAuthClient() {
         method: 'POST',
         body: JSON.stringify({ email, password })
       });
-      setToken(result.access_token);
       return result;
     },
     loginWithProvider: notMigrated,
-    logout: (redirectTo = '/') => {
-      clearToken();
-      if (redirectTo) {
-        window.location.href = redirectTo;
+    logout: async (redirectTo = '/') => {
+      try {
+        await apiRequest('/auth/logout', { method: 'POST' });
+      } finally {
+        if (redirectTo) {
+          window.location.href = redirectTo;
+        }
       }
     },
     redirectToLogin: (fromUrl = '/') => {
@@ -28,11 +28,10 @@ export function createAuthClient() {
         method: 'POST',
         body: JSON.stringify({ email, password, full_name, role })
       });
-      setToken(result.access_token);
       return result;
     },
     verifyOtp: notMigrated,
-    setToken,
+    setToken: () => undefined,
     resendOtp: notMigrated,
     resetPasswordRequest: (email) => apiRequest('/auth/forgot-password', {
       method: 'POST',
@@ -43,16 +42,6 @@ export function createAuthClient() {
       body: JSON.stringify({ resetToken, newPassword })
     })
   };
-}
-
-function setToken(token) {
-  if (token) {
-    window.localStorage.setItem(TOKEN_KEY, token);
-  }
-}
-
-function clearToken() {
-  window.localStorage.removeItem(TOKEN_KEY);
 }
 
 function notMigrated() {

@@ -1,39 +1,41 @@
-**Welcome to your Base44 project** 
+# Frontend - Oramix Assessment Platform
 
-**About**
+Frontend React/Vite da aplicacao Oramix Assessment Platform.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## Comandos
 
-This project contains everything you need to run your app locally.
-
-**Edit the code in your local development environment**
-
-Any change pushed to the repo will also be reflected in the Base44 Builder.
-
-**Prerequisites:** 
-
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
-
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+```bash
+npm install
+npm run dev
+npm run build
+npm run typecheck
+npm run lint
 ```
 
-Run the app: `npm run dev`
+O servidor de desenvolvimento usa a porta `5175`. Em desenvolvimento, as chamadas `/api` sao encaminhadas pelo Vite para `http://localhost:3003`.
 
-**Publish your changes**
+## Configuracao
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+Opcionalmente, definir:
 
-**Docs & Support**
+```txt
+VITE_API_BASE_URL=
+VITE_API_PROXY_TARGET=http://localhost:3003
+```
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+Em producao, `VITE_API_BASE_URL` deve apontar para a URL publica da API. O cliente acrescenta `/api` quando necessario.
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+## Camada de API
+
+As paginas usam uma fachada local em `src/api/base44Client.js` para preservar a compatibilidade dos nomes existentes durante a migracao. Essa fachada nao importa SDK Base44 e envia todas as chamadas para a API propria em `/api`.
+
+Os clientes locais estao em:
+
+- `src/api/apiClient.js`
+- `src/api/authClient.js`
+- `src/api/entitiesClient.js`
+- `src/api/functionsClient.js`
+- `src/api/integrationsClient.js`
+- `src/api/usersClient.js`
+
+O frontend nao depende de uma plataforma externa para autenticacao, dados, funcoes ou LLM.

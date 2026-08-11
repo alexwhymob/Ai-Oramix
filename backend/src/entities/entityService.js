@@ -20,7 +20,8 @@ export async function listEntities(entityName, query, options = {}) {
   const { filter, limit, skip, sort } = parseEntityQuery(query);
   const finalFilter = mergeFilters(filter, options.accessFilter);
 
-  return Model.find(finalFilter).sort(sort).skip(skip).limit(limit).lean();
+  const records = await Model.find(finalFilter).sort(sort).skip(skip).limit(limit).lean();
+  return records.map((record) => sanitizeEntityRecord(entityName, record));
 }
 
 export async function getEntity(entityName, id, options = {}) {
@@ -34,14 +35,14 @@ export async function getEntity(entityName, id, options = {}) {
     throw error;
   }
 
-  return record;
+  return sanitizeEntityRecord(entityName, record);
 }
 
 export async function createEntity(entityName, payload) {
   const Model = resolveEntity(entityName);
   const record = await Model.create(payload);
   await syncEntitySideEffects(entityName, null, record.toJSON());
-  return record.toJSON();
+  return sanitizeEntityRecord(entityName, record.toJSON());
 }
 
 export async function bulkCreateEntities(entityName, payload) {
@@ -54,7 +55,7 @@ export async function bulkCreateEntities(entityName, payload) {
 
   const Model = resolveEntity(entityName);
   const records = await Model.insertMany(payload, { ordered: false });
-  return records.map(record => record.toJSON());
+  return records.map(record => sanitizeEntityRecord(entityName, record.toJSON()));
 }
 
 export async function updateEntity(entityName, id, payload, options = {}) {
@@ -76,7 +77,7 @@ export async function updateEntity(entityName, id, payload, options = {}) {
   }
 
   await syncEntitySideEffects(entityName, previousRecord, record.toJSON());
-  return record.toJSON();
+  return sanitizeEntityRecord(entityName, record.toJSON());
 }
 
 export async function deleteEntity(entityName, id, options = {}) {
@@ -110,6 +111,19 @@ function mergeFilters(filter, accessFilter = {}) {
       normalizedAccessFilter
     ]
   };
+}
+
+function sanitizeEntityRecord(entityName, record) {
+  if (entityName !== 'User') return record;
+
+  const sanitized = { ...record };
+  delete sanitized.password_hash;
+  delete sanitized.reset_password_token_hash;
+  delete sanitized.reset_password_expires_at;
+  delete sanitized.refresh_token_hash;
+  delete sanitized.refresh_token_expires_at;
+  delete sanitized.auth_token_version;
+  return sanitized;
 }
 
 async function syncEntitySideEffects(entityName, previousRecord, nextRecord) {

@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Esta documentacao descreve o mapeamento inicial entre chamadas Base44 e a futura API propria em Node.js/Express.
+Esta documentacao descreve a API propria em Node.js/Express e o mapeamento de compatibilidade mantido no frontend.
 
 ## Padrao de Entidades
 
@@ -28,9 +28,9 @@ PUT    /api/entities/:entity/:id
 DELETE /api/entities/:entity/:id
 ```
 
-Implementado na Fase 4 para entidades registradas explicitamente no backend.
+Implementado para todas as entidades registadas em `backend/src/entities/entityRegistry.js`.
 
-Na Fase 6, o frontend passou a usar esta API por meio de `frontend/src/api/base44Client.js`, mantendo a assinatura `base44.entities.*`.
+O frontend usa esta API por meio de `frontend/src/api/base44Client.js`, mantendo temporariamente a assinatura `base44.entities.*` sem depender do SDK Base44.
 
 ## Query Parameters
 
@@ -62,18 +62,30 @@ Regras principais:
 
 Chamadas sem permissao retornam `401 auth_required` ou `403 forbidden`.
 
-## Entidades Iniciais
+Pedidos de escrita com cookies sao aceites apenas quando o header `Origin` coincide com `FRONTEND_URL`. Pedidos sem `Origin`, comuns em integrações servidor-servidor, continuam permitidos e devem ser protegidos por autenticação adequada.
 
-Endpoints devem existir para:
+## Entidades Disponiveis
+
+Os endpoints genericos estao disponiveis para:
 
 - `Customer`
 - `Assessment`
+- `AssessmentTemplate`
 - `AssessmentAnswer`
+- `PresentationTemplate`
+- `ReportTemplate`
+- `ReportSection`
+- `NotificationTemplate`
+- `MaturityPreset`
+- `MaturityLevel`
+- `HtmlReportConfig`
 - `Pillar`
 - `Question`
 - `Report`
 - `ConsultantNote`
 - `User`
+
+As permissoes variam por entidade e role. A lista anterior nao significa que todas as entidades possam ser lidas ou alteradas publicamente.
 
 ## Erros Comuns
 
@@ -104,26 +116,29 @@ base44.functions.invoke('quizSession', payload)
 base44.functions.invoke('createDataSubAssessment', payload)
 base44.functions.invoke('generateReport', payload)
 base44.functions.invoke('sendReport', payload)
+base44.functions.invoke('exportPresentation', payload)
 ```
 
-Endpoints propostos:
+Endpoints:
 
 ```txt
 POST /api/functions/quizSession
 POST /api/functions/createDataSubAssessment
 POST /api/functions/generateReport
 POST /api/functions/sendReport
+POST /api/functions/exportPresentation
 ```
 
 O frontend usa o cliente `functions.invoke` para chamar esses endpoints no backend proprio.
 
-Implementado na Fase 8:
+Implementado:
 
 ```txt
 POST /api/functions/quizSession
 POST /api/functions/createDataSubAssessment
 POST /api/functions/generateReport
 POST /api/functions/sendReport
+POST /api/functions/exportPresentation
 ```
 
 Acoes suportadas:
@@ -214,6 +229,37 @@ Resposta esperada:
 }
 ```
 
+`exportPresentation`:
+
+- exige autenticacao;
+- valida a permissao sobre o assessment;
+- usa o template PPT selecionado ou o template ativo por defeito;
+- gera uma apresentacao `.pptx` com os dados, notas e graficos do assessment;
+- devolve o ficheiro codificado em base64 para download no frontend;
+- registra auditoria com `report.export_presentation`.
+- URLs de branding aceitam apenas HTTPS, imagens raster permitidas e tamanho maximo de 5 MB; destinos locais/privados sao rejeitados para evitar SSRF.
+
+Payload esperado:
+
+```json
+{
+  "assessmentId": "assessment-id",
+  "language": "pt",
+  "presentationTemplateId": "presentation-template-id"
+}
+```
+
+Resposta esperada:
+
+```json
+{
+  "success": true,
+  "fileName": "Apresentacao_Executiva_Empresa_2026-06-03.pptx",
+  "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "contentBase64": "..."
+}
+```
+
 ## Health Check
 
 Endpoint criado na Fase 2:
@@ -245,36 +291,58 @@ base44.auth.resetPassword({ resetToken, newPassword })
 base44.users.inviteUser(email, role)
 ```
 
-Endpoints propostos:
+Endpoints:
 
 ```txt
 GET  /api/auth/me
 POST /api/auth/login
 POST /api/auth/logout
 POST /api/auth/register
+POST /api/auth/refresh
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
 POST /api/users/invite
+PUT  /api/users/:userId
+POST /api/users/:userId/resend-invite
+POST /api/users/:userId/unlock-login
+GET  /api/users/ai-provider-config
+PUT  /api/users/ai-provider-config
+GET  /api/users/ai-provider-models?provider=openai
 ```
 
-Autenticacao ainda nao foi migrada. O frontend contem stubs controlados ate a fase JWT.
-Implementado na Fase 7 e extendido nas fases seguintes:
+Implementado com JWT e extendido nas fases seguintes:
 
 ```txt
 POST /api/auth/login
 POST /api/auth/register
+POST /api/auth/refresh
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
 GET  /api/auth/me
 POST /api/auth/logout
 POST /api/users/invite
+PUT  /api/users/:userId
+POST /api/users/:userId/resend-invite
+POST /api/users/:userId/unlock-login
+GET  /api/users/ai-provider-config
+PUT  /api/users/ai-provider-config
+GET  /api/users/ai-provider-models?provider=openai
 ```
 
-`GET /api/auth/me` exige header:
+`GET /api/auth/me` usa automaticamente o cookie HttpOnly de sessao. O header Bearer continua aceite para compatibilidade operacional:
 
 ```txt
 Authorization: Bearer <token>
 ```
+
+`POST /api/auth/login` e `POST /api/auth/register` definem cookies HttpOnly e devolvem apenas os dados publicos do utilizador. Os tokens nao sao devolvidos no JSON.
+
+`POST /api/auth/refresh` exige o cookie `oramix_refresh_token`, valida a sessao e substitui o refresh token anterior por um novo. Uma tentativa de reutilizar um refresh token ja rotacionado revoga a sessao e gera `security.refresh_token_reuse`.
+
+`POST /api/auth/logout` e idempotente, limpa os cookies e revoga a sessao quando um token identificavel esta presente.
+
+Falhas repetidas de login por conta podem devolver `429 auth_temporarily_locked`. O bloqueio e progressivo e a suspeita e registada em auditoria.
+Para utilizadores existentes, o contador e o bloqueio ficam persistidos em `User.login_*`, permitindo que o Admin os consulte e desbloqueie.
 
 `POST /api/users/invite`:
 
@@ -283,6 +351,60 @@ Authorization: Bearer <token>
 - cria o utilizador se nao existir;
 - atualiza o `role` se o utilizador ja existir;
 - envia e-mail de convite com link para `/reset-password?token=...`.
+
+`PUT /api/users/:userId`:
+
+- exige autenticacao de `admin`;
+- permite editar nome, role e estado ativo do utilizador;
+- registra auditoria com `user.updated`.
+
+`POST /api/users/:userId/resend-invite`:
+
+- exige autenticacao de `admin`;
+- reenvia o convite para o utilizador indicado;
+- registra auditoria com `user.invite_resent`.
+
+`POST /api/users/:userId/unlock-login`:
+
+- exige autenticacao de `admin`;
+- exige `justification` entre 5 e 500 caracteres;
+- limpa as tentativas e o bloqueio persistido da conta;
+- registra auditoria com `security.login_unlocked`, incluindo a justificativa.
+
+Payload:
+
+```json
+{
+  "justification": "Bloqueio confirmado como falso positivo apos contacto com o utilizador."
+}
+```
+
+`GET /api/users/ai-provider-config`:
+
+- exige autenticacao de `admin`;
+- devolve provider e modelo selecionados;
+- devolve apenas o estado e a mascara das API keys, nunca a chave completa;
+- lista providers e modelos suportados.
+
+`PUT /api/users/ai-provider-config`:
+
+- exige autenticacao de `admin`;
+- permite selecionar `openai` ou `anthropic`;
+- permite selecionar o modelo suportado;
+- grava uma nova API key apenas quando fornecida;
+- preserva a chave existente quando `apiKey` fica vazio.
+
+Payload esperado:
+
+```json
+{
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "apiKey": "sk-..."
+}
+```
+
+`GET /api/users/ai-provider-models?provider=openai` devolve a lista de modelos permitidos para o provider escolhido.
 
 ## Audit Logs
 
@@ -302,7 +424,13 @@ Uso atual:
 base44.integrations.Core.InvokeLLM(...)
 ```
 
-Endpoint implementado:
+Endpoint generico implementado:
+
+```txt
+POST /api/integrations/:integrationName
+```
+
+Integracao atualmente disponivel:
 
 ```txt
 POST /api/integrations/llm

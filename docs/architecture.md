@@ -2,9 +2,9 @@
 
 ## Estado Atual
 
-O projeto atual foi exportado do Base44 e a aplicacao React/Vite foi movida para `frontend/`. A interface usa React, React Router, React Query, Tailwind CSS, componentes Radix/shadcn e bibliotecas auxiliares para graficos, PDF, markdown e edicao de conteudo.
+O projeto foi originalmente migrado do Base44, mas a aplicacao atual corre com frontend e backend proprios. A interface usa React, React Router, React Query, Tailwind CSS, componentes Radix/shadcn e bibliotecas auxiliares para graficos, PDF, markdown e edicao de conteudo.
 
-O frontend chama diretamente o SDK do Base44 por meio de `src/api/base44Client.js`. Essa camada cria o cliente com `@base44/sdk` e e usada pelas paginas e componentes para acessar entidades, autenticacao, funcoes serverless e integracoes.
+O frontend usa uma fachada local em `frontend/src/api/base44Client.js` apenas para preservar os nomes da API durante a migracao. Essa fachada nao usa o SDK Base44: todos os clientes chamam a API Express propria atraves de `frontend/src/api/apiClient.js`.
 
 As regras de negocio mais importantes herdadas do Base44 estao em `frontend/base44/functions`:
 
@@ -13,19 +13,13 @@ As regras de negocio mais importantes herdadas do Base44 estao em `frontend/base
 - `generateReport`: gera ou atualiza relatorio com apoio de LLM.
 - `sendReport`: envia notificacao por e-mail ao cliente.
 
-As entidades Base44 estao documentadas em `frontend/base44/entities/*.jsonc` e em `Entidades.md`.
+Os ficheiros em `frontend/base44/` sao referencias legadas da migracao e nao participam no build Docker. Os modelos efetivos estao em `backend/src/models/`.
 
-## Dependencias Base44
+## Compatibilidade legada
 
-Dependencias principais a remover ou substituir gradualmente:
+Os nomes `base44Client` e `base44.*` permanecem temporariamente no frontend como uma camada de compatibilidade interna. Nao existe dependencia instalada do SDK Base44 nem chamadas para servicos Base44 em runtime.
 
-- `@base44/sdk`
-- `@base44/vite-plugin`
-- `base44.entities.*`
-- `base44.auth.*`
-- `base44.functions.invoke(...)`
-- `base44.integrations.Core.InvokeLLM`
-- `base44.users.inviteUser`
+Os fluxos ainda nao migrados, como Google Login e OTP, sao explicitamente sinalizados no cliente e nao fazem fallback para uma plataforma externa.
 
 ## Arquitetura Alvo
 
@@ -113,7 +107,7 @@ O campo `id` original do Base44 deve ser preservado como campo unico para compat
 
 ## Fluxo de Dados Proposto
 
-1. O frontend chama uma camada local compativel com `base44`.
+1. O frontend chama a camada local de API.
 2. Essa camada envia requests para `/api`.
 3. O backend valida request, autenticacao e permissao.
 4. Controllers chamam services.
@@ -122,10 +116,10 @@ O campo `id` original do Base44 deve ser preservado como campo unico para compat
 
 ## Decisoes Tecnicas Iniciais
 
-- Criar um adaptador no frontend para reduzir alteracoes visuais e funcionais.
+- Manter uma fachada local no frontend para reduzir alteracoes visuais e funcionais durante a transicao.
 - Preservar nomes de entidades e metodos usados pelo Base44.
 - Migrar por fases pequenas, com testes e documentacao em cada etapa.
-- Comecar por backend independente antes de trocar chamadas do frontend.
+- Manter o backend independente e evitar dependencias de runtime em plataformas externas.
 - Preservar `pillar_scores` como string JSON inicialmente para reduzir risco.
 
 ## Pontos de Atencao

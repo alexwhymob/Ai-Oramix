@@ -14,6 +14,10 @@ export function createUsersClient() {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
+    unlockLogin: (userId, justification) => apiRequest(`/users/${encodeURIComponent(userId)}/unlock-login`, {
+      method: 'POST',
+      body: JSON.stringify({ justification })
+    }),
     getAiProviderConfig: () => apiRequest('/users/ai-provider-config'),
     updateAiProviderConfig: (payload) => apiRequest('/users/ai-provider-config', {
       method: 'PUT',

@@ -3,6 +3,7 @@ import {
   getAiProviderConfig,
   invite,
   listAiProviderModels,
+  unlockLogin,
   resendInvite,
   update,
   updateAiProviderConfig
@@ -15,5 +16,6 @@ usersRouter.post('/invite', authMiddleware, requireRoles(['admin']), invite);
 usersRouter.get('/ai-provider-config', authMiddleware, requireRoles(['admin']), getAiProviderConfig);
 usersRouter.put('/ai-provider-config', authMiddleware, requireRoles(['admin']), updateAiProviderConfig);
 usersRouter.get('/ai-provider-models', authMiddleware, requireRoles(['admin']), listAiProviderModels);
+usersRouter.post('/:userId/unlock-login', authMiddleware, requireRoles(['admin']), unlockLogin);
 usersRouter.put('/:userId', authMiddleware, requireRoles(['admin']), update);
 usersRouter.post('/:userId/resend-invite', authMiddleware, requireRoles(['admin']), resendInvite);

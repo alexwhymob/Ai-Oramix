@@ -10,19 +10,20 @@ import { integrationsRouter } from './routes/integrations.routes.js';
 import { usersRouter } from './routes/users.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { optionalAuthMiddleware } from './middlewares/auth.middleware.js';
-import { createRateLimiter, securityHeaders } from './middlewares/security.middleware.js';
+import { createRateLimiter, csrfOriginProtection, securityHeaders } from './middlewares/security.middleware.js';
 
 export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
-  app.set('trust proxy', 1);
+  app.set('trust proxy', env.TRUST_PROXY ? 1 : false);
   app.use(securityHeaders);
   app.use(cors({
     origin: env.FRONTEND_URL,
     credentials: true
   }));
   app.use(express.json({ limit: '1mb' }));
+  app.use(csrfOriginProtection);
 
   app.use('/api', healthRouter);
   app.use('/api/auth', createRateLimiter({ max: 30 }));

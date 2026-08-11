@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       : `Dear ${customer.name},\n\nYour AI Readiness Report is ready.\n\nGlobal Score: ${assessment.global_score?.toFixed(2)}/5.0\nMaturity Level: ${maturityLabel}\n\nPlease contact the Oramix team to access the full report.\n\nBest regards,\nOramix Team`;
 
     const { error } = await resend.emails.send({
-      from: 'Oramix AI Readiness <onboarding@resend.dev>',
+      from: 'Oramix Assessment Platform <onboarding@resend.dev>',
       to: customer.email,
       subject,
       text: textBody,

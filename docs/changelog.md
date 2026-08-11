@@ -1,5 +1,62 @@
 # Changelog
 
+## 2026-08-11
+
+### Tarefa
+
+Hardening de autenticacao, configuracao administrativa e atualizacao da documentacao tecnica.
+
+### Alteracoes principais
+
+- Migracao dos tokens de autenticacao para cookies `HttpOnly`, com access token de curta duracao e refresh token com rotacao.
+- Revogacao de sessoes por `auth_token_version` e invalidacao de refresh tokens reutilizados.
+- Protecao progressiva contra brute force por utilizador, com registo de suspeitas de ataque e desbloqueio administrativo auditado.
+- Reforco de CSRF, rate limiting, headers de seguranca, CSP e validacoes para recursos externos usados no PPT.
+- Adicao de gestao administrativa de utilizadores: edicao, inativacao, reenvio de convite e desbloqueio de login com justificativa.
+- Adicao da configuracao do provider LLM, incluindo OpenAI/Anthropic, modelos e armazenamento cifrado das API keys.
+- Expansao dos modelos de `AssessmentTemplate`, `PresentationTemplate`, `ReportTemplate`, maturidade, notificacoes e configuracao HTML.
+- Associacao de assessments e pilares aos templates, incluindo suporte para assessments do tipo `sub_assessment`.
+- Atualizacao do frontend para filtrar templates disponiveis e manter sub-assessments fora da pagina publica de inicio.
+- Preparacao de Docker Compose, manifest da aplicacao, favicon proprio e identidade `Oramix Assessment Platform`.
+- Atualizacao da documentacao de API, autenticacao, auditoria, base de dados, deployment e testes.
+
+### Ficheiros e areas principais
+
+- `backend/src/services/auth.service.js`
+- `backend/src/services/authCookies.service.js`
+- `backend/src/services/loginProtection.service.js`
+- `backend/src/middlewares/auth.middleware.js`
+- `backend/src/middlewares/security.middleware.js`
+- `backend/src/models/`
+- `backend/src/routes/`
+- `frontend/src/api/`
+- `frontend/src/lib/AuthContext.jsx`
+- `frontend/src/pages/admin/Configuration.jsx`
+- `docker-compose.yml`
+- `frontend/public/manifest.json`
+- `docs/api.md`
+- `docs/auth.md`
+- `docs/audit.md`
+- `docs/database.md`
+- `docs/deployment.md`
+- `docs/testing.md`
+
+### Impacto
+
+Alto para seguranca e operacao. A autenticacao passou a ter sessao gerida por cookies seguros, rotacao de refresh tokens, protecao contra tentativas repetidas e maior rastreabilidade administrativa. A plataforma tambem passou a suportar configuracao mais flexivel de templates e providers de IA.
+
+### Validacao
+
+- Testes automatizados de autenticacao, rotas, protecao contra brute force e middleware de seguranca executados com sucesso.
+- `git diff --check` executado sem erros.
+- Os fluxos de login, logout, envio de e-mail e exportacao PPT foram validados manualmente em ambiente local.
+
+### Observacoes
+
+- Em desenvolvimento local, `AUTH_COOKIE_SECURE` deve permanecer desativado quando a aplicacao nao usa HTTPS.
+- O bloqueio progressivo esta em memoria; em deploy com varias replicas deve ser movido para Redis ou MongoDB.
+- Segredos, API keys e arquivos `.env*` permanecem fora do repositorio.
+
 ## 2026-06-03
 
 ### Tarefa

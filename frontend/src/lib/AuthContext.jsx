@@ -21,13 +21,7 @@ export const AuthProvider = ({ children }) => {
     setAppPublicSettings(null);
     setAuthError(null);
 
-    if (window.localStorage.getItem('oramix_access_token')) {
-      await checkUserAuth();
-    } else {
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-    }
+    await checkUserAuth();
   };
 
   const checkUserAuth = async () => {

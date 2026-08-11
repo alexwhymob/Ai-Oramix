@@ -1,3 +1,5 @@
+import { env } from '../config/env.js';
+
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const DEFAULT_RATE_LIMIT_MAX = 100;
 
@@ -44,11 +46,24 @@ export function createRateLimiter({ windowMs = DEFAULT_RATE_LIMIT_WINDOW_MS, max
   };
 }
 
-function getClientKey(req) {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
-    return forwardedFor.split(',')[0].trim();
+export function csrfOriginProtection(req, _res, next) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    next();
+    return;
   }
 
+  const origin = req.headers.origin;
+  if (!origin || origin === env.FRONTEND_URL) {
+    next();
+    return;
+  }
+
+  const error = new Error('Cross-site request blocked');
+  error.status = 403;
+  error.code = 'csrf_origin_rejected';
+  next(error);
+}
+
+function getClientKey(req) {
   return req.ip || req.socket?.remoteAddress || 'unknown';
 }

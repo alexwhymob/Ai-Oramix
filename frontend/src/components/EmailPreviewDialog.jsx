@@ -16,7 +16,7 @@ function buildFullEmail(bodyHtml, lang) {
           <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
             <tr>
               <td style="background:linear-gradient(135deg,#1d4e89 0%,#e67e22 100%);padding:32px 40px;text-align:center;">
-                <div style="font-size:22px;font-weight:bold;color:#ffffff;">Oramix AI Readiness</div>
+                <div style="font-size:22px;font-weight:bold;color:#ffffff;">Oramix Assessment Platform</div>
                 <div style="font-size:13px;color:#ffffff;opacity:0.9;margin-top:4px;">${subtitle}</div>
               </td>
             </tr>

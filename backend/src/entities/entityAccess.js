@@ -46,6 +46,10 @@ export async function buildEntityAccessFilter({ entityName, action, user }) {
 }
 
 export function applyEntityWriteDefaults({ entityName, action, payload, user }) {
+  if (entityName === 'User') {
+    return sanitizeUserWritePayload(action, payload);
+  }
+
   if (entityName !== 'Customer' || action !== 'create' || user?.role !== 'account_manager') {
     return payload;
   }
@@ -55,6 +59,27 @@ export function applyEntityWriteDefaults({ entityName, action, payload, user }) 
     account_manager_id: user.id,
     created_by_id: user.id
   };
+}
+
+const USER_WRITE_FIELDS = new Set(['email', 'full_name', 'role', 'active']);
+
+function sanitizeUserWritePayload(action, payload = {}) {
+  if (action === 'create' || action === 'bulkCreate') {
+    const error = new Error('User records must be created through the invite flow.');
+    error.status = 403;
+    error.code = 'user_write_flow_required';
+    throw error;
+  }
+
+  const forbiddenFields = Object.keys(payload).filter((field) => !USER_WRITE_FIELDS.has(field));
+  if (forbiddenFields.length) {
+    const error = new Error('User security fields cannot be changed through the generic entity API.');
+    error.status = 400;
+    error.code = 'user_field_not_editable';
+    throw error;
+  }
+
+  return Object.fromEntries(Object.entries(payload).filter(([field]) => USER_WRITE_FIELDS.has(field)));
 }
 
 export function assertFunctionAccess({ functionName, action, user }) {

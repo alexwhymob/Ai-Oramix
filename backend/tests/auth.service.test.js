@@ -5,7 +5,9 @@ import {
   createResetPasswordService,
   hashPassword,
   hashResetToken,
+  getUserFromToken,
   loginUser,
+  registerUser,
   resolveRegistrationRole,
   signAuthToken,
   updateInternalUser,
@@ -27,7 +29,8 @@ describe('auth service', () => {
     const token = signAuthToken({
       id: 'user-1',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
+      auth_token_version: 3
     });
 
     const payload = verifyAuthToken(token);
@@ -35,6 +38,50 @@ describe('auth service', () => {
     expect(payload.sub).toBe('user-1');
     expect(payload.email).toBe('admin@example.com');
     expect(payload.role).toBe('admin');
+    expect(payload.token_version).toBe(3);
+  });
+
+  it('validates tokens against the persisted session version after logout', async () => {
+    const findOneSpy = vi.spyOn(User, 'findOne').mockReturnValue({
+      select: vi.fn().mockResolvedValue({
+        id: 'user-versioned',
+        email: 'admin@example.com',
+        role: 'admin',
+        active: true,
+        auth_token_version: 3,
+        toJSON() {
+          return {
+            id: this.id,
+            email: this.email,
+            role: this.role,
+            active: this.active,
+            auth_token_version: this.auth_token_version
+          };
+        }
+      })
+    });
+
+    const token = signAuthToken({
+      id: 'user-versioned',
+      email: 'admin@example.com',
+      role: 'admin',
+      auth_token_version: 3
+    });
+
+    await expect(getUserFromToken(token)).resolves.toMatchObject({ id: 'user-versioned' });
+    findOneSpy.mockRestore();
+  });
+
+  it('rejects invalid registration credentials before accessing the database', async () => {
+    await expect(registerUser({
+      email: 'invalid-email',
+      password: 'short'
+    })).rejects.toMatchObject({ code: 'invalid_email', status: 400 });
+
+    await expect(registerUser({
+      email: 'valid@example.com',
+      password: 'short'
+    })).rejects.toMatchObject({ code: 'invalid_password', status: 400 });
   });
 
   it('does not allow public registration to choose privileged roles', async () => {
@@ -93,6 +140,7 @@ describe('auth service', () => {
     expect(user.password_hash).toBe('new-hash');
     expect(user.reset_password_token_hash).toBeNull();
     expect(user.reset_password_expires_at).toBeNull();
+    expect(user.auth_token_version).toBe(1);
     expect(save).toHaveBeenCalledOnce();
   });
 

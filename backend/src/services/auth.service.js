@@ -4,9 +4,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import { env } from '../config/env.js';
 import { User } from '../models/index.js';
 import { sendEmail } from './email/emailClient.js';
+import { assertLoginAllowed, clearLoginFailures, getLoginProtectionStatus, recordLoginFailure } from './loginProtection.service.js';
 
-const TOKEN_EXPIRES_IN = '8h';
-const PUBLIC_USER_FIELDS = 'id email full_name role active created_date updated_date created_by_id';
+const ACCESS_TOKEN_EXPIRES_IN = '15m';
+const REFRESH_TOKEN_EXPIRES_IN = '30d';
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+const AUTH_USER_FIELDS = 'id email full_name role active created_date updated_date created_by_id auth_token_version';
 const PASSWORD_RESET_EXPIRES_IN_MS = 60 * 60 * 1000;
 
 export function requireJwtSecret() {
@@ -34,10 +38,25 @@ export function signAuthToken(user) {
     {
       sub: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      token_version: user.auth_token_version || 0
     },
     env.JWT_SECRET,
-    { expiresIn: TOKEN_EXPIRES_IN }
+    { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+  );
+}
+
+function signRefreshToken(user) {
+  requireJwtSecret();
+
+  return jwt.sign(
+    {
+      sub: user.id,
+      token_version: user.auth_token_version || 0,
+      type: 'refresh'
+    },
+    env.JWT_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
   );
 }
 
@@ -46,7 +65,9 @@ export function verifyAuthToken(token) {
   return jwt.verify(token, env.JWT_SECRET);
 }
 
-export async function registerUser({ email, password, full_name, role = 'account_manager' }, options = {}) {
+export async function registerUser({ email, password, full_name, role = 'account_manager' } = {}, options = {}) {
+  validateEmail(email);
+  validatePassword(password);
   const effectiveRole = resolveRegistrationRole(role, options);
   const existing = await User.findOne({ email: email.toLowerCase() });
   if (existing) {
@@ -71,24 +92,54 @@ export function resolveRegistrationRole(role = 'account_manager', options = {}) 
   return options.allowRoleOverride ? role : 'account_manager';
 }
 
-export async function loginUser({ email, password }) {
+export async function loginUser({ email, password } = {}) {
+  validateEmail(email);
+  assertLoginAllowed(email);
+  if (typeof password !== 'string' || password.length === 0 || password.length > MAX_PASSWORD_LENGTH) {
+    throw createAuthInputError('Invalid email or password');
+  }
   const user = await User.findOne({ email: email.toLowerCase() });
+  assertLoginAllowed(email, user);
   const isValid = await verifyPassword(password, user?.password_hash);
 
   if (!user || !isValid) {
     const error = new Error('Invalid email or password');
     error.status = 401;
     error.code = 'invalid_credentials';
+    const attempt = recordLoginFailure(email, user);
+    if (user) await user.save();
+    error.securityEvent = attempt.suspected;
+    error.securityMetadata = attempt.metadata;
     throw error;
   }
 
   assertUserIsActive(user);
+  await clearLoginFailures(email, user);
   return createAuthResponse(user);
 }
 
+export async function unlockUserLogin(userId) {
+  const user = await User.findOne({ id: userId });
+  if (!user) {
+    const error = new Error('User not found');
+    error.status = 404;
+    error.code = 'user_not_found';
+    throw error;
+  }
+
+  user.login_failed_attempts = 0;
+  user.login_locked_until = null;
+  user.login_lock_level = 0;
+  await user.save();
+  clearLoginFailures(user.email);
+  return sanitizeUser(user);
+}
+
+export { getLoginProtectionStatus };
+
 export async function getUserFromToken(token) {
   const payload = verifyAuthToken(token);
-  const user = await User.findOne({ id: payload.sub }).select(PUBLIC_USER_FIELDS);
+  const user = await User.findOne({ id: payload.sub }).select(AUTH_USER_FIELDS);
 
   if (!user) {
     const error = new Error('User not found');
@@ -97,8 +148,89 @@ export async function getUserFromToken(token) {
     throw error;
   }
 
+  if ((payload.token_version || 0) !== (user.auth_token_version || 0)) {
+    const error = new Error('Authentication token is no longer valid');
+    error.status = 401;
+    error.code = 'token_revoked';
+    throw error;
+  }
+
   assertUserIsActive(user);
-  return user.toJSON();
+  return sanitizeUser(user);
+}
+
+export async function invalidateUserSessions(userId) {
+  const user = await User.findOne({ id: userId });
+  if (!user) return;
+
+  user.auth_token_version = (user.auth_token_version || 0) + 1;
+  user.refresh_token_hash = null;
+  user.refresh_token_expires_at = null;
+  await user.save();
+}
+
+export async function refreshUserSession(refreshToken) {
+  if (!refreshToken) {
+    throw createSessionError('Refresh token is required', 'refresh_token_required', 401);
+  }
+
+  let payload;
+  try {
+    payload = jwt.verify(refreshToken, env.JWT_SECRET);
+  } catch {
+    throw createSessionError('Invalid refresh token', 'invalid_refresh_token', 401);
+  }
+
+  if (payload.type !== 'refresh') {
+    throw createSessionError('Invalid refresh token', 'invalid_refresh_token', 401);
+  }
+
+  const user = await User.findOne({ id: payload.sub });
+  if (!user || user.active === false) {
+    throw createSessionError('Invalid refresh token', 'invalid_refresh_token', 401);
+  }
+
+  const tokenMatches = Boolean(user.refresh_token_hash) && hashResetToken(refreshToken) === user.refresh_token_hash;
+  const versionMatches = (payload.token_version || 0) === (user.auth_token_version || 0);
+  const refreshIsValid = user.refresh_token_expires_at && user.refresh_token_expires_at > new Date();
+
+  if (!tokenMatches || !versionMatches || !refreshIsValid) {
+    if (!tokenMatches && user.refresh_token_hash) {
+      await invalidateUserSessions(user.id);
+      const error = createSessionError('Refresh token reuse detected', 'refresh_token_reuse', 401);
+      error.securityEvent = true;
+      error.securityMetadata = { userId: user.id };
+      throw error;
+    }
+
+    throw createSessionError('Invalid refresh token', 'invalid_refresh_token', 401);
+  }
+
+  return createAuthResponse(user);
+}
+
+export async function logoutUser({ accessToken, refreshToken } = {}) {
+  let userId = null;
+
+  if (accessToken) {
+    try {
+      userId = verifyAuthToken(accessToken).sub;
+    } catch {
+      // The access token may already be expired; use the refresh token below.
+    }
+  }
+
+  if (!userId && refreshToken) {
+    try {
+      userId = jwt.verify(refreshToken, env.JWT_SECRET).sub;
+    } catch {
+      // Clearing the cookies remains safe even when both tokens are invalid.
+    }
+  }
+
+  if (userId) {
+    await invalidateUserSessions(userId);
+  }
 }
 
 export const requestPasswordReset = createPasswordResetRequestService();
@@ -112,7 +244,7 @@ export function createPasswordResetRequestService(deps = {}) {
   const emailClient = deps.email || { sendEmail };
   const now = deps.now || (() => new Date());
 
-  return async function runPasswordResetRequest({ email }) {
+  return async function runPasswordResetRequest({ email } = {}) {
     if (!email || !email.trim()) {
       return { success: true };
     }
@@ -166,12 +298,7 @@ export function createResetPasswordService(deps = {}) {
       throw error;
     }
 
-    if (!newPassword || newPassword.length < 8) {
-      const error = new Error('Password must be at least 8 characters long');
-      error.status = 400;
-      error.code = 'invalid_password';
-      throw error;
-    }
+    validatePassword(newPassword);
 
     const resetTokenHash = hashResetToken(resetToken);
     const user = await models.User.findOne({
@@ -187,6 +314,9 @@ export function createResetPasswordService(deps = {}) {
     }
 
     user.password_hash = await hashPasswordFn(newPassword);
+    user.auth_token_version = (user.auth_token_version || 0) + 1;
+    user.refresh_token_hash = null;
+    user.refresh_token_expires_at = null;
     user.reset_password_token_hash = null;
     user.reset_password_expires_at = null;
     await user.save();
@@ -202,14 +332,10 @@ export function createInviteUserService(deps = {}) {
   const emailClient = deps.email || { sendEmail };
   const now = deps.now || (() => new Date());
 
-  return async function runInviteUser({ email, role = 'account_manager', full_name = '' }) {
-    const normalizedEmail = email?.toLowerCase().trim();
-    if (!normalizedEmail) {
-      const error = new Error('Email is required');
-      error.status = 400;
-      error.code = 'missing_email';
-      throw error;
-    }
+  return async function runInviteUser({ email, role = 'account_manager', full_name = '' } = {}) {
+    validateEmail(email);
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedFullName = typeof full_name === 'string' ? full_name.trim() : '';
 
     if (!['admin', 'ai_consultant', 'account_manager'].includes(role)) {
       const error = new Error('Invalid role');
@@ -223,21 +349,24 @@ export function createInviteUserService(deps = {}) {
     if (!user) {
       user = await models.User.create({
         email: normalizedEmail,
-        full_name: full_name.trim() || normalizedEmail,
+        full_name: normalizedFullName || normalizedEmail,
         role,
         active: true,
         password_hash: null
       });
     } else {
       user.role = role;
-      if (full_name?.trim()) {
-        user.full_name = full_name.trim();
+      if (normalizedFullName) {
+        user.full_name = normalizedFullName;
       }
     }
 
     const resetToken = generateResetToken();
     user.reset_password_token_hash = hashResetToken(resetToken);
     user.reset_password_expires_at = new Date(now().getTime() + PASSWORD_RESET_EXPIRES_IN_MS);
+    user.auth_token_version = (user.auth_token_version || 0) + 1;
+    user.refresh_token_hash = null;
+    user.refresh_token_expires_at = null;
     await user.save();
 
     const setupUrl = `${env.FRONTEND_URL.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(resetToken)}`;
@@ -294,6 +423,9 @@ export async function updateInternalUser(userId, payload = {}, options = {}) {
   }
 
   Object.assign(user, normalizedPayload);
+  if (normalizedPayload.email || normalizedPayload.role || normalizedPayload.active !== undefined) {
+    user.auth_token_version = (user.auth_token_version || 0) + 1;
+  }
   await user.save();
 
   return sanitizeUser(user);
@@ -346,14 +478,27 @@ function generateResetToken() {
   return randomBytes(32).toString('hex');
 }
 
-function createAuthResponse(user) {
+async function createAuthResponse(user) {
+  const refreshToken = signRefreshToken(user);
+  user.refresh_token_hash = hashResetToken(refreshToken);
+  user.refresh_token_expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  await user.save();
+
   const token = signAuthToken(user);
   const jsonUser = sanitizeUser(user);
 
   return {
     access_token: token,
+    refresh_token: refreshToken,
     user: jsonUser
   };
+}
+
+function createSessionError(message, code, status) {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
 }
 
 function sanitizeUser(user) {
@@ -361,6 +506,12 @@ function sanitizeUser(user) {
   delete jsonUser.password_hash;
   delete jsonUser.reset_password_token_hash;
   delete jsonUser.reset_password_expires_at;
+  delete jsonUser.refresh_token_hash;
+  delete jsonUser.refresh_token_expires_at;
+  delete jsonUser.auth_token_version;
+  delete jsonUser.login_failed_attempts;
+  delete jsonUser.login_locked_until;
+  delete jsonUser.login_lock_level;
   return jsonUser;
 }
 
@@ -375,4 +526,29 @@ function formatRoleLabel(role) {
     default:
       return role;
   }
+}
+
+function validateEmail(email) {
+  if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    const error = new Error('A valid email is required');
+    error.status = 400;
+    error.code = 'invalid_email';
+    throw error;
+  }
+}
+
+function validatePassword(password) {
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+    const error = new Error(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters long`);
+    error.status = 400;
+    error.code = 'invalid_password';
+    throw error;
+  }
+}
+
+function createAuthInputError(message) {
+  const error = new Error(message);
+  error.status = 400;
+  error.code = 'invalid_auth_input';
+  return error;
 }

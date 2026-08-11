@@ -19,6 +19,19 @@ npm install
 npm test
 ```
 
+Os testes de seguranca cobrem cookies, bloqueio progressivo, validacao de origem CSRF e rejeicao de campos sensiveis na entidade `User`.
+
+## Dependencias
+
+Foi executado `npm audit` nos dois projetos e aplicadas as correcoes automaticas sem `--force`.
+
+Riscos residuais a acompanhar:
+
+- `image-size`, transitivo de `pptxgenjs`, com alertas de denial of service em parsers de formatos que a aplicacao nao aceita; os assets PPT sao agora limitados a PNG, JPEG, GIF e WebP, com validacao de assinatura, HTTPS, timeout e limite de 5 MB.
+- `react-router` com alertas de redirecionamento/open redirect; as navegacoes que usam valores externos devem continuar a validar destinos e nao aceitar URLs protocol-relative.
+
+Nao foi usado `npm audit fix --force`, pois a correcao sugerida para o `pptxgenjs` implica downgrade e quebra potencial da exportacao PPT.
+
 Teste inicial:
 
 - `GET /api/health` deve responder `200` com `{ "status": "ok", "service": "oramix-ai-backend" }`.
@@ -36,11 +49,11 @@ Teste inicial:
 
 ## Frontend
 
-O frontend possui um adaptador local em `frontend/src/api/base44Client.js`.
+O frontend possui uma fachada de compatibilidade local em `frontend/src/api/base44Client.js`. Ela nao usa o SDK Base44 e encaminha as chamadas para o backend proprio.
 
 Validacoes atuais:
 
-- Build Vite deve concluir sem o plugin Base44.
+- Build Vite deve concluir sem qualquer plugin ou SDK externo de plataforma.
 - Chamadas `base44.entities.*` devem apontar para `/api/entities`.
 - `base44.functions.invoke('generateReport')` deve apontar para `/api/functions/generateReport`.
 - `base44.functions.invoke('sendReport')` deve apontar para `/api/functions/sendReport`.

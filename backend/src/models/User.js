@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   active: { type: Boolean, default: true },
+  auth_token_version: { type: Number, default: 0 },
+  refresh_token_hash: { type: String, default: null },
+  refresh_token_expires_at: { type: Date, default: null },
+  login_failed_attempts: { type: Number, default: 0 },
+  login_locked_until: { type: Date, default: null },
+  login_lock_level: { type: Number, default: 0 },
   password_hash: { type: String, default: null },
   reset_password_token_hash: { type: String, default: null },
   reset_password_expires_at: { type: Date, default: null }

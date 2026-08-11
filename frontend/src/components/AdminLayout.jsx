@@ -55,7 +55,7 @@ export default function AdminLayout() {
             </div>
             <div>
               <div className="font-bold text-sm text-white leading-none">Oramix</div>
-              <div className="text-[10px] text-white/40 mt-0.5">AI Readiness</div>
+              <div className="text-[10px] text-white/40 mt-0.5">Assessment Platform</div>
             </div>
           </div>
         </div>

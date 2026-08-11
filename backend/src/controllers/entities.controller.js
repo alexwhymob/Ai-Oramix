@@ -70,7 +70,13 @@ export async function bulkCreateEntityRecords(req, res, next) {
 export async function updateEntityRecord(req, res, next) {
   try {
     const accessFilter = await buildEntityAccessFilter({ entityName: req.params.entity, action: 'update', user: req.user });
-    const record = await updateEntity(req.params.entity, req.params.id, req.body, { accessFilter });
+    const payload = applyEntityWriteDefaults({
+      entityName: req.params.entity,
+      action: 'update',
+      payload: req.body,
+      user: req.user
+    });
+    const record = await updateEntity(req.params.entity, req.params.id, payload, { accessFilter });
     await writeAuditLog({
       req,
       action: 'entity.update',

@@ -1,8 +1,9 @@
 import { getUserFromToken } from '../services/auth.service.js';
+import { ACCESS_COOKIE_NAME, parseCookies } from '../services/authCookies.service.js';
 
 export async function authMiddleware(req, _res, next) {
   try {
-    const token = extractBearerToken(req.headers.authorization);
+    const token = extractBearerToken(req.headers.authorization) || parseCookies(req)[ACCESS_COOKIE_NAME];
     if (!token) {
       const error = new Error('Authentication required');
       error.status = 401;
@@ -19,7 +20,7 @@ export async function authMiddleware(req, _res, next) {
 
 export async function optionalAuthMiddleware(req, _res, next) {
   try {
-    const token = extractBearerToken(req.headers.authorization);
+    const token = extractBearerToken(req.headers.authorization) || parseCookies(req)[ACCESS_COOKIE_NAME];
     if (token) {
       req.user = await getUserFromToken(token);
     }

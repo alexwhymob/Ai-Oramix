@@ -18,7 +18,7 @@ npm run dev
 npm run build
 ```
 
-Variaveis herdadas do Base44 ainda usadas nesta fase:
+Variaveis usadas pelo frontend nesta fase:
 
 ```txt
 VITE_API_BASE_URL=
@@ -51,10 +51,15 @@ Variaveis iniciais:
 NODE_ENV=development
 PORT=3003
 FRONTEND_URL=http://localhost:5175
+TRUST_PROXY=false
+AUTH_COOKIE_SAMESITE=lax
+AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_DOMAIN=
 MONGODB_URI=
 MONGODB_DIRECT_URI=
 MONGODB_DB_NAME=
 JWT_SECRET=
+LLM_CONFIG_ENCRYPTION_KEY=
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-5.4
 OPENAI_API_KEY=
@@ -76,7 +81,12 @@ O backend ja possui autenticacao JWT e geracao de relatorio com provider LLM tro
 - `EMAIL_PROVIDER=resend` e o provider de e-mail suportado nesta fase;
 - `RESEND_API_KEY` e obrigatoria quando `EMAIL_PROVIDER=resend`;
 - `EMAIL_FROM` define o remetente dos e-mails de relatorio.
+- `LLM_CONFIG_ENCRYPTION_KEY` deve ser uma chave aleatoria com pelo menos 32 caracteres e nao deve ser alterada sem um plano de re-encriptacao das chaves LLM armazenadas.
+- Antes do deploy, executar `npm audit` em `backend/` e `frontend/`; nao usar `--force` sem validar o impacto no exportador PPT e no router.
 - `MONGODB_DIRECT_URI` e opcional e serve como fallback quando a URI SRV do Atlas falha por DNS/SRV no ambiente local.
+- `AUTH_COOKIE_SECURE=false` e adequado apenas para desenvolvimento em `localhost`; em producao deve ser `true` com HTTPS.
+- `AUTH_COOKIE_SAMESITE=lax` funciona quando frontend e API partilham o mesmo site. Para dominios diferentes, usar `none` com HTTPS e CORS configurado com credenciais.
+- `FRONTEND_URL` deve ser uma origem exata e confiavel, pois tambem e usada na validacao anti-CSRF.
 
 ## Recomendacao de Deploy
 
@@ -151,6 +161,7 @@ Arquitetura recomendada:
 - `https://app.seudominio.com` serve o frontend estatico
 - `https://app.seudominio.com/api/*` faz proxy para `http://127.0.0.1:3003/api/*`
 - o backend liga ao MongoDB Atlas via `MONGODB_URI` ou `MONGODB_DIRECT_URI`
+- o Nginx aplica CSP, `X-Frame-Options` e `nosniff` ao frontend
 
 Passos sugeridos:
 
@@ -181,10 +192,15 @@ Variaveis importantes em VPS:
 NODE_ENV=production
 PORT=3003
 FRONTEND_URL=https://app.seudominio.com
+TRUST_PROXY=true
+AUTH_COOKIE_SAMESITE=lax
+AUTH_COOKIE_SECURE=true
+AUTH_COOKIE_DOMAIN=
 MONGODB_URI=...
 MONGODB_DIRECT_URI=...
 MONGODB_DB_NAME=...
 JWT_SECRET=...
+LLM_CONFIG_ENCRYPTION_KEY=...
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-5.4-mini
 OPENAI_API_KEY=...
@@ -192,6 +208,8 @@ EMAIL_PROVIDER=resend
 RESEND_API_KEY=...
 EMAIL_FROM=...
 ```
+
+Quando o frontend e servido pelo mesmo dominio e o Nginx encaminha `/api`, manter `AUTH_COOKIE_SAMESITE=lax`. Se forem usados dominios separados, configurar `AUTH_COOKIE_SAMESITE=none`, `AUTH_COOKIE_SECURE=true` e uma lista explicita de origens permitidas em `FRONTEND_URL`.
 
 ## Docker
 
@@ -218,6 +236,7 @@ Comportamento:
 - o `backend` le variaveis de `backend/.env`
 - o `frontend` e buildado como estatico e servido por `nginx`
 - o `frontend` faz proxy de `/api` para o container `backend:3003`
+- o Compose local usa `NODE_ENV=development` e cookies sem `Secure`, porque a aplicacao e acessada por HTTP em `localhost`
 
 URLs:
 
@@ -225,6 +244,17 @@ URLs:
 http://localhost:5175
 http://localhost:3003/api/health
 ```
+
+Em desenvolvimento local sem HTTPS, manter:
+
+```txt
+NODE_ENV=development
+AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_SAMESITE=lax
+TRUST_PROXY=false
+```
+
+Essas definicoes sao apenas para `localhost`. Em producao com HTTPS, usar `NODE_ENV=production` e `AUTH_COOKIE_SECURE=true`.
 
 ## Escolha de Modelo OpenAI
 

@@ -1,3 +1,4 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { env } from '../config/env.js';
 import { LlmProviderConfig } from '../models/index.js';
 
@@ -18,7 +19,7 @@ export const SUPPORTED_LLM_MODELS = {
 const DEFAULT_CONFIG_KEY = 'default';
 
 export async function resolveLlmRuntimeConfig() {
-  const storedConfig = await LlmProviderConfig.findOne({ key: DEFAULT_CONFIG_KEY }).lean();
+  const storedConfig = await migrateLegacyApiKeys(await LlmProviderConfig.findOne({ key: DEFAULT_CONFIG_KEY }).lean());
   const provider = normalizeProvider(storedConfig?.provider || env.LLM_PROVIDER || 'openai');
   const model = resolveModel(provider, storedConfig?.model || env.LLM_MODEL);
   const apiKey = resolveProviderApiKey(provider, storedConfig);
@@ -32,7 +33,7 @@ export async function resolveLlmRuntimeConfig() {
 }
 
 export async function getLlmProviderAdminConfig() {
-  const storedConfig = await LlmProviderConfig.findOne({ key: DEFAULT_CONFIG_KEY }).lean();
+  const storedConfig = await migrateLegacyApiKeys(await LlmProviderConfig.findOne({ key: DEFAULT_CONFIG_KEY }).lean());
   const provider = normalizeProvider(storedConfig?.provider || env.LLM_PROVIDER || 'openai');
   const model = resolveModel(provider, storedConfig?.model || env.LLM_MODEL);
 
@@ -61,7 +62,7 @@ export async function saveLlmProviderAdminConfig(payload = {}, actor = null) {
   };
 
   if (apiKey) {
-    update[apiKeyField] = apiKey;
+    update[apiKeyField] = encryptApiKey(apiKey);
   }
 
   await LlmProviderConfig.updateOne(
@@ -91,9 +92,9 @@ export function listSupportedModels(provider) {
 function resolveProviderApiKey(provider, storedConfig) {
   switch (provider) {
     case 'openai':
-      return storedConfig?.openai_api_key || env.OPENAI_API_KEY || '';
+      return decryptApiKey(storedConfig?.openai_api_key) || env.OPENAI_API_KEY || '';
     case 'anthropic':
-      return storedConfig?.anthropic_api_key || env.ANTHROPIC_API_KEY || '';
+      return decryptApiKey(storedConfig?.anthropic_api_key) || env.ANTHROPIC_API_KEY || '';
     default:
       return '';
   }
@@ -133,4 +134,64 @@ function maskApiKey(apiKey) {
   if (!value) return null;
   if (value.length <= 8) return '********';
   return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+function encryptApiKey(value) {
+  const key = getEncryptionKey();
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `enc:v1:${iv.toString('base64url')}:${tag.toString('base64url')}:${encrypted.toString('base64url')}`;
+}
+
+function decryptApiKey(value) {
+  if (!value) return '';
+  if (!String(value).startsWith('enc:v1:')) return value;
+
+  try {
+    const [, version, ivValue, tagValue, encryptedValue] = String(value).split(':');
+    if (version !== 'v1') return '';
+    const decipher = createDecipheriv('aes-256-gcm', getEncryptionKey(), Buffer.from(ivValue, 'base64url'));
+    decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
+    return Buffer.concat([
+      decipher.update(Buffer.from(encryptedValue, 'base64url')),
+      decipher.final()
+    ]).toString('utf8');
+  } catch {
+    const error = new Error('Unable to decrypt stored AI provider key');
+    error.status = 500;
+    error.code = 'llm_key_decryption_failed';
+    throw error;
+  }
+}
+
+function getEncryptionKey() {
+  const configuredKey = env.LLM_CONFIG_ENCRYPTION_KEY || env.JWT_SECRET;
+  if (!configuredKey) {
+    const error = new Error('LLM_CONFIG_ENCRYPTION_KEY is required to store provider keys');
+    error.status = 500;
+    error.code = 'missing_llm_key_encryption_secret';
+    throw error;
+  }
+
+  return createHash('sha256').update(configuredKey).digest();
+}
+
+async function migrateLegacyApiKeys(storedConfig) {
+  if (!storedConfig) return storedConfig;
+
+  const update = {};
+  for (const field of ['openai_api_key', 'anthropic_api_key']) {
+    if (storedConfig[field] && !String(storedConfig[field]).startsWith('enc:v1:')) {
+      update[field] = encryptApiKey(storedConfig[field]);
+      storedConfig[field] = update[field];
+    }
+  }
+
+  if (Object.keys(update).length) {
+    await LlmProviderConfig.updateOne({ key: DEFAULT_CONFIG_KEY }, { $set: update });
+  }
+
+  return storedConfig;
 }
