@@ -19,6 +19,8 @@ Hardening de autenticacao, configuracao administrativa e atualizacao da document
 - Atualizacao do frontend para filtrar templates disponiveis e manter sub-assessments fora da pagina publica de inicio.
 - Preparacao de Docker Compose, manifest da aplicacao, favicon proprio e identidade `Oramix Assessment Platform`.
 - Atualizacao da documentacao de API, autenticacao, auditoria, base de dados, deployment e testes.
+- Adicionado MFA TOTP para administradores, com codigos de recuperacao de uso unico.
+- Adicionadas notificacoes Web Push para novas submissao de assessments, com Service Worker e subscricoes MongoDB.
 
 ### Ficheiros e areas principais
 

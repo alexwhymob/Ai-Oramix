@@ -8,6 +8,7 @@ import { functionsRouter } from './routes/functions.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { integrationsRouter } from './routes/integrations.routes.js';
 import { usersRouter } from './routes/users.routes.js';
+import { notificationsRouter } from './routes/notifications.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { optionalAuthMiddleware } from './middlewares/auth.middleware.js';
 import { createRateLimiter, csrfOriginProtection, securityHeaders } from './middlewares/security.middleware.js';
@@ -33,6 +34,7 @@ export function createApp() {
   app.use('/api/integrations', integrationsRouter);
   app.use('/api/users', createRateLimiter({ max: 30 }));
   app.use('/api/users', usersRouter);
+  app.use('/api/notifications', notificationsRouter);
   app.use('/api/entities', optionalAuthMiddleware);
   app.use('/api/entities', entitiesRouter);
 

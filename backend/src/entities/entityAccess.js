@@ -1,7 +1,7 @@
 import { Assessment, Customer } from '../models/index.js';
 import { getEntityModel } from './entityRegistry.js';
 
-const PUBLIC_READ_ENTITIES = new Set(['Pillar', 'Question', 'AssessmentTemplate']);
+const PUBLIC_READ_ENTITIES = new Set(['Pillar', 'Question', 'AssessmentTemplate', 'MaturityPreset', 'MaturityLevel']);
 const ADMIN_ONLY_ENTITIES = new Set([
   'User',
   'PresentationTemplate',

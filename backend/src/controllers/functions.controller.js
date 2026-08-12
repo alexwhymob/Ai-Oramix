@@ -5,6 +5,7 @@ import { generateReport } from '../services/reportGeneration.service.js';
 import { sendReport } from '../services/reportEmail.service.js';
 import { exportPresentation } from '../services/presentationExport.service.js';
 import { applyFunctionWriteDefaults, assertFunctionAccess } from '../entities/entityAccess.js';
+import { notifyAssessmentSubmitted } from '../services/pushNotification.service.js';
 
 const AUDIT_ACTIONS = {
   registerCustomer: 'quiz.register_customer',
@@ -26,6 +27,9 @@ export async function invokeFunction(req, res, next) {
       assertFunctionAccess({ functionName, action: req.body?.action, user: req.user });
       const payload = applyFunctionWriteDefaults({ functionName, payload: req.body, user: req.user });
       const result = await handleQuizSessionAction(payload);
+      if ((payload.action === 'submit' || payload.action === 'submitSub') && result.completedNow) {
+        await notifyAssessmentSubmitted(result.assessmentId || payload.assessmentId);
+      }
       await writeAuditLog({
         req,
         action: AUDIT_ACTIONS[payload?.action] || 'quiz.unknown',

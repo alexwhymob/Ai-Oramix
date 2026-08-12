@@ -46,6 +46,8 @@ Teste inicial:
 - `sendReport` deve testar corpo de e-mail, permissoes por role e provider de e-mail sem chamar a API real do Resend.
 - `integrations/llm` deve testar autenticacao, validacao de `prompt` e permissao por role sem chamar a API real da OpenAI.
 - `forgot/reset password` deve testar criacao de token hash, expiracao e troca de password sem depender de MongoDB online.
+- MFA deve testar criacao de desafio, validacao TOTP, consumo de codigo de recuperacao e rejeicao de desafios expirados.
+- Web Push deve testar validacao e persistencia de subscricoes sem enviar notificacoes reais.
 
 ## Frontend
 
@@ -58,6 +60,7 @@ Validacoes atuais:
 - `base44.functions.invoke('generateReport')` deve apontar para `/api/functions/generateReport`.
 - `base44.functions.invoke('sendReport')` deve apontar para `/api/functions/sendReport`.
 - `base44.integrations.Core.InvokeLLM` deve apontar para `/api/integrations/llm`.
+- A configuracao `Configuration > Users` deve permitir ativar MFA e subscrever notificacoes do browser.
 
 ## Validacao Manual Minima
 
@@ -67,3 +70,4 @@ Para cada tarefa:
 - Rodar testes relacionados quando as dependencias estiverem instaladas.
 - Confirmar que o frontend nao mudou visualmente quando a tarefa nao envolver UI.
 - Nunca rodar testes automatizados contra a base MongoDB de producao.
+- Validar Web Push manualmente em HTTPS ou `localhost`, com permissao de notificacoes concedida no browser.

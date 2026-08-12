@@ -7,6 +7,8 @@ import NotificationManager from '@/components/NotificationManager';
 import PresentationTemplateManager from '@/components/PresentationTemplateManager';
 import AiProviderSettings from '@/components/AiProviderSettings';
 import MaturityPresetManager from '@/components/MaturityPresetManager';
+import MfaSettings from '@/components/MfaSettings';
+import BrowserNotificationSettings from '@/components/BrowserNotificationSettings';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -184,6 +186,10 @@ export default function AdminConfiguration() {
 
       {activeTab === 'users' && (
         <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <MfaSettings />
+            <BrowserNotificationSettings />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {ROLES.map((role) => (
               <div key={role.value} className="bg-[#152233] border border-white/10 rounded-xl p-4">

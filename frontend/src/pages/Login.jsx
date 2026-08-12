@@ -14,16 +14,37 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaChallenge, setMfaChallenge] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await base44.auth.loginViaEmailPassword(email, password);
+      const result = await base44.auth.loginViaEmailPassword(email, password);
+      if (result?.mfa_required) {
+        setMfaChallenge(result.challenge_token);
+        setError('Enter the code from your authenticator app.');
+        return;
+      }
       window.location.href = searchParams.get("from") || "/";
     } catch (err) {
       setError(err.message || "Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await base44.auth.verifyMfa(mfaChallenge, mfaCode);
+      window.location.href = searchParams.get("from") || "/";
+    } catch (err) {
+      setError(err.message || 'Invalid MFA code');
     } finally {
       setLoading(false);
     }
@@ -71,7 +92,17 @@ export default function Login() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {mfaChallenge ? (
+        <form onSubmit={handleMfaSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="mfa-code">Authenticator code</Label>
+            <Input id="mfa-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))} className="h-12" required autoFocus />
+          </div>
+          <Button type="submit" className="w-full h-12 font-medium" disabled={loading || mfaCode.length !== 6}>
+            {loading ? 'Verifying...' : 'Verify code'}
+          </Button>
+        </form>
+      ) : <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
@@ -120,7 +151,7 @@ export default function Login() {
             "Log in"
           )}
         </Button>
-      </form>
+      </form>}
     </AuthLayout>
   );
 }

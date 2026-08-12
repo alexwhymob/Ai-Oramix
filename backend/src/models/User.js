@@ -19,13 +19,18 @@ const userSchema = new mongoose.Schema({
   login_lock_level: { type: Number, default: 0 },
   password_hash: { type: String, default: null },
   reset_password_token_hash: { type: String, default: null },
-  reset_password_expires_at: { type: Date, default: null }
+  reset_password_expires_at: { type: Date, default: null },
+  mfa_enabled: { type: Boolean, default: false },
+  mfa_secret_encrypted: { type: String, default: null },
+  mfa_recovery_codes_hash: { type: [String], default: [] },
+  mfa_verified_at: { type: Date, default: null }
 }, schemaOptions);
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ active: 1 });
 userSchema.index({ reset_password_token_hash: 1 });
+userSchema.index({ mfa_enabled: 1 });
 
 touchUpdatedDate(userSchema);
 

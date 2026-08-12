@@ -297,6 +297,10 @@ Endpoints:
 GET  /api/auth/me
 POST /api/auth/login
 POST /api/auth/logout
+POST /api/auth/mfa/verify
+GET  /api/auth/mfa/setup
+POST /api/auth/mfa/confirm
+POST /api/auth/mfa/disable
 POST /api/auth/register
 POST /api/auth/refresh
 POST /api/auth/forgot-password
@@ -308,6 +312,9 @@ POST /api/users/:userId/unlock-login
 GET  /api/users/ai-provider-config
 PUT  /api/users/ai-provider-config
 GET  /api/users/ai-provider-models?provider=openai
+GET  /api/notifications/public-key
+POST /api/notifications/subscribe
+POST /api/notifications/unsubscribe
 ```
 
 Implementado com JWT e extendido nas fases seguintes:
@@ -340,6 +347,23 @@ Authorization: Bearer <token>
 `POST /api/auth/refresh` exige o cookie `oramix_refresh_token`, valida a sessao e substitui o refresh token anterior por um novo. Uma tentativa de reutilizar um refresh token ja rotacionado revoga a sessao e gera `security.refresh_token_reuse`.
 
 `POST /api/auth/logout` e idempotente, limpa os cookies e revoga a sessao quando um token identificavel esta presente.
+
+MFA para administradores:
+
+- `POST /api/auth/mfa/verify` valida o desafio temporario devolvido quando um admin com MFA ativo faz login.
+- `GET /api/auth/mfa/setup` cria um segredo TOTP temporario e devolve o URI `otpauth`.
+- `POST /api/auth/mfa/confirm` confirma o primeiro codigo e ativa MFA, devolvendo codigos de recuperacao uma unica vez.
+- `POST /api/auth/mfa/disable` desativa MFA para o administrador autenticado.
+
+Os segredos MFA nunca sao devolvidos pela API depois da configuracao.
+
+Web Push:
+
+- `GET /api/notifications/public-key` devolve a chave publica VAPID quando o provider esta configurado.
+- `POST /api/notifications/subscribe` grava a subscricao do browser para o utilizador autenticado.
+- `POST /api/notifications/unsubscribe` desativa uma subscricao do browser.
+
+As notificacoes sao enviadas aos admins ativos e ao account manager associado quando uma avaliacao e concluida pela primeira vez. O payload nao inclui dados sensiveis da empresa.
 
 Falhas repetidas de login por conta podem devolver `429 auth_temporarily_locked`. O bloqueio e progressivo e a suspeita e registada em auditoria.
 Para utilizadores existentes, o contador e o bloqueio ficam persistidos em `User.login_*`, permitindo que o Admin os consulte e desbloqueie.

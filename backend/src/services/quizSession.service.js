@@ -163,6 +163,7 @@ async function loadMainSession(token) {
 }
 
 async function submitAssessment({ assessmentId, answers = [], globalScore, maturityLevel, pillarScores }) {
+  const existingAssessment = await Assessment.findOne({ id: assessmentId }).select('status').lean();
   for (const answer of answers) {
     await AssessmentAnswer.updateOne(
       {
@@ -198,7 +199,7 @@ async function submitAssessment({ assessmentId, answers = [], globalScore, matur
     throw error;
   }
 
-  return { success: true };
+  return { success: true, assessmentId, completedNow: existingAssessment?.status !== 'completed' };
 }
 
 async function loadSubSession(assessmentId) {

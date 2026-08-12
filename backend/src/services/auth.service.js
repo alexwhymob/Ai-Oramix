@@ -5,12 +5,13 @@ import { env } from '../config/env.js';
 import { User } from '../models/index.js';
 import { sendEmail } from './email/emailClient.js';
 import { assertLoginAllowed, clearLoginFailures, getLoginProtectionStatus, recordLoginFailure } from './loginProtection.service.js';
+import { createMfaChallenge } from './mfa.service.js';
 
 const ACCESS_TOKEN_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_IN = '30d';
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
-const AUTH_USER_FIELDS = 'id email full_name role active created_date updated_date created_by_id auth_token_version';
+const AUTH_USER_FIELDS = 'id email full_name role active created_date updated_date created_by_id auth_token_version mfa_enabled';
 const PASSWORD_RESET_EXPIRES_IN_MS = 60 * 60 * 1000;
 
 export function requireJwtSecret() {
@@ -115,6 +116,12 @@ export async function loginUser({ email, password } = {}) {
 
   assertUserIsActive(user);
   await clearLoginFailures(email, user);
+  if (user.role === 'admin' && user.mfa_enabled) {
+    return {
+      mfa_required: true,
+      challenge_token: createMfaChallenge(user)
+    };
+  }
   return createAuthResponse(user);
 }
 
@@ -478,7 +485,7 @@ function generateResetToken() {
   return randomBytes(32).toString('hex');
 }
 
-async function createAuthResponse(user) {
+export async function createAuthResponse(user) {
   const refreshToken = signRefreshToken(user);
   user.refresh_token_hash = hashResetToken(refreshToken);
   user.refresh_token_expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -512,6 +519,8 @@ function sanitizeUser(user) {
   delete jsonUser.login_failed_attempts;
   delete jsonUser.login_locked_until;
   delete jsonUser.login_lock_level;
+  delete jsonUser.mfa_secret_encrypted;
+  delete jsonUser.mfa_recovery_codes_hash;
   return jsonUser;
 }
 

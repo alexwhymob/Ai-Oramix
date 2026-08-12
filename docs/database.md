@@ -327,6 +327,10 @@ Campos principais:
 - `login_lock_level`
 - `reset_password_token_hash`
 - `reset_password_expires_at`
+- `mfa_enabled`
+- `mfa_secret_encrypted`
+- `mfa_recovery_codes_hash`
+- `mfa_verified_at`
 
 Indices:
 
@@ -339,6 +343,7 @@ Indices:
 `refresh_token_hash` e `refresh_token_expires_at` sao campos internos de sessao. Nunca sao devolvidos pela API nem registados em auditoria.
 Os campos `login_*` suportam a visibilidade e o desbloqueio administrativo do bloqueio progressivo.
 Os campos `reset_password_*` sao internos e armazenam apenas o hash e a expiracao do token de recuperacao.
+Os campos `mfa_*` sao internos. O segredo TOTP e os codigos de recuperacao nunca sao devolvidos pela API.
 
 As API keys de providers LLM sao armazenadas cifradas com AES-256-GCM em `LlmProviderConfig`. `LLM_CONFIG_ENCRYPTION_KEY` deve ser mantida apenas no ambiente do backend. Valores legados em texto simples sao cifrados automaticamente quando a configuracao e lida.
 
@@ -373,6 +378,27 @@ Indices:
 - `provider`
 
 As chaves sao cifradas no backend e nunca sao devolvidas nas respostas da API. A chave `LLM_CONFIG_ENCRYPTION_KEY` e obrigatoria para proteger estes valores.
+
+### PushSubscription
+
+Campos principais:
+
+- `user_id`
+- `endpoint`
+- `p256dh`
+- `auth`
+- `user_agent`
+- `active`
+- `last_error_at`
+
+Indices:
+
+- `id`, unico
+- `user_id`
+- `endpoint`, unico
+- `user_id + active`
+
+As chaves da subscricao sao usadas apenas pelo Web Push e ficam associadas ao utilizador autenticado.
 
 ### AuditLog
 

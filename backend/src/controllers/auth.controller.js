@@ -4,14 +4,26 @@ import {
   registerUser,
   refreshUserSession,
   requestPasswordReset,
-  resetPasswordWithToken
+  resetPasswordWithToken,
+  createAuthResponse
 } from '../services/auth.service.js';
+import { confirmMfaSetup, createMfaSetup, disableMfa, verifyMfaChallenge } from '../services/mfa.service.js';
 import { clearAuthCookies, parseCookies, setAuthCookies, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../services/authCookies.service.js';
 import { writeAuditLog } from '../services/auditLog.service.js';
 
 export async function login(req, res, next) {
   try {
     const result = await loginUser(req.body);
+    if (result.mfa_required) {
+      await writeAuditLog({
+        req,
+        action: 'auth.mfa_required',
+        entity: 'User',
+        metadata: { email: req.body?.email }
+      });
+      res.status(202).json({ mfa_required: true, challenge_token: result.challenge_token });
+      return;
+    }
     await writeAuditLog({
       req,
       user: result.user,
@@ -35,6 +47,57 @@ export async function login(req, res, next) {
         metadata: error.securityMetadata || {}
       });
     }
+    next(error);
+  }
+}
+
+export async function verifyMfa(req, res, next) {
+  try {
+    const result = await verifyMfaChallenge(req.body?.challenge_token, req.body?.code);
+    const session = await createAuthResponse(result.user);
+    await writeAuditLog({
+      req,
+      user: result.user,
+      action: result.usedRecoveryCode ? 'auth.mfa_recovery_code_used' : 'auth.mfa_verified',
+      entity: 'User',
+      entity_id: result.user.id
+    });
+    sendSessionResponse(res, session);
+  } catch (error) {
+    await writeAuditLog({
+      req,
+      action: error.securityEvent ? 'security.mfa_failed' : 'auth.mfa_failed',
+      entity: 'User',
+      metadata: error.securityMetadata || {}
+    });
+    next(error);
+  }
+}
+
+export async function setupMfa(req, res, next) {
+  try {
+    res.json(createMfaSetup(req.user));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function confirmMfa(req, res, next) {
+  try {
+    const result = await confirmMfaSetup(req.user.id, req.body || {});
+    await writeAuditLog({ req, user: req.user, action: 'security.mfa_enabled', entity: 'User', entity_id: req.user.id });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function turnOffMfa(req, res, next) {
+  try {
+    const result = await disableMfa(req.user.id);
+    await writeAuditLog({ req, user: req.user, action: 'security.mfa_disabled', entity: 'User', entity_id: req.user.id });
+    res.json(result);
+  } catch (error) {
     next(error);
   }
 }

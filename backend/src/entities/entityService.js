@@ -123,6 +123,8 @@ function sanitizeEntityRecord(entityName, record) {
   delete sanitized.refresh_token_hash;
   delete sanitized.refresh_token_expires_at;
   delete sanitized.auth_token_version;
+  delete sanitized.mfa_secret_encrypted;
+  delete sanitized.mfa_recovery_codes_hash;
   return sanitized;
 }
 

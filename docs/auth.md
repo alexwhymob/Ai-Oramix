@@ -20,16 +20,16 @@ Fluxos implementados:
 - Bloqueio progressivo por conta apos falhas consecutivas de login.
 - Registo de suspeitas de brute force e reutilizacao de refresh token na auditoria.
 - Desbloqueio administrativo de login com justificativa obrigatoria.
+- MFA TOTP para contas `admin`, com codigos de recuperacao de uso unico.
+- Alertas Web Push para administradores quando uma avaliacao e submetida.
 
 Fora do escopo atual:
 
 - Google login.
-- OTP.
 
 Fluxos ainda pendentes:
 
 - Google login.
-- OTP.
 - Persistencia distribuida do controlo de tentativas para e-mails desconhecidos, caso sejam usadas varias replicas do backend.
 
 ## Backend
@@ -44,6 +44,10 @@ POST /api/auth/forgot-password
 POST /api/auth/reset-password
 GET  /api/auth/me
 POST /api/auth/logout
+POST /api/auth/mfa/verify
+GET  /api/auth/mfa/setup
+POST /api/auth/mfa/confirm
+POST /api/auth/mfa/disable
 POST /api/users/invite
 PUT  /api/users/:userId
 POST /api/users/:userId/resend-invite
@@ -51,12 +55,19 @@ POST /api/users/:userId/unlock-login
 GET  /api/users/ai-provider-config
 PUT  /api/users/ai-provider-config
 GET  /api/users/ai-provider-models?provider=openai
+GET  /api/notifications/public-key
+POST /api/notifications/subscribe
+POST /api/notifications/unsubscribe
 ```
 
 Variavel local obrigatoria:
 
 ```txt
 JWT_SECRET
+MFA_ISSUER
+WEB_PUSH_VAPID_PUBLIC_KEY
+WEB_PUSH_VAPID_PRIVATE_KEY
+WEB_PUSH_SUBJECT
 ```
 
 O valor deve existir apenas em ambiente local/servidor. Nunca versionar arquivos `.env*`.
@@ -132,3 +143,15 @@ TRUST_PROXY=false
 ```
 
 Em desenvolvimento local por HTTP, usar `AUTH_COOKIE_SECURE=false`, `AUTH_COOKIE_SAMESITE=lax` e `TRUST_PROXY=false`. Em producao, usar HTTPS e `AUTH_COOKIE_SECURE=true`. Se frontend e backend estiverem em sites diferentes, usar HTTPS, `AUTH_COOKIE_SAMESITE=none` e CORS com credenciais e origens explicitas.
+
+## MFA e Web Push
+
+O Admin pode ativar MFA em `Configuration > Users`. O segredo ou URI `otpauth` deve ser adicionado a uma aplicacao autenticadora e confirmado com um codigo de seis digitos.
+
+Gerar as chaves VAPID uma vez no ambiente operacional:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+As chaves devem ser configuradas apenas no backend. O utilizador Admin ativa as notificacoes em `Configuration > Users`; o browser pede permissao e regista a subscricao no MongoDB. A notificacao e enviada quando uma avaliacao muda pela primeira vez para `completed`.

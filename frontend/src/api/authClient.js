@@ -10,6 +10,16 @@ export function createAuthClient() {
       });
       return result;
     },
+    verifyMfa: (challenge_token, code) => apiRequest('/auth/mfa/verify', {
+      method: 'POST',
+      body: JSON.stringify({ challenge_token, code })
+    }),
+    setupMfa: () => apiRequest('/auth/mfa/setup'),
+    confirmMfa: (secret, code) => apiRequest('/auth/mfa/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ secret, code })
+    }),
+    disableMfa: () => apiRequest('/auth/mfa/disable', { method: 'POST' }),
     loginWithProvider: notMigrated,
     logout: async (redirectTo = '/') => {
       try {

@@ -47,7 +47,7 @@ function handleAuthFailure(status, path) {
     return;
   }
 
-  if (isAuthRoute(path) || isPublicAuthScreen()) {
+    if (isAuthRoute(path) || isPublicScreen()) {
     return;
   }
 
@@ -56,7 +56,7 @@ function handleAuthFailure(status, path) {
 }
 
 function shouldTryRefresh(path) {
-  return !isAuthRoute(path) && !isPublicAuthScreen();
+  return !isAuthRoute(path) && !isPublicScreen();
 }
 
 async function refreshSession() {
@@ -90,8 +90,8 @@ function isAuthRoute(path) {
   ].some((authPath) => path.startsWith(authPath));
 }
 
-function isPublicAuthScreen() {
-  return ['/login', '/forgot-password', '/reset-password', '/register'].some((route) =>
+function isPublicScreen() {
+  return ['/login', '/forgot-password', '/reset-password', '/register', '/quiz/', '/sub-quiz/', '/complete/', '/sub-complete/'].some((route) =>
     window.location.pathname.startsWith(route)
   );
 }
