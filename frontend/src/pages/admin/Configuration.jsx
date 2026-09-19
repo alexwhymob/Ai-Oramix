@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Bot, Check, Edit2, HelpCircle, KeyRound, Loader2, Mail, Power, Shield, UserPlus, Users } from 'lucide-react';
+import { Activity, Bot, Check, Code2, Edit2, HelpCircle, KeyRound, Loader2, Mail, Power, Shield, UserPlus, Users } from 'lucide-react';
+import AiAuditManager from '@/components/AiAuditManager';
 import QuestionManager from '@/components/QuestionManager';
 import NotificationManager from '@/components/NotificationManager';
 import PresentationTemplateManager from '@/components/PresentationTemplateManager';
@@ -9,6 +10,7 @@ import AiProviderSettings from '@/components/AiProviderSettings';
 import MaturityPresetManager from '@/components/MaturityPresetManager';
 import MfaSettings from '@/components/MfaSettings';
 import BrowserNotificationSettings from '@/components/BrowserNotificationSettings';
+import HtmlFormatManager from '@/components/HtmlFormatManager';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -40,7 +42,7 @@ export default function AdminConfiguration() {
   const [inviting, setInviting] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', role: 'ai_consultant', active: true });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', role: 'ai_consultant', active: true, booking_url: '' });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['all_users'],
@@ -57,7 +59,7 @@ export default function AdminConfiguration() {
     });
   }, [users]);
 
-  const initialTab = ['users', 'questions', 'provider-ai', 'maturity', 'notifications', 'presentations'].includes(searchParams.get('tab'))
+  const initialTab = ['users', 'questions', 'provider-ai', 'ai-audit', 'maturity', 'notifications', 'presentations', 'html'].includes(searchParams.get('tab'))
     ? searchParams.get('tab')
     : 'users';
   const initialTemplateId = searchParams.get('templateId') || 'all';
@@ -133,7 +135,8 @@ export default function AdminConfiguration() {
       full_name: user.full_name || '',
       email: user.email || '',
       role: user.role || 'ai_consultant',
-      active: user.active ?? true
+      active: user.active ?? true,
+      booking_url: user.booking_url || ''
     });
   };
 
@@ -166,6 +169,9 @@ export default function AdminConfiguration() {
           <button onClick={() => setActiveTab('provider-ai')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'provider-ai' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
             <Bot className="w-3.5 h-3.5" /> Provider AI
           </button>
+          <button onClick={() => setActiveTab('ai-audit')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'ai-audit' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
+            <Activity className="w-3.5 h-3.5" /> AI Audit
+          </button>
           <button onClick={() => setActiveTab('maturity')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'maturity' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
             <Shield className="w-3.5 h-3.5" /> Maturity
           </button>
@@ -175,14 +181,19 @@ export default function AdminConfiguration() {
           <button onClick={() => setActiveTab('presentations')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'presentations' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
             <Shield className="w-3.5 h-3.5" /> Presentations
           </button>
+          <button onClick={() => setActiveTab('html')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === 'html' ? 'bg-blue-500 text-white' : 'text-white/50 hover:text-white/80'}`}>
+            <Code2 className="w-3.5 h-3.5" /> HTML Report
+          </button>
         </div>
       </div>
 
       {activeTab === 'questions' && <QuestionManager initialTemplateId={initialTemplateId} />}
       {activeTab === 'provider-ai' && <AiProviderSettings />}
+      {activeTab === 'ai-audit' && <AiAuditManager />}
       {activeTab === 'maturity' && <MaturityPresetManager />}
       {activeTab === 'notifications' && <NotificationManager />}
       {activeTab === 'presentations' && <PresentationTemplateManager />}
+      {activeTab === 'html' && <HtmlFormatManager />}
 
       {activeTab === 'users' && (
         <>
@@ -328,6 +339,10 @@ export default function AdminConfiguration() {
                 <div>
                   <label className="text-xs text-white/50 block mb-1">Email</label>
                   <Input type="email" value={editForm.email} onChange={(event) => setEditForm((prev) => ({ ...prev, email: event.target.value }))} className="bg-[#0D1B2A] border-white/10 text-white" />
+                </div>
+                <div>
+                  <label className="text-xs text-white/50 block mb-1">Booking URL</label>
+                  <Input type="url" value={editForm.booking_url} onChange={(event) => setEditForm((prev) => ({ ...prev, booking_url: event.target.value }))} placeholder="https://..." className="bg-[#0D1B2A] border-white/10 text-white" />
                 </div>
                 <div>
                   <label className="text-xs text-white/50 block mb-1">Role</label>

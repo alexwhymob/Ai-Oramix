@@ -29,13 +29,30 @@ export default function AssessmentComplete() {
   const [expandedPillar, setExpandedPillar] = useState(null);
   const [showScrollPopup, setShowScrollPopup] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
+  const [resultAccessReady, setResultAccessReady] = useState(false);
+  const [resultAccessError, setResultAccessError] = useState(false);
   const t = (pt, en) => (lang === 'pt' ? pt : en);
   const { resolveLevel } = useMaturityData();
 
-  const { data: resultData } = useQuery({
+  useEffect(() => {
+    if (!assessmentId) return;
+    const resultToken = new URLSearchParams(window.location.hash.slice(1)).get('access');
+    if (!resultToken) {
+      setResultAccessReady(true);
+      return;
+    }
+    base44.functions.invoke('quizSession', { action: 'exchangeResultAccess', assessmentId, resultToken })
+      .then(() => {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+        setResultAccessReady(true);
+      })
+      .catch(() => setResultAccessError(true));
+  }, [assessmentId]);
+
+  const { data: resultData, isError: isResultAccessError } = useQuery({
     queryKey: ['quiz_result', assessmentId],
     queryFn: () => base44.functions.invoke('quizSession', { action: 'getResult', assessmentId }).then((response) => response.data),
-    enabled: !!assessmentId
+    enabled: !!assessmentId && resultAccessReady
   });
 
   const assessment = resultData?.assessment;
@@ -94,7 +111,7 @@ export default function AssessmentComplete() {
   const { data: subData } = useQuery({
     queryKey: ['sub_assessments', assessmentId],
     queryFn: () => base44.functions.invoke('quizSession', { action: 'getSubAssessments', assessmentId }).then((response) => response.data),
-    enabled: !!assessmentId && !!assessment,
+    enabled: !!assessmentId && !!assessment && resultAccessReady,
     refetchInterval: (query) => {
       const pending = query?.state?.data?.subAssessments?.some((item) => item.status !== 'completed');
       return pending ? 5000 : false;
@@ -123,6 +140,23 @@ export default function AssessmentComplete() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [popupSubAssessment, popupDismissed]);
+
+  const openSubAssessment = async (subAssessmentId) => {
+    const response = await base44.functions.invoke('quizSession', { action: 'issueSubAccess', assessmentId: subAssessmentId });
+    navigate(`/sub-quiz/${subAssessmentId}#access=${encodeURIComponent(response.data.accessToken)}`);
+  };
+
+  if (resultAccessError || isResultAccessError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 text-center">
+        <div className="max-w-md space-y-3 text-muted-foreground">
+          <AlertTriangle className="mx-auto h-9 w-9 text-amber-500" />
+          <h1 className="text-xl font-semibold text-foreground">{t('Acesso aos resultados indisponível', 'Results access unavailable')}</h1>
+          <p>{t('Este link de resultados expirou, já foi utilizado ou o acesso foi revogado. Contacte o seu account manager.', 'This results link has expired, was already used, or access was revoked. Please contact your account manager.')}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!assessment) {
     return (
@@ -307,7 +341,7 @@ export default function AssessmentComplete() {
                       {t('Ver resultados detalhados', 'View detailed results')} <ArrowRight className="w-4 h-4" />
                     </Button>
                   ) : (
-                    <Button onClick={() => navigate(`/sub-quiz/${subAssessment.id}`)} className="bg-orange-500 hover:bg-orange-600 text-white gap-1.5">
+                    <Button onClick={() => openSubAssessment(subAssessment.id)} className="bg-orange-500 hover:bg-orange-600 text-white gap-1.5">
                       {t(`Iniciar sub-avaliacao de ${pillarName}`, `Start ${pillarName} sub-assessment`)} <ArrowRight className="w-4 h-4" />
                     </Button>
                   )}
@@ -340,7 +374,7 @@ export default function AssessmentComplete() {
                 {t('Complete para obter recomendacoes mais precisas.', 'Complete it to get more precise recommendations.')}
               </p>
             </div>
-            <Button size="sm" onClick={() => navigate(`/sub-quiz/${popupSubAssessment.id}`)} className="bg-orange-500 hover:bg-orange-600 text-white gap-1 flex-shrink-0">
+            <Button size="sm" onClick={() => openSubAssessment(popupSubAssessment.id)} className="bg-orange-500 hover:bg-orange-600 text-white gap-1 flex-shrink-0">
               {t('Iniciar', 'Start')} <ArrowRight className="w-3.5 h-3.5" />
             </Button>
             <button

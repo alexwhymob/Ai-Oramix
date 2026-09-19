@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Database, ArrowRight, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
+import { Database, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const DATA_MATURITY = [

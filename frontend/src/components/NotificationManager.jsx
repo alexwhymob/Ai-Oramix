@@ -16,7 +16,8 @@ const TRIGGER_INFO = {
 
 const TEMPLATE_VARS = {
   completion: ['customer_name', 'company', 'global_score', 'maturity_label', 'quiz_link', 'booking_url'],
-  incomplete_reminder: ['customer_name', 'company', 'quiz_link', 'booking_url'],
+  assessment_started: ['customer_name', 'company', 'quiz_link', 'access_expires_at'],
+  incomplete_reminder: ['customer_name', 'company', 'quiz_link', 'access_expires_at', 'booking_url'],
   final_report: ['customer_name', 'company', 'global_score', 'maturity_label', 'booking_url'],
   presentation_scheduling: ['customer_name', 'company', 'am_name', 'booking_url'],
   report_ready: ['customer_name', 'company', 'global_score', 'maturity_label', 'booking_url', 'app_access_line']

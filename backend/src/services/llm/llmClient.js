@@ -10,13 +10,16 @@ import {
 } from './openai.provider.js';
 
 export async function generateStructuredObject(options) {
-  const provider = createProviderClient(await resolveLlmRuntimeConfig());
-  return provider.generateStructuredObject(options);
+  return runAudited('structured_generation', options, 'generateStructuredObject');
 }
 
 export async function generateText(options) {
-  const provider = createProviderClient(await resolveLlmRuntimeConfig());
-  return provider.generateText(options);
+  return runAudited('text_generation', options, 'generateText');
+}
+
+async function runAudited(operation, options, method) {
+  const runtime = await resolveLlmRuntimeConfig();
+  return createProviderClient(runtime)[method]({ ...options, auditOperation: operation });
 }
 
 export function createProviderClient(runtimeEnv = env) {

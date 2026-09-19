@@ -86,6 +86,12 @@ URLs locais:
 
 - Frontend: `http://localhost:5175`
 - Healthcheck: `http://localhost:3003/api/health`
+- Métricas OpenTelemetry (apenas local): `http://localhost:9464/metrics`
+- Traces OpenTelemetry / Jaeger (apenas local): `http://localhost:16686`
+
+O Docker Compose executa localmente um OpenTelemetry Collector e Jaeger. Os traces são mantidos em memória pelo Jaeger e são apagados quando esse serviço é recriado. Para desligar a exportação de traces, remova `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` da configuração do serviço `backend`.
+
+O Redis é usado apenas para rate limiting distribuído e não expõe porta no host nem persiste dados. Em produção, configure `REDIS_URL` com TLS/autenticação e mantenha `RATE_LIMIT_REQUIRE_REDIS=true` para evitar iniciar sem essa proteção.
 
 Parar os containers:
 
@@ -124,11 +130,12 @@ Os scripts fazem upsert na nossa base MongoDB. Nao importam dados para nenhuma p
 - [Deploy](docs/deployment.md)
 - [Testes](docs/testing.md)
 - [Auditoria](docs/audit.md)
+- [Roadmap de seguranca e acesso publico](docs/security-roadmap.md)
 - [Plano de migracao](docs/migration-plan.md)
 - [Changelog](docs/changelog.md)
 
 ## Seguranca
 
-Segredos, chaves de API, credenciais do Atlas e tokens JWT devem ser fornecidos por variaveis de ambiente. O backend aplica autenticacao JWT em cookies HttpOnly, refresh tokens rotativos, autorizacao por role, rate limiting, bloqueio progressivo contra brute force, headers de seguranca e registo de auditoria.
+Segredos, chaves de API, credenciais do Atlas e tokens JWT devem ser fornecidos por variaveis de ambiente. O backend aplica autenticacao JWT em cookies HttpOnly, refresh tokens rotativos, autorizacao por role, rate limiting, bloqueio progressivo contra brute force, headers de seguranca e registo de auditoria. O acesso publico a resultados usa uma credencial de troca unica, valida por 30 dias, que e convertida num cookie de leitura `HttpOnly`; consultar [Roadmap de seguranca e acesso publico](docs/security-roadmap.md) para o fluxo e a transicao dos QR links legados.
 
 Antes de um deploy publico, validar whitelist de IP do Atlas, HTTPS, rotacao de segredos, politica de backups e logs sem dados sensiveis.

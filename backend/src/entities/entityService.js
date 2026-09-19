@@ -1,4 +1,5 @@
 import { getEntityModel } from './entityRegistry.js';
+import { withSpan } from '../telemetry/tracing.js';
 import { parseEntityQuery } from './entityQuery.js';
 import { syncAssessmentTemplatePillarCount } from '../services/assessmentTemplate.service.js';
 
@@ -20,13 +21,21 @@ export async function listEntities(entityName, query, options = {}) {
   const { filter, limit, skip, sort } = parseEntityQuery(query);
   const finalFilter = mergeFilters(filter, options.accessFilter);
 
-  const records = await Model.find(finalFilter).sort(sort).skip(skip).limit(limit).lean();
+  const records = await withSpan('MongoDB find', {
+    'db.operation.name': 'find',
+    'db.collection.name': entityName,
+    'app.operation': 'entities.list'
+  }, () => Model.find(finalFilter).sort(sort).skip(skip).limit(limit).lean());
   return records.map((record) => sanitizeEntityRecord(entityName, record));
 }
 
 export async function getEntity(entityName, id, options = {}) {
   const Model = resolveEntity(entityName);
-  const record = await Model.findOne(mergeFilters({ id }, options.accessFilter)).lean();
+  const record = await withSpan('MongoDB findOne', {
+    'db.operation.name': 'findOne',
+    'db.collection.name': entityName,
+    'app.operation': 'entities.get'
+  }, () => Model.findOne(mergeFilters({ id }, options.accessFilter)).lean());
 
   if (!record) {
     const error = new Error(`${entityName} ${id} not found`);

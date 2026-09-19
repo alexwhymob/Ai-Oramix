@@ -1,5 +1,4 @@
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { getMaturityLevel } from '@/lib/scoring';
 import { getLevelDisplayColor, useMaturityData } from '@/lib/useMaturity';
 
 const scoreColor = (s) => s < 2 ? '#ef4444' : s < 3 ? '#f97316' : s < 3.6 ? '#eab308' : s < 4.3 ? '#22c55e' : '#3b82f6';

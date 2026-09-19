@@ -19,7 +19,7 @@ npm install
 npm test
 ```
 
-Os testes de seguranca cobrem cookies, bloqueio progressivo, validacao de origem CSRF e rejeicao de campos sensiveis na entidade `User`.
+Os testes de seguranca cobrem cookies, bloqueio progressivo, validacao de origem CSRF, rejeicao de campos sensiveis na entidade `User` e credenciais publicas com hash, expiracao e revogacao.
 
 ## Dependencias
 
@@ -48,6 +48,8 @@ Teste inicial:
 - `forgot/reset password` deve testar criacao de token hash, expiracao e troca de password sem depender de MongoDB online.
 - MFA deve testar criacao de desafio, validacao TOTP, consumo de codigo de recuperacao e rejeicao de desafios expirados.
 - Web Push deve testar validacao e persistencia de subscricoes sem enviar notificacoes reais.
+- O acesso a resultados deve ser testado sem cookie (esperado `403`), com token de troca valido uma vez e com renovacao restrita a utilizadores internos autorizados.
+- A eliminacao em cascata deve exigir sessao admin, nome da empresa como confirmacao e justificacao valida antes de iniciar uma transacao MongoDB.
 
 ## Frontend
 
@@ -71,3 +73,4 @@ Para cada tarefa:
 - Confirmar que o frontend nao mudou visualmente quando a tarefa nao envolver UI.
 - Nunca rodar testes automatizados contra a base MongoDB de producao.
 - Validar Web Push manualmente em HTTPS ou `localhost`, com permissao de notificacoes concedida no browser.
+- Validar manualmente o fluxo completo de avaliacao: token de escrita, submissao, troca unica do token de resultados, consulta por cookie, expiracao/renovacao pelo account manager e bloqueio de links QR legados depois da data de corte.

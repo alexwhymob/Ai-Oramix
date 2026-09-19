@@ -11,8 +11,26 @@ services:
       TRUST_PROXY: "false"
       AUTH_COOKIE_SAMESITE: lax
       AUTH_COOKIE_SECURE: "false"
+      OTEL_ENABLED: "true"
+      OTEL_SERVICE_NAME: oramix-ai-backend
+      OTEL_PROMETHEUS_PORT: 9464
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      REDIS_URL: redis://redis:6379
+      RATE_LIMIT_REQUIRE_REDIS: "true"
+      S3_ENDPOINT: http://rustfs:9000
+      S3_ACCESS_KEY: oramix
+      S3_SECRET_KEY: oramix-local-storage-password
+      S3_BUCKET: oramix-exports
     ports:
       - "3003:3003"
+      - "127.0.0.1:9464:9464"
+    depends_on:
+      otel-collector:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_started
     healthcheck:
       test:
         [
@@ -44,3 +62,71 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.139.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      jaeger:
+        condition: service_started
+    restart: unless-stopped
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.21.0
+    command: ["--config", "/jaeger/config.yaml", "--feature-gates=storage.clickhouse"]
+    volumes:
+      - ./observability/jaeger-clickhouse.yaml:/jaeger/config.yaml:ro
+    ports:
+      - "127.0.0.1:16686:16686"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8-alpine
+    environment:
+      CLICKHOUSE_DB: jaeger
+      CLICKHOUSE_USER: jaeger
+      CLICKHOUSE_PASSWORD: jaeger_local_password
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1' --user jaeger --password jaeger_local_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    command: /data
+    environment:
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: oramix
+      RUSTFS_SECRET_KEY: oramix-local-storage-password
+    volumes:
+      - rustfs_data:/data
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  clickhouse_data:
+  rustfs_data:

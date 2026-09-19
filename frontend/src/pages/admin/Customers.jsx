@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { base44 } from '@/api/base44Client';
 import { useCurrentUser } from '@/lib/useCurrentUser';
+import { toast } from 'sonner';
 
 const SECTORS = ['Tecnologia', 'Saude', 'Industria', 'Retalho', 'Servicos Financeiros', 'Educacao', 'Energia', 'Logistica', 'Construcao', 'Outro'];
 const SIZES = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
@@ -29,13 +30,16 @@ const EMPTY = {
 };
 
 export default function AdminCustomers() {
-  const { user, isAccountManager, isAiConsultant } = useCurrentUser();
+  const { user, isAdmin, isAccountManager, isAiConsultant } = useCurrentUser();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editCustomer, setEditCustomer] = useState(null);
   const [qrCustomer, setQrCustomer] = useState(null);
   const [deleteCustomer, setDeleteCustomer] = useState(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -157,51 +161,89 @@ export default function AdminCustomers() {
     setFormOpen(true);
   };
 
+  const showExpiringQr = async (customer, assessment) => {
+    if (!assessment || assessment.status === 'completed') return;
+    try {
+      const response = await base44.functions.invoke('quizSession', {
+        action: 'renewInputAccess',
+        assessmentId: assessment.id
+      });
+      setQrCustomer({ ...customer, access_token: response.data?.accessToken });
+      toast.success('A new 48-hour assessment link was generated.');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Unable to generate an assessment link.');
+    }
+  };
+
   const handleSave = async () => {
+    if (!form.company_size) {
+      setSaveError('Company size is required.');
+      return;
+    }
+
     setSaving(true);
     setSaveError('');
 
-    if (editCustomer) {
-      const { template_id, ...customerPayload } = form;
-      await base44.entities.Customer.update(editCustomer.id, customerPayload);
+    try {
+      if (editCustomer) {
+        const { template_id, ...customerPayload } = form;
+        await base44.entities.Customer.update(editCustomer.id, customerPayload);
 
-      const assessment = mainAssessmentMap[editCustomer.id];
-      if (assessment) {
-        await base44.entities.Assessment.update(assessment.id, {
-          assessment_template_id: template_id || null
+        const assessment = mainAssessmentMap[editCustomer.id];
+        if (assessment) {
+          await base44.entities.Assessment.update(assessment.id, {
+            assessment_template_id: template_id || null
+          });
+        }
+      } else {
+        const res = await base44.functions.invoke('quizSession', {
+          action: 'adminRegister',
+          form,
+          templateId: form.template_id || undefined
         });
-      }
-    } else {
-      const res = await base44.functions.invoke('quizSession', {
-        action: 'adminRegister',
-        form,
-        templateId: form.template_id || undefined
-      });
 
-      if (res.data?.error === 'non_corporate_email') {
-        setSaveError('Please use a corporate email address.');
-        setSaving(false);
-        return;
+        if (res.data?.error === 'non_corporate_email') {
+          setSaveError('Please use a corporate email address.');
+          return;
+        }
+
+        if (res.data?.error === 'job_title_required') {
+          setSaveError('Job title is required.');
+          return;
+        }
       }
 
-      if (res.data?.error === 'job_title_required') {
-        setSaveError('Job title is required.');
-        setSaving(false);
-        return;
-      }
+      qc.invalidateQueries({ queryKey: ['all_customers'] });
+      qc.invalidateQueries({ queryKey: ['all_assessments'] });
+      setFormOpen(false);
+    } catch (error) {
+      setSaveError(error?.data?.message || error?.message || 'Unable to save customer. Please try again.');
+    } finally {
+      setSaving(false);
     }
-
-    qc.invalidateQueries({ queryKey: ['all_customers'] });
-    qc.invalidateQueries({ queryKey: ['all_assessments'] });
-    setFormOpen(false);
-    setSaving(false);
   };
 
   const handleDelete = async () => {
     if (!deleteCustomer) return;
-    await base44.entities.Customer.delete(deleteCustomer.id);
-    qc.invalidateQueries({ queryKey: ['all_customers'] });
-    setDeleteCustomer(null);
+    setDeleting(true);
+    try {
+      const response = await base44.functions.invoke('deleteCustomerCascade', {
+        customerId: deleteCustomer.id,
+        confirmation: deleteConfirmation,
+        reason: deleteReason
+      });
+      const deleted = response.data?.deleted || {};
+      toast.success(`Customer deleted with ${deleted.assessments || 0} assessment(s) and related data.`);
+      qc.invalidateQueries({ queryKey: ['all_assessments'] });
+      qc.invalidateQueries({ queryKey: ['all_customers'] });
+      setDeleteCustomer(null);
+      setDeleteReason('');
+      setDeleteConfirmation('');
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Unable to delete customer.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -367,12 +409,12 @@ export default function AdminCustomers() {
                             </Button>
                           </Link>
                         )}
-                        {customer.qr_token && (
+                        {assessment && assessment.status !== 'completed' && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="w-7 h-7 text-white/40 hover:text-blue-400"
-                            onClick={() => setQrCustomer(customer)}
+                            onClick={() => showExpiringQr(customer, assessment)}
                             title="Show QR"
                           >
                             <QrCode className="w-3.5 h-3.5" />
@@ -383,8 +425,8 @@ export default function AdminCustomers() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </Button>
                         )}
-                        {!isAiConsultant && !isAccountManager && (
-                          <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-red-400" onClick={() => setDeleteCustomer(customer)}>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" className="w-7 h-7 text-white/40 hover:text-red-400" onClick={() => { setDeleteCustomer(customer); setDeleteReason(''); setDeleteConfirmation(''); }}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         )}
@@ -422,7 +464,7 @@ export default function AdminCustomers() {
               </Select>
             </div>
             <div>
-              <Label>Company Size</Label>
+              <Label>Company Size *</Label>
               <Select value={form.company_size} onValueChange={(value) => set('company_size', value)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{SIZES.map((size) => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectContent>
@@ -469,7 +511,7 @@ export default function AdminCustomers() {
             <Button variant="outline" onClick={() => setFormOpen(false)} className="flex-1">Cancel</Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !form.name || !form.email || !form.company || !form.role || (!editCustomer && !form.template_id)}
+              disabled={saving || !form.name || !form.email || !form.company || !form.role || !form.company_size || (!editCustomer && !form.template_id)}
               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white gap-2"
             >
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -483,19 +525,29 @@ export default function AdminCustomers() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>QR Code – {qrCustomer?.company}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground text-center">{qrCustomer?.name}</p>
-          {qrCustomer?.qr_token && <QRCodeDisplay token={qrCustomer.qr_token} size={200} />}
+          {qrCustomer?.access_token && <QRCodeDisplay token={qrCustomer.access_token} size={200} />}
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteCustomer} onOpenChange={() => setDeleteCustomer(null)}>
+      <AlertDialog open={!!deleteCustomer} onOpenChange={(open) => { if (!open && !deleting) setDeleteCustomer(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Customer</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure you want to delete <strong>{deleteCustomer?.name}</strong> ({deleteCustomer?.company})? This cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>This permanently deletes <strong>{deleteCustomer?.name}</strong>, all assessments, answers, reports and consultant notes. Audit records are retained.</AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label htmlFor="delete-confirmation">Type the company name to confirm: <strong>{deleteCustomer?.company}</strong></Label>
+              <Input id="delete-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} disabled={deleting} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="delete-reason">Justification (required, 10-500 characters)</Label>
+              <textarea id="delete-reason" value={deleteReason} onChange={(event) => setDeleteReason(event.target.value)} disabled={deleting} className="mt-1 w-full min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+            </div>
+          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(event) => { event.preventDefault(); handleDelete(); }} disabled={deleting || deleteConfirmation !== deleteCustomer?.company || deleteReason.trim().length < 10} className="bg-red-500 hover:bg-red-600">{deleting ? 'Deleting...' : 'Delete permanently'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Download, Mail, Sparkles, CheckCircle2, Loader2, FileText, Settings2, FileChartColumnIncreasing } from 'lucide-react';
+import { ArrowLeft, Download, Mail, Sparkles, CheckCircle2, Loader2, FileText, Settings2, FileChartColumnIncreasing, FileCode2 } from 'lucide-react';
 import { exportReportPDF } from '@/lib/exportPdf';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import html2canvas from 'html2canvas';
@@ -14,6 +14,8 @@ import { useCurrentUser } from '@/lib/useCurrentUser';
 import ReportVisuals from '@/components/ReportVisuals';
 import ReportVisualsExport from '@/components/ReportVisualsExport';
 import SubAssessmentVisualsExport from '@/components/SubAssessmentVisualsExport';
+import ReviewChecklist from '@/components/ReviewChecklist';
+import HtmlReportDialog from '@/components/HtmlReportDialog';
 
 
 const SECTIONS_PT = ['Sumário Executivo','Metodologia','Resultados por Pilar','Radar de Maturidade','Mapa de Gaps','Quick Wins','Roadmap','Recomendação de Casos de Uso','Próximos Passos'];
@@ -33,6 +35,7 @@ export default function AdminReportEditor() {
   const [selectedSubAssessmentId, setSelectedSubAssessmentId] = useState('');
   const [pdfSections, setPdfSections] = useState([1,2,3,4,5,6,7,8,9]);
   const [pdfVisuals, setPdfVisuals] = useState(true);
+  const [showHtmlReport, setShowHtmlReport] = useState(false);
 
   const { data: report, isLoading } = useQuery({ queryKey: ['report_detail', id], queryFn: () => base44.entities.Report.get(id) });
   const { data: assessment, refetch: refetchAssessment } = useQuery({ queryKey: ['assessment_r', report?.assessment_id], queryFn: () => base44.entities.Assessment.get(report.assessment_id), enabled: !!report?.assessment_id });
@@ -138,6 +141,13 @@ export default function AdminReportEditor() {
     await base44.entities.Report.update(id, { [sectionKey]: value });
     qc.invalidateQueries({ queryKey: ['report_detail', id] });
     toast.success('Section saved');
+  };
+  const reviewSections = sectionTitles.map((title, index) => ({ key: `section_${index + 1}`, title, content: report?.[`section_${index + 1}`] }));
+  const toggleSectionReview = async (sectionKey) => {
+    const reviewed = report.reviewed_sections || [];
+    const next = reviewed.includes(sectionKey) ? reviewed.filter((key) => key !== sectionKey) : [...reviewed, sectionKey];
+    await base44.entities.Report.update(id, { reviewed_sections: next });
+    await qc.invalidateQueries({ queryKey: ['report_detail', id] });
   };
 
   const handleFinalize = async () => {
@@ -328,6 +338,12 @@ export default function AdminReportEditor() {
           </Button>
 
           {completedSections > 0 && !isAiConsultant && (
+            <Button size="sm" onClick={() => setShowHtmlReport(true)} variant="outline" className="border-white/20 text-white hover:bg-white/10 gap-1.5">
+              <FileCode2 className="w-3.5 h-3.5" /> HTML
+            </Button>
+          )}
+
+          {completedSections > 0 && !isAiConsultant && (
             <Button size="sm" onClick={() => setShowPdfPicker(true)} variant="outline" className="border-white/20 text-white hover:bg-white/10 gap-1.5">
               <Download className="w-3.5 h-3.5" /> Export PDF
             </Button>
@@ -414,6 +430,17 @@ export default function AdminReportEditor() {
         </div>
       )}
 
+      <HtmlReportDialog
+        open={showHtmlReport}
+        onOpenChange={setShowHtmlReport}
+        report={report}
+        assessment={assessment}
+        customer={customer}
+        template={template}
+        sections={reviewSections}
+        consultantNotes={consultantNotes}
+      />
+
       {/* Visuals */}
       {assessment && (
         <>
@@ -445,6 +472,7 @@ export default function AdminReportEditor() {
       )}
 
       {/* Report sections */}
+      <ReviewChecklist sections={reviewSections} reviewedKeys={report.reviewed_sections || []} onToggle={toggleSectionReview} />
       <div className="space-y-3">
         {[1,2,3,4,5,6,7,8,9].map(n => (
           <ReportSectionEditor

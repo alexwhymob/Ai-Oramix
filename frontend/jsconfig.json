@@ -9,7 +9,6 @@
     "moduleResolution": "bundler",
     "lib": ["esnext", "dom"],
     "target": "esnext",
-    "ignoreDeprecations": "6.0",
     "allowJs": true,
     "checkJs": false,
     "skipLibCheck": true,

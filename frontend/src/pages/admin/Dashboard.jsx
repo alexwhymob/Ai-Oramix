@@ -234,7 +234,7 @@ export default function AdminDashboard() {
                 )}
                 {assessment.status === 'completed' && (
                   <Link to={`/admin/assessment/${assessment.id}`} className="text-xs text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap">
-                    View ->
+                    View →
                   </Link>
                 )}
               </div>

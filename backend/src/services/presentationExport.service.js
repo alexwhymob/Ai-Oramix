@@ -15,6 +15,8 @@ import {
 import { generateStructuredObject } from './llm/llmClient.js';
 import { buildDetailedAnswers, getMaturityLabel, parsePillarScores } from './reportGeneration.service.js';
 import { resolveMaturityForAssessment } from './maturity.service.js';
+import { archiveExport } from './objectStorage.service.js';
+import { ArchivedFile } from '../models/index.js';
 
 const DEFAULT_PRESENTATION_TEMPLATE = {
   code: 'default-executive',
@@ -172,12 +174,17 @@ export function createExportPresentation(deps = {}) {
 
     const fileName = buildFileName(customer.company, language);
     const contentBase64 = await pptx.write({ outputType: 'base64', compression: true });
+    const content = Buffer.from(contentBase64, 'base64');
+    const objectKey = `customers/${customer.id}/assessments/${assessment.id}/presentations/${Date.now()}-${fileName}`;
+    const archivedKey = await archiveExport({ key: objectKey, body: content, contentType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+    if (archivedKey) await ArchivedFile.create({ assessment_id: assessment.id, customer_id: customer.id, object_key: archivedKey, file_name: fileName, mime_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', size_bytes: content.length, kind: 'presentation' });
 
     return {
       success: true,
       fileName,
       mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       contentBase64,
+      archived: Boolean(archivedKey),
       slideCount: pptx._slides?.length || undefined,
       templateId: template.id || null,
       templateName: template.name

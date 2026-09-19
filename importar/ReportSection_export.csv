@@ -1,0 +1,1042 @@
+"json_schema","context_keys","report_template_id","title","prompt","key","order","id","created_date","updated_date","created_by_id","created_by","is_sample"
+"{
+  ""$schema"": ""http://json-schema.org/draft-07/schema#"",
+  ""title"": ""Conclusoes e Recomendacoes"",
+  ""type"": ""object"",
+  ""required"": [
+    ""conclusoes"",
+    ""resumo_executivo_final"",
+    ""recomendacoes_executivas"",
+    ""prioridades_estrategicas"",
+    ""proximos_passos""
+  ],
+  ""properties"": {
+    ""conclusoes"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""avaliacao_global"",
+        ""principais_pontos_fortes"",
+        ""principais_fragilidades"",
+        ""nivel_maturidade_final"",
+        ""exposicao_risco""
+      ],
+      ""properties"": {
+        ""avaliacao_global"": {
+          ""type"": ""string"",
+          ""description"": ""Síntese global da postura da organização""
+        },
+        ""principais_pontos_fortes"": {
+          ""type"": ""array"",
+          ""minItems"": 3,
+          ""items"": {
+            ""type"": ""string""
+          }
+        },
+        ""principais_fragilidades"": {
+          ""type"": ""array"",
+          ""minItems"": 3,
+          ""items"": {
+            ""type"": ""string""
+          }
+        },
+        ""nivel_maturidade_final"": {
+          ""type"": ""string"",
+          ""enum"": [
+            ""Muito Baixo"",
+            ""Baixo"",
+            ""Intermédio"",
+            ""Elevado"",
+            ""Muito Elevado""
+          ]
+        },
+        ""exposicao_risco"": {
+          ""type"": ""string"",
+          ""enum"": [
+            ""Baixa"",
+            ""Moderada"",
+            ""Elevada"",
+            ""Muito Elevada"",
+            ""Crítica""
+          ]
+        }
+      }
+    },
+    ""resumo_executivo_final"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""mensagem_chave"",
+        ""impacto_negocio"",
+        ""urgencia_acao""
+      ],
+      ""properties"": {
+        ""mensagem_chave"": {
+          ""type"": ""string"",
+          ""description"": ""Mensagem principal para administração""
+        },
+        ""impacto_negocio"": {
+          ""type"": ""string"",
+          ""description"": ""Impacto direto no negócio""
+        },
+        ""urgencia_acao"": {
+          ""type"": ""string"",
+          ""enum"": [
+            ""Baixa"",
+            ""Moderada"",
+            ""Alta"",
+            ""Imediata""
+          ]
+        }
+      }
+    },
+    ""recomendacoes_executivas"": {
+      ""type"": ""array"",
+      ""minItems"": 5,
+      ""items"": {
+        ""type"": ""object"",
+        ""required"": [
+          ""titulo"",
+          ""descricao"",
+          ""justificacao"",
+          ""beneficio"",
+          ""impacto"",
+          ""esforco"",
+          ""prioridade""
+        ],
+        ""properties"": {
+          ""titulo"": {
+            ""type"": ""string""
+          },
+          ""descricao"": {
+            ""type"": ""string""
+          },
+          ""justificacao"": {
+            ""type"": ""string""
+          },
+          ""beneficio"": {
+            ""type"": ""string""
+          },
+          ""impacto"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixo"",
+              ""Médio"",
+              ""Elevado"",
+              ""Crítico""
+            ]
+          },
+          ""esforco"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixo"",
+              ""Médio"",
+              ""Elevado""
+            ]
+          },
+          ""prioridade"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixa"",
+              ""Média"",
+              ""Alta"",
+              ""Crítica""
+            ]
+          }
+        }
+      }
+    },
+    ""prioridades_estrategicas"": {
+      ""type"": ""array"",
+      ""minItems"": 3,
+      ""items"": {
+        ""type"": ""object"",
+        ""required"": [
+          ""iniciativa"",
+          ""descricao"",
+          ""horizonte"",
+          ""resultado_esperado""
+        ],
+        ""properties"": {
+          ""iniciativa"": {
+            ""type"": ""string""
+          },
+          ""descricao"": {
+            ""type"": ""string""
+          },
+          ""horizonte"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Curto Prazo"",
+              ""Médio Prazo"",
+              ""Longo Prazo""
+            ]
+          },
+          ""resultado_esperado"": {
+            ""type"": ""string""
+          }
+        }
+      }
+    },
+    ""proximos_passos"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""acoes_imediatas"",
+        ""governance_recomendada"",
+        ""monitorizacao"",
+        ""reavaliacao""
+      ],
+      ""properties"": {
+        ""acoes_imediatas"": {
+          ""type"": ""array"",
+          ""minItems"": 3,
+          ""items"": {
+            ""type"": ""string""
+          }
+        },
+        ""governance_recomendada"": {
+          ""type"": ""string"",
+          ""description"": ""Modelo de governação sugerido""
+        },
+        ""monitorizacao"": {
+          ""type"": ""string"",
+          ""description"": ""Como acompanhar progresso e KPIs""
+        },
+        ""reavaliacao"": {
+          ""type"": ""string"",
+          ""example"": ""Reavaliar maturidade em 12 meses""
+        }
+      }
+    }
+  }
+}","[""org"",""score"",""pillars"",""answers""]","6a4e2c5e814790b330244dba","Conclusoes e Recomendacoes","Gera o conteúdo da secção ""Conclusoes e Recomendacoes"" na estrutura definido pelo JSON schema no formato markdown-it.
+","section_6","6","6a4e49fa6e26302ba973044d","2026-07-08T13:00:42.195000","2026-07-08T23:59:57.104000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"{
+  ""$schema"": ""http://json-schema.org/draft-07/schema#"",
+  ""title"": ""Gaps e Roadmap"",
+  ""type"": ""object"",
+  ""description"": ""Estrutura para identificação de gaps e definição de roadmap de remediação"",
+  ""properties"": {
+    ""gaps_identificados"": {
+      ""type"": ""array"",
+      ""description"": ""Lista de gaps ou lacunas identificadas na organização"",
+      ""items"": {
+        ""type"": ""object"",
+        ""properties"": {
+          ""id"": {
+            ""type"": ""string"",
+            ""description"": ""Identificador único do gap""
+          },
+          ""titulo"": {
+            ""type"": ""string"",
+            ""description"": ""Título resumido do gap""
+          },
+          ""descricao"": {
+            ""type"": ""string"",
+            ""description"": ""Descrição detalhada do problema identificado""
+          },
+          ""dominio"": {
+            ""type"": ""string"",
+            ""description"": ""Domínio ou área afetada (ex: Segurança, Infraestrutura, Dados, Aplicações)""
+          },
+          ""impacto"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixo"",
+              ""Médio"",
+              ""Elevado"",
+              ""Crítico""
+            ],
+            ""description"": ""Impacto do gap no negócio""
+          },
+          ""probabilidade"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixa"",
+              ""Média"",
+              ""Alta""
+            ],
+            ""description"": ""Probabilidade de ocorrência""
+          },
+          ""nivel_risco"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixo"",
+              ""Médio"",
+              ""Elevado"",
+              ""Crítico""
+            ],
+            ""description"": ""Classificação final do risco (impacto x probabilidade)""
+          },
+          ""prioridade"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixa"",
+              ""Média"",
+              ""Alta"",
+              ""Crítica""
+            ],
+            ""description"": ""Prioridade de tratamento""
+          }
+        },
+        ""required"": [
+          ""id"",
+          ""titulo"",
+          ""descricao"",
+          ""dominio"",
+          ""impacto"",
+          ""probabilidade"",
+          ""nivel_risco"",
+          ""prioridade""
+        ]
+      }
+    },
+    ""roadmap_remediacao"": {
+      ""type"": ""object"",
+      ""description"": ""Plano de ações para mitigação dos gaps"",
+      ""properties"": {
+        ""quick_wins"": {
+          ""type"": ""array"",
+          ""description"": ""Ações de curto prazo (0-3 meses)"",
+          ""items"": {
+            ""type"": ""object"",
+            ""properties"": {
+              ""acao"": {
+                ""type"": ""string"",
+                ""description"": ""Nome da ação""
+              },
+              ""descricao"": {
+                ""type"": ""string"",
+                ""description"": ""Descrição detalhada da ação""
+              },
+              ""esforco"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""Baixo"",
+                  ""Médio"",
+                  ""Elevado""
+                ],
+                ""description"": ""Esforço necessário para implementação""
+              },
+              ""impacto"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""Baixo"",
+                  ""Médio"",
+                  ""Elevado""
+                ],
+                ""description"": ""Impacto esperado da ação""
+              },
+              ""prazo"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""0-3 meses""
+                ],
+                ""description"": ""Horizonte temporal""
+              }
+            },
+            ""required"": [
+              ""acao"",
+              ""descricao"",
+              ""esforco"",
+              ""impacto"",
+              ""prazo""
+            ]
+          }
+        },
+        ""medio_prazo"": {
+          ""type"": ""array"",
+          ""description"": ""Ações de médio prazo (3-9 meses)"",
+          ""items"": {
+            ""type"": ""object"",
+            ""properties"": {
+              ""acao"": {
+                ""type"": ""string""
+              },
+              ""descricao"": {
+                ""type"": ""string""
+              },
+              ""esforco"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""Baixo"",
+                  ""Médio"",
+                  ""Elevado""
+                ]
+              },
+              ""impacto"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""Baixo"",
+                  ""Médio"",
+                  ""Elevado""
+                ]
+              },
+              ""prazo"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""3-9 meses""
+                ]
+              }
+            },
+            ""required"": [
+              ""acao"",
+              ""descricao"",
+              ""esforco"",
+              ""impacto"",
+              ""prazo""
+            ]
+          }
+        },
+        ""longo_prazo"": {
+          ""type"": ""array"",
+          ""description"": ""Ações de longo prazo (9-18 meses)"",
+          ""items"": {
+            ""type"": ""object"",
+            ""properties"": {
+              ""acao"": {
+                ""type"": ""string""
+              },
+              ""descricao"": {
+                ""type"": ""string""
+              },
+              ""esforco"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""Baixo"",
+                  ""Médio"",
+                  ""Elevado""
+                ]
+              },
+              ""impacto"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""Baixo"",
+                  ""Médio"",
+                  ""Elevado""
+                ]
+              },
+              ""prazo"": {
+                ""type"": ""string"",
+                ""enum"": [
+                  ""9-18 meses""
+                ]
+              }
+            },
+            ""required"": [
+              ""acao"",
+              ""descricao"",
+              ""esforco"",
+              ""impacto"",
+              ""prazo""
+            ]
+          }
+        }
+      },
+      ""required"": [
+        ""quick_wins"",
+        ""medio_prazo"",
+        ""longo_prazo""
+      ]
+    }
+  },
+  ""required"": [
+    ""gaps_identificados"",
+    ""roadmap_remediacao""
+  ]
+}","[""org"",""score"",""pillars"",""answers""]","6a4e2c5e814790b330244dba","Gaps & Roadmap","Gera o conteúdo da secção ""Gaps & Roadmaps"", com base nos resultados do assessment, identificar gaps críticos e definir roadmap de remediação, na estrutura definido pelo JSON schema no formato markdown-it.
+","section_5","5","6a4e3d25d3ac23de2f726fba","2026-07-08T12:05:57.958000","2026-07-08T23:59:56.662000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"{
+  ""$schema"": ""https://json-schema.org/draft/2020-12/schema"",
+  ""title"": ""Resultados e Avaliações"",
+  ""type"": ""object"",
+  ""description"": ""Estrutura para identificação de resultados e avaliações da avaliação nis 2"",
+  ""required"": [
+    ""resumo_resultados"",
+    ""avaliacao_por_dominio"",
+    ""analise_maturidade""
+  ],
+  ""properties"": {
+    ""resumo_resultados"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""descricao"",
+        ""total_controlos_avaliados"",
+        ""percentagem_conformidade"",
+        ""principais_falhas""
+      ],
+      ""properties"": {
+        ""descricao"": {
+          ""type"": ""string""
+        },
+        ""total_controlos_avaliados"": {
+          ""type"": ""integer"",
+          ""minimum"": 0
+        },
+        ""percentagem_conformidade"": {
+          ""type"": ""number"",
+          ""minimum"": 0,
+          ""maximum"": 100
+        },
+        ""principais_falhas"": {
+          ""type"": ""array"",
+          ""items"": {
+            ""type"": ""string""
+          }
+        }
+      }
+    },
+    ""avaliacao_por_dominio"": {
+      ""type"": ""array"",
+      ""items"": {
+        ""type"": ""object"",
+        ""required"": [
+          ""dominio"",
+          ""descricao"",
+          ""score_maturidade"",
+          ""nivel_risco"",
+          ""controlos""
+        ],
+        ""properties"": {
+          ""dominio"": {
+            ""type"": ""string""
+          },
+          ""descricao"": {
+            ""type"": ""string""
+          },
+          ""score_maturidade"": {
+            ""type"": ""number"",
+            ""minimum"": 0,
+            ""maximum"": 5
+          },
+          ""nivel_risco"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixo"",
+              ""Médio"",
+              ""Elevado"",
+              ""Crítico""
+            ]
+          },
+          ""controlos"": {
+            ""type"": ""array"",
+            ""items"": {
+              ""type"": ""object"",
+              ""required"": [
+                ""id"",
+                ""nome"",
+                ""estado"",
+                ""descricao"",
+                ""evidencia"",
+                ""impacto"",
+                ""recomendacao""
+              ],
+              ""properties"": {
+                ""id"": {
+                  ""type"": ""string""
+                },
+                ""nome"": {
+                  ""type"": ""string""
+                },
+                ""estado"": {
+                  ""type"": ""string"",
+                  ""enum"": [
+                    ""Não Implementado"",
+                    ""Parcialmente Implementado"",
+                    ""Implementado""
+                  ]
+                },
+                ""descricao"": {
+                  ""type"": ""string""
+                },
+                ""evidencia"": {
+                  ""type"": ""string""
+                },
+                ""impacto"": {
+                  ""type"": ""string"",
+                  ""enum"": [
+                    ""Baixo"",
+                    ""Médio"",
+                    ""Elevado"",
+                    ""Crítico""
+                  ]
+                },
+                ""recomendacao"": {
+                  ""type"": ""string""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    ""analise_maturidade"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""nivel_atual"",
+        ""nivel_alvo"",
+        ""gap_maturidade"",
+        ""descricao""
+      ],
+      ""properties"": {
+        ""nivel_atual"": {
+          ""type"": ""number"",
+          ""minimum"": 0,
+          ""maximum"": 5
+        },
+        ""nivel_alvo"": {
+          ""type"": ""number"",
+          ""minimum"": 0,
+          ""maximum"": 5
+        },
+        ""gap_maturidade"": {
+          ""type"": ""number"",
+          ""minimum"": 0
+        },
+        ""descricao"": {
+          ""type"": ""string""
+        }
+      }
+    }
+  }
+}","[""org"",""score"",""pillars"",""answers""]","6a4e2c5e814790b330244dba","Resultados e Avaliações","Gera o conteúdo da secção ""Resultados e Avaliações"", uma análise factual do assessment NIS2 com base nos dados recolhidos, na estrutura definido pelo JSON schema no formato markdown-it.
+","section_4","4","6a4e3d256bc4c98392210814","2026-07-08T12:05:57.744000","2026-07-08T23:59:55.986000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"{
+  ""$schema"": ""http://json-schema.org/draft-07/schema#"",
+  ""title"": ""Relatorio Executivo"",
+  ""type"": ""object"",
+  ""required"": [
+    ""resumo_executivo"",
+    ""indicadores_chave"",
+    ""avaliacao_global"",
+    ""analise_risco"",
+    ""insights_estrategicos""
+  ],
+  ""properties"": {
+    ""resumo_executivo"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""descricao_geral"",
+        ""principais_conclusoes"",
+        ""estado_maturidade"",
+        ""impacto_negocio""
+      ],
+      ""properties"": {
+        ""descricao_geral"": {
+          ""type"": ""string"",
+          ""description"": ""Resumo de alto nível da avaliação""
+        },
+        ""principais_conclusoes"": {
+          ""type"": ""array"",
+          ""items"": {
+            ""type"": ""string""
+          },
+          ""minItems"": 3,
+          ""description"": ""Lista de conclusões principais""
+        },
+        ""estado_maturidade"": {
+          ""type"": ""string"",
+          ""enum"": [
+            ""Muito Baixo"",
+            ""Baixo"",
+            ""Intermédio"",
+            ""Elevado"",
+            ""Muito Elevado""
+          ]
+        },
+        ""impacto_negocio"": {
+          ""type"": ""string"",
+          ""description"": ""Impacto da maturidade atual no negócio""
+        }
+      }
+    },
+    ""indicadores_chave"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""score_conformidade"",
+        ""score_maturidade"",
+        ""score_risco"",
+        ""distribuicao_controlos""
+      ],
+      ""properties"": {
+        ""score_conformidade"": {
+          ""type"": ""object"",
+          ""required"": [
+            ""percentagem"",
+            ""classificacao""
+          ],
+          ""properties"": {
+            ""percentagem"": {
+              ""type"": ""number"",
+              ""minimum"": 0,
+              ""maximum"": 100
+            },
+            ""classificacao"": {
+              ""type"": ""string"",
+              ""enum"": [
+                ""Baixo"",
+                ""Médio"",
+                ""Elevado""
+              ]
+            }
+          }
+        },
+        ""score_maturidade"": {
+          ""type"": ""object"",
+          ""required"": [
+            ""valor"",
+            ""escala"",
+            ""classificacao""
+          ],
+          ""properties"": {
+            ""valor"": {
+              ""type"": ""number"",
+              ""minimum"": 0,
+              ""maximum"": 5
+            },
+            ""escala"": {
+              ""type"": ""string"",
+              ""example"": ""0-5""
+            },
+            ""classificacao"": {
+              ""type"": ""string"",
+              ""enum"": [
+                ""Inicial"",
+                ""Repetível"",
+                ""Definido"",
+                ""Gerido"",
+                ""Otimizado""
+              ]
+            }
+          }
+        },
+        ""score_risco"": {
+          ""type"": ""object"",
+          ""required"": [
+            ""nivel"",
+            ""descricao""
+          ],
+          ""properties"": {
+            ""nivel"": {
+              ""type"": ""string"",
+              ""enum"": [
+                ""Baixo"",
+                ""Médio"",
+                ""Médio-Alto"",
+                ""Elevado"",
+                ""Crítico""
+              ]
+            },
+            ""descricao"": {
+              ""type"": ""string""
+            }
+          }
+        },
+        ""distribuicao_controlos"": {
+          ""type"": ""object"",
+          ""required"": [
+            ""nao_implementados"",
+            ""parcialmente_implementados"",
+            ""implementados""
+          ],
+          ""properties"": {
+            ""nao_implementados"": {
+              ""type"": ""number"",
+              ""minimum"": 0,
+              ""maximum"": 100
+            },
+            ""parcialmente_implementados"": {
+              ""type"": ""number"",
+              ""minimum"": 0,
+              ""maximum"": 100
+            },
+            ""implementados"": {
+              ""type"": ""number"",
+              ""minimum"": 0,
+              ""maximum"": 100
+            }
+          }
+        }
+      }
+    },
+    ""avaliacao_global"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""nivel_global"",
+        ""justificacao"",
+        ""benchmark_setorial""
+      ],
+      ""properties"": {
+        ""nivel_global"": {
+          ""type"": ""string"",
+          ""enum"": [
+            ""Insuficiente"",
+            ""Aceitável"",
+            ""Bom"",
+            ""Avançado""
+          ]
+        },
+        ""justificacao"": {
+          ""type"": ""string""
+        },
+        ""benchmark_setorial"": {
+          ""type"": ""string"",
+          ""description"": ""Comparação com práticas do setor""
+        }
+      }
+    },
+    ""analise_risco"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""principais_riscos"",
+        ""impacto_operacional"",
+        ""probabilidade_ocorrencia""
+      ],
+      ""properties"": {
+        ""principais_riscos"": {
+          ""type"": ""array"",
+          ""minItems"": 3,
+          ""items"": {
+            ""type"": ""string""
+          }
+        },
+        ""impacto_operacional"": {
+          ""type"": ""string""
+        },
+        ""probabilidade_ocorrencia"": {
+          ""type"": ""string"",
+          ""enum"": [
+            ""Baixa"",
+            ""Média"",
+            ""Alta""
+          ]
+        }
+      }
+    },
+    ""insights_estrategicos"": {
+      ""type"": ""array"",
+      ""minItems"": 3,
+      ""items"": {
+        ""type"": ""object"",
+        ""required"": [
+          ""titulo"",
+          ""descricao"",
+          ""impacto""
+        ],
+        ""properties"": {
+          ""titulo"": {
+            ""type"": ""string""
+          },
+          ""descricao"": {
+            ""type"": ""string""
+          },
+          ""impacto"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Baixo"",
+              ""Médio"",
+              ""Elevado""
+            ]
+          }
+        }
+      }
+    }
+  }
+}","[""org"",""score"",""pillars"",""answers""]","6a4e2c5e814790b330244dba","Relatorio Executivo","Gera o conteúdo da secção ""Relatorio Executivo"" na estrutura definido pelo JSON schema no formato markdown-it.
+","section_3","3","6a4e3d252238e3bd9d6d7992","2026-07-08T12:05:57.524000","2026-07-08T23:59:55.549000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"{
+  ""$schema"": ""http://json-schema.org/draft-07/schema#"",
+  ""type"": ""object"",
+  ""title"": ""Contexto da Empresa"",
+  ""required"": [
+    ""classificacao_entidade"",
+    ""descricao_organizacao"",
+    ""instalacoes""
+  ],
+  ""additionalProperties"": false,
+  ""properties"": {
+    ""classificacao_entidade"": {
+      ""type"": ""string"",
+      ""minLength"": 50,
+      ""description"": ""Classificação da organização no contexto NIS2, incluindo justificação da sua criticidade.""
+    },
+    ""descricao_organizacao"": {
+      ""type"": ""string"",
+      ""minLength"": 100,
+      ""description"": ""Descrição da organização, papel no setor, relevância operacional e impacto no serviço público.""
+    },
+    ""instalacoes"": {
+      ""type"": ""array"",
+      ""minItems"": 1,
+      ""description"": ""Lista de instalações avaliadas."",
+      ""items"": {
+        ""type"": ""object"",
+        ""required"": [
+          ""nome"",
+          ""localizacao"",
+          ""descricao"",
+          ""funcao"",
+          ""criticidade""
+        ],
+        ""additionalProperties"": false,
+        ""properties"": {
+          ""nome"": {
+            ""type"": ""string"",
+            ""minLength"": 3
+          },
+          ""localizacao"": {
+            ""type"": ""string"",
+            ""minLength"": 3
+          },
+          ""descricao"": {
+            ""type"": ""string"",
+            ""minLength"": 50,
+            ""description"": ""Descrição da instalação e do seu papel operacional.""
+          },
+          ""funcao"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""tratamento"",
+              ""distribuicao"",
+              ""armazenamento"",
+              ""controlo_operacional"",
+              ""suporte""
+            ],
+            ""description"": ""Função principal da instalação.""
+          },
+          ""criticidade"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""baixa"",
+              ""media"",
+              ""alta"",
+              ""critica""
+            ],
+            ""description"": ""Nível de criticidade da instalação no contexto operacional.""
+          },
+          ""dependencias"": {
+            ""type"": ""array"",
+            ""items"": {
+              ""type"": ""string""
+            },
+            ""description"": ""Dependências relevantes (energia, comunicações, sistemas).""
+          }
+        }
+      }
+    }
+  }
+}","[""org"",""score"",""pillars"",""answers""]","6a4e2c5e814790b330244dba","Contexto da Empresa","Gera o conteúdo da secção ""Contexto da Empresa"" na estrutura definido pelo JSON schema no formato markdown-it.
+","section_2","2","6a4e3cb92af66b3dc0635f9d","2026-07-08T12:04:09.313000","2026-07-08T23:59:54.624000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"{
+  ""$schema"": ""http://json-schema.org/draft-07/schema#"",
+  ""type"": ""object"",
+  ""title"": ""Enquadramento"",
+  ""required"": [
+    ""introducao"",
+    ""ambito"",
+    ""enquadramento_regulatorio"",
+    ""metodologia"",
+    ""criterios_avaliacao"",
+    ""criterios_risco""
+  ],
+  ""properties"": {
+    ""introducao"": {
+      ""type"": ""string"",
+      ""minLength"": 100,
+      ""description"": ""Descrição do objetivo do relatório e contexto geral da avaliação no âmbito da NIS2.""
+    },
+    ""ambito"": {
+      ""type"": ""string"",
+      ""minLength"": 100,
+      ""description"": ""Definição do âmbito da avaliação, incluindo tipos de controlos e instalações abrangidas.""
+    },
+    ""enquadramento_regulatorio"": {
+      ""type"": ""array"",
+      ""minItems"": 3,
+      ""items"": {
+        ""type"": ""object"",
+        ""required"": [
+          ""nome"",
+          ""descricao""
+        ],
+        ""properties"": {
+          ""nome"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""Diretiva NIS2"",
+              ""ISO/IEC 27001"",
+              ""ISO 22301"",
+              ""RGPD""
+            ]
+          },
+          ""descricao"": {
+            ""type"": ""string"",
+            ""minLength"": 50
+          }
+        }
+      },
+      ""description"": ""Lista de frameworks e normas aplicáveis com descrição do seu papel.""
+    },
+    ""metodologia"": {
+      ""type"": ""object"",
+      ""required"": [
+        ""abordagem"",
+        ""tecnicas""
+      ],
+      ""properties"": {
+        ""abordagem"": {
+          ""type"": ""string"",
+          ""minLength"": 100,
+          ""description"": ""Descrição da abordagem geral de avaliação.""
+        },
+        ""tecnicas"": {
+          ""type"": ""array"",
+          ""minItems"": 2,
+          ""items"": {
+            ""type"": ""string"",
+            ""enum"": [
+              ""entrevistas"",
+              ""inspecoes no local"",
+              ""analise documental"",
+              ""observacao direta""
+            ]
+          }
+        }
+      }
+    },
+    ""criterios_avaliacao"": {
+      ""type"": ""array"",
+      ""minItems"": 4,
+      ""items"": {
+        ""type"": ""string"",
+        ""enum"": [
+          ""existencia de controlos"",
+          ""efetividade dos controlos"",
+          ""documentacao e evidencia"",
+          ""monitorizacao continua""
+        ]
+      }
+    },
+    ""criterios_risco"": {
+      ""type"": ""array"",
+      ""minItems"": 4,
+      ""items"": {
+        ""type"": ""string"",
+        ""enum"": [
+          ""impacto no negocio"",
+          ""probabilidade de ocorrencia"",
+          ""capacidade de detecao"",
+          ""tempo de resposta""
+        ]
+      }
+    }
+  }
+}","[""org"",""score"",""pillars"",""answers""]","6a4e2c5e814790b330244dba","Enquadramento","Gera o conteúdo da secção ""Contexto da Empresa"" na estrutura definido pelo JSON schema no formato markdown-it.
+","section_1","1","6a4e3c7671e40149df522a5e","2026-07-08T12:03:02.678000","2026-07-08T23:59:54.176000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"","[""org"",""score""]","6a4c317222b152da328f9047","Next Steps","Next Steps: concrete engagement proposal and support plan from Oramix. Markdown-it.","section_9","9","6a4d3a6a14228b1f4bdf2244","2026-07-07T17:42:02.520000","2026-07-08T23:58:00.427000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""org"",""score"",""pillars"",""answers""]","6a4c317222b152da328f9047","Use Case Recommendations","Use Case Recommendations: 2-3 specific justified use cases prioritized by assessment results, with business value. Relevant to the assessment context. Markdown-it.","section_8","8","6a4d3a6a3fa5300feacbf1d9","2026-07-07T17:42:02.182000","2026-07-08T23:57:56.844000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""org"",""score"",""pillars""]","6a4c317222b152da328f9047","Roadmap","Roadmap: structured plan with milestones for 3, 6, and 12 months. Markdown-it.","section_7","7","6a4d3a691cca59003006b5e3","2026-07-07T17:42:01.884000","2026-07-08T23:57:56.596000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""org"",""score"",""answers""]","6a4c317222b152da328f9047","Quick Wins","Quick Wins: 3-5 specific actionable items for 0-3 months with expected outcome. Markdown-it.","section_6","6","6a4d3a69df98f1711c44c324","2026-07-07T17:42:01.407000","2026-07-08T23:57:56.372000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""score"",""pillars"",""answers""]","6a4c317222b152da328f9047","Gap Map","Gap Map: prioritized markdown table with columns: Gap | Impact (H/M/L) | Effort (H/M/L) | Priority (1-5). Markdown-it.","section_5","5","6a4d3a69f469b4e214eabe7f","2026-07-07T17:42:01.093000","2026-07-08T23:57:56.142000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""score"",""pillars""]","6a4c317222b152da328f9047","Maturity Radar","Maturity Radar: written interpretation of the radar, identifying patterns and outliers. Markdown-it.","section_4","4","6a4d3a683daebba10aaa0ac7","2026-07-07T17:42:00.785000","2026-07-08T23:57:55.915000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""org"",""score"",""pillars"",""answers""]","6a4c317222b152da328f9047","Results by Pillar","Results by Pillar: detailed analysis for each of the pillars with scores and insights from actual answers. Markdown-it.","section_3","3","6a4d3a68b0d913cd6564a3ce","2026-07-07T17:42:00.492000","2026-07-08T23:57:55.662000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""org"",""pillars""]","6a4c317222b152da328f9047","Methodology","Methodology: pillar descriptions, 1-5 scale explanation, data collection process. Contextualized for the assessment type. Markdown-it.","section_2","2","6a4d3a68911819eda7603280","2026-07-07T17:42:00.232000","2026-07-08T23:57:55.432000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"
+"","[""org"",""score"",""pillars"",""answers""]","6a4c317222b152da328f9047","Executive Summary","Executive Summary: global score, top 3 strengths, top 3 gaps, key recommendation. Specific to the assessment type. Markdown-it.","section_1","1","6a4d3a67530a540d568e5ed4","2026-07-07T17:41:59.864000","2026-07-08T23:57:55.125000","service_c37d2d76-4a57-43c4-be77-45da55755245","service+c37d2d76-4a57-43c4-be77-45da55755245@no-reply.base44.com","false"

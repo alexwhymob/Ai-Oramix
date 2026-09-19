@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Brain, ChevronLeft, ChevronRight, Send, AlertCircle, Loader2, Database } from 'lucide-react';
@@ -23,6 +23,9 @@ export default function SubQuiz() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const draftTimer = useRef(null);
+  const accessToken = useMemo(() => new URLSearchParams(window.location.hash.slice(1)).get('access'), []);
+
   const { resolveLevel } = useMaturityData();
 
   const t = (pt, en) => lang === 'pt' ? pt : en;
@@ -55,8 +58,21 @@ export default function SubQuiz() {
   }, [allQuestions, pillars]);
 
   useEffect(() => {
-    if (!assessmentId) return;
-    base44.functions.invoke('quizSession', { action: 'loadSub', assessmentId })
+    if (!assessmentId || !accessToken || !Object.keys(answers).length) return;
+    clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      const draftAnswers = Object.entries(answers).map(([questionId, value]) => {
+        const question = allQuestions.find((item) => item.id === questionId);
+        return { assessment_id: assessmentId, question_id: questionId, question_code: question?.code, pillar_code: question?.pillar_code, value };
+      });
+      base44.functions.invoke('quizSession', { action: 'saveDraft', assessmentId, accessToken, answers: draftAnswers }).catch(() => {});
+    }, 750);
+    return () => clearTimeout(draftTimer.current);
+  }, [answers, assessmentId, accessToken, allQuestions]);
+
+  useEffect(() => {
+    if (!assessmentId || !accessToken) return;
+    base44.functions.invoke('quizSession', { action: 'loadSub', assessmentId, accessToken })
       .then(res => {
         setSubAssessment(res.data.assessment);
         setCustomer(res.data.customer);
@@ -70,7 +86,7 @@ export default function SubQuiz() {
         setLoadingSession(false);
       })
       .catch(() => setLoadingSession(false));
-  }, [assessmentId]);
+  }, [assessmentId, accessToken]);
 
   const currentPillar = pillars[currentPillarIdx];
   const pillarQuestions = useMemo(() => questions.filter(q => q.pillar_code === currentPillar?.code).sort((a, b) => a.order - b.order), [questions, currentPillar]);
@@ -91,6 +107,7 @@ export default function SubQuiz() {
     await base44.functions.invoke('quizSession', {
       action: 'submitSub',
       assessmentId,
+      accessToken,
       answers: answerRecords,
       globalScore,
       maturityLevel: maturity.key,

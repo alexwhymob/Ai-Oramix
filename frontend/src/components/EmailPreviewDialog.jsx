@@ -51,6 +51,7 @@ export default function EmailPreviewDialog({ open, onClose, bodyHtml, lang }) {
           <iframe
             srcDoc={fullHtml}
             title="Email Preview"
+            sandbox=""
             className="w-full bg-white rounded-lg shadow-sm"
             style={{ minHeight: '500px', border: 'none' }}
           />

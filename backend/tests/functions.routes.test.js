@@ -15,18 +15,24 @@ describe('function routes', () => {
     expect(response.body.error).toBe('auth_required');
   });
 
-  it('supports createDataSubAssessment function', async () => {
+  it('requires authentication for createDataSubAssessment', async () => {
     const app = createApp();
 
     const response = await request(app)
       .post('/api/functions/createDataSubAssessment')
       .send({ event: {} })
-      .expect(200);
+      .expect(401);
 
-    expect(response.body).toEqual({
-      skipped: true,
-      reason: 'No entity_id in event'
-    });
+    expect(response.body.error).toBe('auth_required');
+  });
+
+  it('requires an admin session for cascade customer deletion', async () => {
+    const response = await request(createApp())
+      .post('/api/functions/deleteCustomerCascade')
+      .send({ customerId: 'customer-1', confirmation: 'ACME', reason: 'Duplicate test customer' })
+      .expect(401);
+
+    expect(response.body.error).toBe('auth_required');
   });
 
   it('returns 400 for unknown quizSession actions', async () => {
@@ -65,5 +71,14 @@ describe('function routes', () => {
 
     expect(forbiddenResponse.body.error).toBe('forbidden');
     meSpy.mockRestore();
+  });
+
+  it('requires an authenticated internal user to renew a results link', async () => {
+    const response = await request(createApp())
+      .post('/api/functions/quizSession')
+      .send({ action: 'renewResultAccess', assessmentId: 'assessment-1' })
+      .expect(401);
+
+    expect(response.body.error).toBe('auth_required');
   });
 });

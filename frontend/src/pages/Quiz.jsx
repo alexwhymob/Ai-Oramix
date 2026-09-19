@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Brain, ChevronLeft, ChevronRight, Send, AlertCircle, Loader2 } from 'lucide-react';
@@ -20,11 +20,13 @@ export default function Quiz() {
   const [answers, setAnswers] = useState(() => { try { return JSON.parse(localStorage.getItem(`quiz_${token}`) || '{}'); } catch { return {}; } });
   const [customer, setCustomer] = useState(null);
   const [assessmentId, setAssessmentId] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
   const [templateId, setTemplateId] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
-  const [sessionError, setSessionError] = useState(false);
+  const [sessionError, setSessionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const draftTimer = useRef(null);
   const { resolveLevel } = useMaturityData();
 
   const { data: allPillars = [] } = useQuery({
@@ -61,16 +63,13 @@ export default function Quiz() {
     if (!token) return;
     base44.functions.invoke('quizSession', { action: 'load', token })
       .then(res => {
-        const { customer, assessment, existingAnswers } = res.data;
+        const { customer, assessment, existingAnswers, accessToken: sessionToken } = res.data;
         setCustomer(customer);
         if (assessment.assessment_template_id) {
           setTemplateId(assessment.assessment_template_id);
         }
-        if (assessment.status === 'completed') {
-          navigate(`/complete/${assessment.id}`);
-          return;
-        }
         setAssessmentId(assessment.id);
+        setAccessToken(sessionToken);
         if (existingAnswers?.length) {
           const m = {};
           existingAnswers.forEach(a => { m[a.question_id] = a.value; });
@@ -78,8 +77,8 @@ export default function Quiz() {
         }
         setLoadingSession(false);
       })
-      .catch(() => {
-        setSessionError(true);
+      .catch((error) => {
+        setSessionError(error?.data?.error || error?.data?.code || 'invalid_link');
         setLoadingSession(false);
       });
   }, [token]);
@@ -87,6 +86,19 @@ export default function Quiz() {
   useEffect(() => {
     localStorage.setItem(`quiz_${token}`, JSON.stringify(answers));
   }, [answers, token]);
+
+  useEffect(() => {
+    if (!assessmentId || !accessToken || !Object.keys(answers).length) return;
+    clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      const draftAnswers = Object.entries(answers).map(([questionId, value]) => {
+        const question = allQuestions.find((item) => item.id === questionId);
+        return { assessment_id: assessmentId, question_id: questionId, question_code: question?.code, pillar_code: question?.pillar_code, value };
+      });
+      base44.functions.invoke('quizSession', { action: 'saveDraft', assessmentId, accessToken, answers: draftAnswers }).catch(() => {});
+    }, 750);
+    return () => clearTimeout(draftTimer.current);
+  }, [answers, assessmentId, accessToken, allQuestions]);
 
   const currentPillar = pillars[currentPillarIdx];
   const pillarQuestions = useMemo(() => allQuestions.filter(q => q.pillar_code === currentPillar?.code).sort((a, b) => a.order - b.order), [allQuestions, currentPillar]);
@@ -99,7 +111,7 @@ export default function Quiz() {
 
   const handleSubmit = async () => {
     if (!allAnswered) { setShowValidation(true); return; }
-    if (!assessmentId) return;
+    if (!assessmentId || !accessToken) return;
     setSubmitting(true);
     const { pillarScores, globalScore } = calculateScores(pillars, allQuestions, answers);
     const maturity = resolveLevel(globalScore, assessmentTemplate?.maturity_preset_id);
@@ -107,17 +119,17 @@ export default function Quiz() {
       const q = allQuestions.find(q => q.id === questionId);
       return { assessment_id: assessmentId, question_id: questionId, question_code: q?.code, pillar_code: q?.pillar_code, value };
     });
-    await base44.functions.invoke('quizSession', {
+    const response = await base44.functions.invoke('quizSession', {
       action: 'submit',
       assessmentId,
+      accessToken,
       answers: answerRecords,
       globalScore,
       maturityLevel: maturity.key,
       pillarScores,
     });
-    await base44.functions.invoke('createDataSubAssessment', { event: { entity_id: assessmentId } });
     localStorage.removeItem(`quiz_${token}`);
-    navigate(`/complete/${assessmentId}`);
+    navigate(`/complete/${assessmentId}#access=${encodeURIComponent(response.data.resultToken)}`);
   };
 
   if (loadingSession) {
@@ -129,8 +141,10 @@ export default function Quiz() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-center p-8 max-w-sm">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">{t('Link inválido', 'Invalid link')}</h2>
-          <p className="text-muted-foreground text-sm mb-4">{t('Este QR code não é válido ou já expirou.', 'This QR code is not valid or has expired.')}</p>
+          <h2 className="text-xl font-bold mb-2">{sessionError === 'public_access_denied' ? t('Link expirado ou revogado', 'Link expired or revoked') : t('Link inválido', 'Invalid link')}</h2>
+          <p className="text-muted-foreground text-sm mb-4">{sessionError === 'public_access_denied'
+            ? t('Por motivos de segurança, este acesso terminou. Contacte o seu account manager para receber um novo link; as respostas já guardadas serão mantidas.', 'For security, this access has ended. Contact your account manager for a new link; your saved responses will be kept.')
+            : t('Este QR code não é válido ou já expirou.', 'This QR code is not valid or has expired.')}</p>
           <Button onClick={() => navigate('/')} variant="outline">{t('Voltar ao início', 'Back to home')}</Button>
         </div>
       </div>

@@ -20,4 +20,13 @@ describe('auth routes', () => {
     expect(response.headers['set-cookie']).toHaveLength(2);
     expect(response.headers['set-cookie'].every((cookie) => !cookie.includes('; Secure'))).toBe(true);
   });
+
+  it('does not allow public registration of internal users', async () => {
+    const response = await request(createApp())
+      .post('/api/auth/register')
+      .send({ email: 'attacker@example.com', password: 'password123' })
+      .expect(403);
+
+    expect(response.body.error).toBe('registration_disabled');
+  });
 });

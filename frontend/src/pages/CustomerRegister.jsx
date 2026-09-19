@@ -103,6 +103,11 @@ export default function CustomerRegister() {
       return;
     }
 
+    if (!form.company_size) {
+      setEmailError(t('Selecione a dimensao da empresa para iniciar a avaliacao.', 'Select the company size to start the assessment.'));
+      return;
+    }
+
     setConsentError('');
     setLoading(true);
 
@@ -225,7 +230,7 @@ export default function CustomerRegister() {
             </div>
 
             <div>
-              <Label>{t('Dimensao da empresa', 'Company size')}</Label>
+              <Label>{t('Dimensao da empresa *', 'Company size *')}</Label>
               <Select value={form.company_size} onValueChange={(value) => setField('company_size', value)}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder={t('Selecionar', 'Select')} />
@@ -296,7 +301,7 @@ export default function CustomerRegister() {
             {consentError && <p className="text-xs text-red-500">{consentError}</p>}
           </div>
 
-          <Button type="submit" className="w-full gap-2 bg-blue-500 hover:bg-blue-600 text-white" size="lg" disabled={loading || !form.name || !form.email || !form.company || !form.role || !dataConsent}>
+          <Button type="submit" className="w-full gap-2 bg-blue-500 hover:bg-blue-600 text-white" size="lg" disabled={loading || !form.name || !form.email || !form.company || !form.role || !form.company_size || !dataConsent}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
             {t('Iniciar Avaliacao', 'Start Assessment')}
           </Button>

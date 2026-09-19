@@ -24,7 +24,19 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   EMAIL_PROVIDER: z.enum(['resend', 'smtp']).default('resend'),
   RESEND_API_KEY: z.string().min(1).optional(),
-  EMAIL_FROM: z.string().min(1).default('Oramix Assessment Platform <onboarding@resend.dev>')
+  EMAIL_FROM: z.string().min(1).default('Oramix Assessment Platform <onboarding@resend.dev>'),
+  SCHEDULER_ENABLED: z.enum(['true', 'false']).default('true').transform((value) => value === 'true'),
+  SCHEDULER_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
+  OTEL_ENABLED: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
+  OTEL_SERVICE_NAME: z.string().min(1).default('oramix-ai-backend'),
+  OTEL_PROMETHEUS_PORT: z.coerce.number().int().min(1024).max(65535).default(9464),
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.string().url().optional(),
+  REDIS_URL: z.string().url().optional(),
+  RATE_LIMIT_REQUIRE_REDIS: z.enum(['true', 'false']).default('false').transform((value) => value === 'true')
+  ,S3_ENDPOINT: z.string().url().optional()
+  ,S3_ACCESS_KEY: z.string().min(1).optional()
+  ,S3_SECRET_KEY: z.string().min(1).optional()
+  ,S3_BUCKET: z.string().min(1).default('oramix-exports')
 });
 
 export const env = envSchema.parse(process.env);

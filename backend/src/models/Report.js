@@ -20,6 +20,7 @@ const reportSchema = new mongoose.Schema({
   section_9: { type: String, default: null },
   generated_at: { type: Date, default: null },
   finalized_at: { type: Date, default: null },
+  reviewed_sections: { type: [String], default: [] },
   language: { type: String, enum: ['pt', 'en'], default: 'pt' }
 }, schemaOptions);
 

@@ -16,4 +16,6 @@ export { ConsultantNote } from './ConsultantNote.js';
 export { User } from './User.js';
 export { AuditLog } from './AuditLog.js';
 export { LlmProviderConfig } from './LlmProviderConfig.js';
+export { LlmAuditLog } from './LlmAuditLog.js';
+export { ArchivedFile } from './ArchivedFile.js';
 export { PushSubscription } from './PushSubscription.js';

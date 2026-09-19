@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, FileText, Sparkles, Plus, Trash2, Loader2, ChevronDown, ChevronUp, Settings2, Database, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, FileText, Sparkles, Plus, Trash2, Loader2, ChevronDown, ChevronUp, Settings2, CheckCircle2, Link as LinkIcon, Copy } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +25,8 @@ export default function AdminAssessmentDetail() {
   const [generating, setGenerating] = useState(false);
   const [generatingField, setGeneratingField] = useState(null);
   const [showSectionPicker, setShowSectionPicker] = useState(false);
+  const [resultLink, setResultLink] = useState(null);
+  const [renewingResultLink, setRenewingResultLink] = useState(false);
   const ALL_SECTIONS = [
     { key: 'section_1', label: '1. Executive Summary' },
     { key: 'section_2', label: '2. Methodology' },
@@ -187,6 +189,24 @@ export default function AdminAssessmentDetail() {
     refetchAssessment();
   };
 
+  const handleRenewResultLink = async () => {
+    setRenewingResultLink(true);
+    try {
+      const response = await base44.functions.invoke('quizSession', { action: 'renewResultAccess', assessmentId: id });
+      const link = `${window.location.origin}/complete/${id}#access=${encodeURIComponent(response.data.resultToken)}`;
+      setResultLink(link);
+    } catch (error) {
+      toast.error(error?.data?.message || error?.message || 'Unable to generate a results link.');
+    } finally {
+      setRenewingResultLink(false);
+    }
+  };
+
+  const copyResultLink = async () => {
+    await navigator.clipboard.writeText(resultLink);
+    toast.success('Results link copied. It is valid for 30 days and can be used once.');
+  };
+
   const priorityColor = { high: 'text-red-400', medium: 'text-yellow-400', low: 'text-green-400' };
 
   if (!assessment) return <div className="p-6 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>;
@@ -222,6 +242,12 @@ export default function AdminAssessmentDetail() {
             <CheckCircle2 className="w-3.5 h-3.5" />
             {assessment?.reviewed_by_consultant ? 'Reviewed ✓' : 'Mark as Reviewed'}
           </Button>
+          {assessment.status === 'completed' && (
+            <Button size="sm" onClick={handleRenewResultLink} disabled={renewingResultLink} variant="outline" className="border-blue-400/40 text-blue-300 hover:bg-blue-500/10 gap-1.5">
+              {renewingResultLink ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LinkIcon className="w-3.5 h-3.5" />}
+              New Results Link
+            </Button>
+          )}
           <Button size="sm" onClick={() => setShowSectionPicker(true)} disabled={generating} className="bg-blue-500 hover:bg-blue-600 text-white gap-1.5">
             {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             {generating ? 'Generating...' : report ? 'Regenerate Report' : 'Generate AI Report'}
@@ -254,6 +280,19 @@ export default function AdminAssessmentDetail() {
             <Button size="sm" onClick={handleGenerateReport} disabled={selectedSections.length === 0} className="bg-blue-500 hover:bg-blue-600 text-white gap-1.5">
               <Sparkles className="w-3.5 h-3.5" /> Generate {selectedSections.length} Section{selectedSections.length !== 1 ? 's' : ''}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(resultLink)} onOpenChange={(open) => !open && setResultLink(null)}>
+        <DialogContent className="bg-[#152233] border border-white/10 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-white">New results link</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-white/60">Share this link only with the assessment respondent. It can be exchanged once for read-only access and expires in 30 days.</p>
+          <textarea readOnly value={resultLink || ''} className="w-full min-h-24 bg-[#0f1d2e] border border-white/10 rounded-lg p-3 text-xs text-white/80 break-all" />
+          <DialogFooter>
+            <Button size="sm" onClick={copyResultLink} className="bg-blue-500 hover:bg-blue-600 text-white gap-1.5"><Copy className="w-3.5 h-3.5" /> Copy link</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -352,11 +391,7 @@ export default function AdminAssessmentDetail() {
             <div key={subAssessment.id} className="space-y-4">
               {subAssessment.status !== 'completed' && (
                 <div className="flex justify-end">
-                  <Link to={`/sub-quiz/${subAssessment.id}`}>
-                    <Button size="sm" variant="outline" className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10 gap-1.5 flex-shrink-0">
-                      <Database className="w-3.5 h-3.5" /> Access Assessment
-                    </Button>
-                  </Link>
+                  <span className="text-xs text-white/40">A secure invitation link is issued from the respondent results page.</span>
                 </div>
               )}
 

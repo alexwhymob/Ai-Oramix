@@ -104,6 +104,13 @@ export function createSendReport(deps = {}) {
       ...(message.html ? { html: message.html } : {})
     });
 
+    if (typeof models.Assessment.updateOne === 'function') {
+      await models.Assessment.updateOne(
+        { id: assessmentId },
+        { $set: { report_sent_at: new Date() } }
+      );
+    }
+
     return {
       success: true,
       to: customer.email,

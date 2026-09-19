@@ -14,7 +14,8 @@ import {
   Pillar,
   Question,
   Report,
-  User
+  User,
+  LlmAuditLog
 } from '../models/index.js';
 
 export const entityRegistry = {
@@ -33,7 +34,8 @@ export const entityRegistry = {
   Question,
   Report,
   ConsultantNote,
-  User
+  User,
+  LlmAuditLog
 };
 
 export function getEntityModel(entityName) {

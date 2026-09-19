@@ -1,0 +1,3 @@
+"name","description","is_active","is_default","order","id","created_date","updated_date","created_by_id","created_by","is_sample"
+"NIS2 (Padrão)","Níveis de maturidade padrão para avaliações de NIS2 Readiness","true","false","2","6a4c4366b759911e0a55aa7d","2026-07-07T00:08:06.792000","2026-07-09T00:06:18.786000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"AI Readiness (Padrão)","Níveis de maturidade padrão para avaliações de AI Readiness","true","true","1","6a4c422e149b4526cab7579e","2026-07-07T00:02:54.676000","2026-07-09T00:06:33.609000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"

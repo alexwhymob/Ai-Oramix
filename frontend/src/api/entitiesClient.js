@@ -16,7 +16,8 @@ const ENTITY_NAMES = [
   'Question',
   'Report',
   'ConsultantNote',
-  'User'
+  'User',
+  'LlmAuditLog'
 ];
 
 export function createEntitiesClient() {

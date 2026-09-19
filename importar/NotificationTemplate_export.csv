@@ -1,0 +1,98 @@
+"body_en","subject_en","from_email","is_active","trigger_type","body_pt","name","description","subject_pt","key","target","order","id","created_date","updated_date","created_by_id","created_by","is_sample"
+"<p style=""margin:0 0 16px;"">Hi {{am_name}},</p>
+<p style=""margin:0 0 16px;"">The AI maturity report for <strong>{{customer_name}}</strong> from <strong>{{company}}</strong> has been generated and is ready for review.</p>
+<div style=""background:#f0f4f8;border-radius:10px;padding:20px;text-align:center;margin:24px 0;"">
+  <div style=""font-size:13px;color:#7f8c8d;margin-bottom:4px;"">Global Score</div>
+  <div style=""font-size:36px;font-weight:bold;color:#1d4e89;"">{{global_score}}/5.0</div>
+  <div style=""font-size:15px;color:#e67e22;font-weight:600;margin-top:6px;"">{{maturity_label}}</div>
+</div>
+<p style=""margin:0 0 16px;"">Access the admin area to review and finalize the report before sending it to the customer.</p>
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"">
+  <tr><td align=""center"">
+    <a href=""https://app.oramix.pt/admin"" style=""display:inline-block;background:#e67e22;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 36px;border-radius:8px;"">Review Report</a>
+  </td></tr>
+</table>
+<p style=""margin:0;font-size:13px;color:#7f8c8d;"">This is an automated notification. Please do not reply to this email.</p>","AI Maturity Report ready — {{company}}","Oramix <readiness@oramix.pt>","true","report_ready","<p style=""margin:0 0 16px;"">Olá {{am_name}},</p>
+<p style=""margin:0 0 16px;"">O relatório de maturidade em IA para <strong>{{customer_name}}</strong> da empresa <strong>{{company}}</strong> foi gerado e está pronto para revisão.</p>
+<div style=""background:#f0f4f8;border-radius:10px;padding:20px;text-align:center;margin:24px 0;"">
+  <div style=""font-size:13px;color:#7f8c8d;margin-bottom:4px;"">Pontuação Global</div>
+  <div style=""font-size:36px;font-weight:bold;color:#1d4e89;"">{{global_score}}/5.0</div>
+  <div style=""font-size:15px;color:#e67e22;font-weight:600;margin-top:6px;"">{{maturity_label}}</div>
+</div>
+<p style=""margin:0 0 16px;"">Acede à área de administração para rever e finalizar o relatório antes de o enviar ao cliente.</p>
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"">
+  <tr><td align=""center"">
+    <a href=""https://app.oramix.pt/admin"" style=""display:inline-block;background:#e67e22;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 36px;border-radius:8px;"">Rever Relatório</a>
+  </td></tr>
+</table>
+<p style=""margin:0;font-size:13px;color:#7f8c8d;"">Esta é uma notificação automática. Não responda a este email.</p>","Relatório Pronto para Revisão","Notificação automática enviada ao Account Manager quando o relatório é gerado","Relatório de Maturidade IA pronto — {{company}}","report_ready","account_manager","5","6a4c1d2f3b77a7de5c1feb54","2026-07-06T21:25:03.520000","2026-07-06T21:25:03.520000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"<p style=""margin:0 0 16px;"">Dear <strong>{{customer_name}}</strong>,</p>
+<p style=""margin:0 0 24px;"">Your AI readiness assessment has been successfully completed for <strong>{{company}}</strong>.</p>
+<div style=""background:#f4f6f9;border-radius:10px;padding:28px;text-align:center;margin:0 0 24px;"">
+<div style=""font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#7f8c8d;margin-bottom:8px;"">Global Score</div>
+<div style=""font-size:36px;font-weight:bold;color:#1d4e89;"">{{global_score}} <span style=""color:#7f8c8d;font-size:20px;font-weight:normal;"">/5.0</span></div>
+<div style=""color:#e67e22;font-weight:500;margin-top:8px;"">{{maturity_label}}</div>
+</div>
+<p style=""margin:0 0 20px;"">View your detailed results by pillar by clicking the button below.</p>
+<table cellpadding=""0"" cellspacing=""0"" style=""margin:0 auto 24px;""><tr><td style=""background:#f39c12;border-radius:8px;"">
+<a href=""{{quiz_link}}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;font-weight:bold;text-decoration:none;font-size:14px;"">View Results &rarr;</a>
+</td></tr></table>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Best regards,<br>Oramix Team</p>","Thank you for completing your Readiness Assessment – {{company}}","Oramix Readiness Team <readiness@oramix.pt>","true","immediate","<p style=""margin:0 0 16px;"">Caro/a <strong>{{customer_name}}</strong>,</p>
+<p style=""margin:0 0 24px;"">A sua avaliação de prontidão para a adoção de IA foi conclu&iacute;da com sucesso para a <strong>{{company}}</strong>.</p>
+<div style=""background:#f4f6f9;border-radius:10px;padding:28px;text-align:center;margin:0 0 24px;"">
+<div style=""font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#7f8c8d;margin-bottom:8px;"">Score Global</div>
+<div style=""font-size:36px;font-weight:bold;color:#1d4e89;"">{{global_score}} <span style=""color:#7f8c8d;font-size:20px;font-weight:normal;"">/5.0</span></div>
+<div style=""color:#e67e22;font-weight:500;margin-top:8px;"">{{maturity_label}}</div>
+</div>
+<p style=""margin:0 0 20px;"">Consulte os seus resultados detalhados por pilar clicando no bot&atilde;o abaixo.</p>
+<table cellpadding=""0"" cellspacing=""0"" style=""margin:0 auto 24px;""><tr><td style=""background:#f39c12;border-radius:8px;"">
+<a href=""{{quiz_link}}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;font-weight:bold;text-decoration:none;font-size:14px;"">Ver Resultados &rarr;</a>
+</td></tr></table>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Com os melhores cumprimentos,<br>Equipa Oramix</p>","Notificação de Conclusão","Enviada imediatamente quando o cliente submete o questionário","Obrigado por completar a sua Avaliação de Maturidade – {{company}}","completion","customer","1","6a4b7b089493901f0aa2abe1","2026-07-06T09:53:12.099000","2026-07-06T09:58:23.433000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"<p style=""margin:0 0 16px;"">Dear <strong>{{customer_name}}</strong>,</p>
+<p style=""margin:0 0 16px;"">We noticed that you haven't yet completed your Readiness Assessment for <strong>{{company}}</strong>.</p>
+<p style=""margin:0 0 24px;"">As a reminder, you can resume the questionnaire at any time. Your input is very important to us &mdash; the assessment takes only a few minutes.</p>
+<table cellpadding=""0"" cellspacing=""0"" style=""margin:0 auto 24px;""><tr><td style=""background:#f39c12;border-radius:8px;"">
+<a href=""{{quiz_link}}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;font-weight:bold;text-decoration:none;font-size:14px;"">Resume Assessment &rarr;</a>
+</td></tr></table>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Best regards,<br>Oramix Team</p>","Reminder: Complete your Readiness Assessment – {{company}}","Oramix Readiness Team <readiness@oramix.pt>","true","scheduled_24h","<p style=""margin:0 0 16px;"">Caro/a <strong>{{customer_name}}</strong>,</p>
+<p style=""margin:0 0 16px;"">Not&aacute;mos que ainda n&atilde;o completou a sua Avalia&ccedil;&atilde;o de Maturidade para a <strong>{{company}}</strong>.</p>
+<p style=""margin:0 0 24px;"">Gostar&iacute;amos de lembrar que pode retomar o question&aacute;rio a qualquer momento. A sua opini&atilde;o &eacute; muito importante para n&oacute;s &mdash; o diagn&oacute;stico demora apenas alguns minutos.</p>
+<table cellpadding=""0"" cellspacing=""0"" style=""margin:0 auto 24px;""><tr><td style=""background:#f39c12;border-radius:8px;"">
+<a href=""{{quiz_link}}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;font-weight:bold;text-decoration:none;font-size:14px;"">Retomar Avalia&ccedil;&atilde;o &rarr;</a>
+</td></tr></table>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Com os melhores cumprimentos,<br>Equipa Oramix</p>","Lembrete de Incompleto","Enviada automaticamente 24h após o início se o questionário não estiver concluído","Lembrete: Complete a sua Avaliação de Maturidade – {{company}}","incomplete_reminder","customer","2","6a4b7b089493901f0aa2abe2","2026-07-06T09:53:12.099000","2026-07-06T09:58:23.649000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"<p style=""margin:0 0 16px;"">Dear <strong>{{customer_name}}</strong>,</p>
+<p style=""margin:0 0 24px;"">Your AI Readiness Report is ready for <strong>{{company}}</strong>.</p>
+<div style=""background:#f4f6f9;border-radius:10px;padding:28px;text-align:center;margin:0 0 24px;"">
+<div style=""font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#7f8c8d;margin-bottom:8px;"">Global Score</div>
+<div style=""font-size:36px;font-weight:bold;color:#1d4e89;"">{{global_score}} <span style=""color:#7f8c8d;font-size:20px;font-weight:normal;"">/5.0</span></div>
+<div style=""color:#e67e22;font-weight:500;margin-top:8px;"">{{maturity_label}}</div>
+</div>
+<p style=""margin:0 0 20px;"">Please contact the Oramix team to access the full report and schedule a presentation session.</p>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Best regards,<br>Oramix Team</p>","Your AI Readiness Report is ready – {{company}}","Oramix AI Readiness <aireadiness@oramix.pt>","true","manual","<p style=""margin:0 0 16px;"">Caro/a <strong>{{customer_name}}</strong>,</p>
+<p style=""margin:0 0 24px;"">O seu Relat&oacute;rio de Maturidade em IA est&aacute; pronto para a <strong>{{company}}</strong>.</p>
+<div style=""background:#f4f6f9;border-radius:10px;padding:28px;text-align:center;margin:0 0 24px;"">
+<div style=""font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#7f8c8d;margin-bottom:8px;"">Score Global</div>
+<div style=""font-size:36px;font-weight:bold;color:#1d4e89;"">{{global_score}} <span style=""color:#7f8c8d;font-size:20px;font-weight:normal;"">/5.0</span></div>
+<div style=""color:#e67e22;font-weight:500;margin-top:8px;"">{{maturity_label}}</div>
+</div>
+<p style=""margin:0 0 20px;"">Entre em contacto com a equipa Oramix para aceder ao relat&oacute;rio completo e agendar uma sess&atilde;o de apresenta&ccedil;&atilde;o.</p>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Com os melhores cumprimentos,<br>Equipa Oramix</p>","Relatório Final","Enviada manualmente pelo administrador quando o relatório está pronto","O seu Relatório de Maturidade em IA está pronto – {{company}}","final_report","customer","3","6a4b7b089493901f0aa2abe3","2026-07-06T09:53:12.099000","2026-07-06T09:58:23.882000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"
+"<p style=""margin:0 0 16px;"">Hi <strong>{{am_name}}</strong>,</p>
+<p style=""margin:0 0 16px;"">It has been <strong>96 hours</strong> since the Final Report was sent to <strong>{{company}}</strong> ({{customer_name}}) and no presentation has been scheduled yet.</p>
+<p style=""margin:0 0 16px;"">Please take the initiative to contact the customer and schedule the presentation session.</p>
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"">
+  <tr><td align=""center"">
+    <a href=""{{booking_url}}"" style=""display:inline-block;background:#e67e22;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 36px;border-radius:8px;"">Schedule Presentation</a>
+  </td></tr>
+</table>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Oramix Team</p>","Alert: Schedule presentation for {{company}}","Oramix <readiness@oramix.pt>","true","scheduled_96h","<p style=""margin:0 0 16px;"">Olá <strong>{{am_name}}</strong>,</p>
+<p style=""margin:0 0 16px;"">Já passaram <strong>96 horas</strong> desde o envio do Relatório Final para <strong>{{company}}</strong> ({{customer_name}}) e ainda não foi agendada a apresentação do assessment.</p>
+<p style=""margin:0 0 16px;"">Por favor, tome a iniciativa de contactar o cliente e agendar a sessão de apresentação.</p>
+<table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"">
+  <tr><td align=""center"">
+    <a href=""{{booking_url}}"" style=""display:inline-block;background:#e67e22;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;padding:14px 36px;border-radius:8px;"">Agendar Apresentação</a>
+  </td></tr>
+</table>
+<p style=""margin:0;color:#7f8c8d;font-size:13px;"">Equipa Oramix</p>","Alerta de Agendamento de Apresentação","Alerta interno ao Account Manager 96h após envio do relatório se não houver apresentação agendada","Alerta: Agendar apresentação para {{company}}","presentation_scheduling","account_manager","4","6a4b7b089493901f0aa2abe4","2026-07-06T09:53:12.099000","2026-07-06T22:21:36.850000","6a1ffa8f65e8b7fd76edb32d","pedrooliveirarocha@gmail.com","false"

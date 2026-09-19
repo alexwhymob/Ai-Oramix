@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   active: { type: Boolean, default: true },
+  booking_url: { type: String, default: null },
   auth_token_version: { type: Number, default: 0 },
   refresh_token_hash: { type: String, default: null },
   refresh_token_expires_at: { type: Date, default: null },

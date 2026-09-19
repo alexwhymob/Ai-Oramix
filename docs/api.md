@@ -124,6 +124,7 @@ Endpoints:
 ```txt
 POST /api/functions/quizSession
 POST /api/functions/createDataSubAssessment
+POST /api/functions/deleteCustomerCascade
 POST /api/functions/generateReport
 POST /api/functions/sendReport
 POST /api/functions/exportPresentation
@@ -136,6 +137,7 @@ Implementado:
 ```txt
 POST /api/functions/quizSession
 POST /api/functions/createDataSubAssessment
+POST /api/functions/deleteCustomerCascade
 POST /api/functions/generateReport
 POST /api/functions/sendReport
 POST /api/functions/exportPresentation
@@ -152,8 +154,19 @@ Acoes suportadas:
 - `getResult`
 - `getSubAssessments`
 - `getSubResult`
+- `exchangeResultAccess`
+- `issueSubAccess`
+- `renewResultAccess` (apenas admin ou account manager responsavel)
 
 Funcoes ainda nao migradas retornam `501 function_not_migrated`.
+
+### Acesso publico a avaliacao e resultados
+
+`assessmentId` identifica uma avaliacao, mas nao autoriza acesso. `submit` e `submitSub` exigem a credencial de escrita devolvida por `load` ou `issueSubAccess`. A submissao revoga essa credencial.
+
+`getResult`, `getSubAssessments` e `getSubResult` exigem o cookie de resultados `oramix_result_access`. O frontend envia o token inicial para `exchangeResultAccess`; essa acao e de uso unico, define o cookie `HttpOnly` e nao devolve a sessao em JSON. Consulte [o roadmap de seguranca](security-roadmap.md) para a politica de 30 dias e renovacao.
+
+`renewResultAccess` invalida a sessao de resultados anterior e devolve uma nova credencial de troca apenas ao utilizador interno autorizado. O frontend administrativo transforma-a imediatamente num link com fragmento e nao deve registar nem persistir o valor bruto.
 
 `registerCustomer` exige consentimento de tratamento de dados no payload `form`:
 
@@ -166,12 +179,16 @@ Funcoes ainda nao migradas retornam `501 function_not_migrated`.
 
 Se o consentimento estiver ausente, a API retorna `422 data_consent_required`.
 
-`createDataSubAssessment` cria uma subavaliacao para o pilar `dados` quando:
+`createDataSubAssessment` exige autenticacao interna quando chamado diretamente. A criacao normal ocorre no servidor apos a submissao da avaliacao principal. Cria uma subavaliacao para o pilar `dados` quando:
 
 - o assessment principal esta `completed`;
 - nao e uma subavaliacao;
 - `pillar_scores` contem `dados` com score inferior a `2.5`;
 - ainda nao existe subavaliacao para o assessment pai.
+
+### Eliminacao em cascata de cliente
+
+`deleteCustomerCascade` e uma operacao destrutiva exclusiva de `admin`. O payload exige `customerId`, `confirmation` com o nome exato da empresa e `reason` entre 10 e 500 caracteres. A operacao e atomica: remove cliente, avaliacoes, respostas, relatorios e notas de consultor ou reverte tudo se ocorrer uma falha. Os logs de auditoria sao preservados e recebem a acao `customer.delete_cascade` com a justificacao e contagens removidas.
 
 `generateReport` agora:
 

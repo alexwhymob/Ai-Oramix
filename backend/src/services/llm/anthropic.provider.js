@@ -1,5 +1,6 @@
 const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_API_VERSION = '2023-06-01';
+import { recordLlmAudit } from '../llmAudit.service.js';
 
 export async function generateStructuredObjectWithAnthropic({
   apiKey,
@@ -8,8 +9,9 @@ export async function generateStructuredObjectWithAnthropic({
   schema,
   systemPrompt,
   userPrompt,
-  temperature = 0.3
+  temperature = 0.3, auditOperation = 'structured_generation'
 }) {
+  const startedAt = performance.now();
   const response = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
     headers: {
@@ -42,6 +44,7 @@ export async function generateStructuredObjectWithAnthropic({
   });
 
   const data = await parseJsonSafe(response);
+  await recordLlmAudit({ provider: 'anthropic', model, operation: auditOperation, status: response.ok ? 'success' : 'error', duration_ms: Math.round(performance.now() - startedAt), input_tokens: data?.usage?.input_tokens ?? null, output_tokens: data?.usage?.output_tokens ?? null, total_tokens: data?.usage ? (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0) : null, error_code: response.ok ? null : 'anthropic_request_failed' });
   if (!response.ok) {
     throw createLlmError(
       data?.error?.message || `Anthropic request failed with status ${response.status}`,
@@ -67,8 +70,9 @@ export async function generateTextWithAnthropic({
   model,
   prompt,
   systemPrompt = null,
-  temperature = 0.7
+  temperature = 0.7, auditOperation = 'text_generation'
 }) {
+  const startedAt = performance.now();
   const response = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
     headers: {
@@ -96,6 +100,7 @@ export async function generateTextWithAnthropic({
   });
 
   const data = await parseJsonSafe(response);
+  await recordLlmAudit({ provider: 'anthropic', model, operation: auditOperation, status: response.ok ? 'success' : 'error', duration_ms: Math.round(performance.now() - startedAt), input_tokens: data?.usage?.input_tokens ?? null, output_tokens: data?.usage?.output_tokens ?? null, total_tokens: data?.usage ? (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0) : null, error_code: response.ok ? null : 'anthropic_request_failed' });
   if (!response.ok) {
     throw createLlmError(
       data?.error?.message || `Anthropic request failed with status ${response.status}`,

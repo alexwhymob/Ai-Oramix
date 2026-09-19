@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { confirmMfa, forgotPassword, login, logout, me, refresh, register, resetPassword, setupMfa, turnOffMfa, verifyMfa } from '../controllers/auth.controller.js';
+import { confirmMfa, forgotPassword, login, logout, me, refresh, resetPassword, setupMfa, turnOffMfa, verifyMfa } from '../controllers/auth.controller.js';
 import { authMiddleware, requireRoles } from '../middlewares/auth.middleware.js';
 import { createRateLimiter } from '../middlewares/security.middleware.js';
 
@@ -7,7 +7,14 @@ export const authRouter = Router();
 
 authRouter.post('/login', createRateLimiter({ max: 10 }), login);
 authRouter.post('/mfa/verify', createRateLimiter({ max: 10 }), verifyMfa);
-authRouter.post('/register', register);
+// Internal users must be provisioned through the authenticated admin invite flow.
+// Customer registration uses the public assessment flow, not this endpoint.
+authRouter.post('/register', createRateLimiter({ max: 5 }), (_req, res) => {
+  res.status(403).json({
+    error: 'registration_disabled',
+    message: 'Account registration is available by invitation only.'
+  });
+});
 authRouter.post('/forgot-password', createRateLimiter({ max: 10 }), forgotPassword);
 authRouter.post('/reset-password', resetPassword);
 authRouter.post('/refresh', refresh);

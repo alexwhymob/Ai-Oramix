@@ -1,0 +1,817 @@
+"finalized_at","assessment_id","language","report_template_id","section_5","section_4","section_3","section_2","section_9","section_8","section_7","generated_at","section_6","reviewed_sections","section_1","status","id","created_date","updated_date","created_by_id","created_by","is_sample"
+"2026-07-09T00:22:20.469Z","6a29ee41eb561cdd98c81183","pt","6a4c317222b152da328f9047","## Gap Map
+
+| Gap | Impact (H/M/L) | Effort (H/M/L) | Priority (1-5) |
+|---|---|---:|---:|
+| Ausência de **estratégia de automação** alinhada com prioridades municipais, serviços e metas operacionais (**S01 = 1/5**) | H | M | 5 |
+| Falta de **metodologia formal para identificar, avaliar e priorizar candidatos** a automação, incluindo viabilidade e ROI (**P07 = 1/5, P08 = 2/5**) | H | M | 5 |
+| **Regras de decisão, excepções e variabilidade** dos processos insuficientemente definidas, comprometendo automatização robusta (**P03 = 1/5, P04 = 2/5**) | H | M | 5 |
+| Inexistência de **business case, medição de ROI e controlo de custos** das automações (**E02 = 1/5, E03 = 1/5, E05 = 1/5**) | H | M | 5 |
+| Falta de **governação mínima de automação**: CoE/função equivalente, ciclo de vida, standards e templates (**G01 = 1/5, G03 = 1/5, G04 = 1/5**) | H | M | 5 |
+| Ausência de **ferramenta/plataforma de automação** implementada e modelo de escalabilidade operacional limitado (**T01 = 1/5, T05 = 2/5**) | H | M | 4 |
+| Capacidade interna pouco disseminada: **sem formação contínua e sem modelo de citizen development** (**H03 = 1/5, H04 = 1/5**) | M | M | 4 |
+| **Resistência cultural à automação** e comunicação insuficiente sobre objectivos e impacto no trabalho (**H05 = 2/5, S05 = 1/5**) | M | M | 4 |
+| Ecossistema de integração ainda fragmentado, com **exposição API não uniforme** e sem camada corporativa de integração (**I01 = 1/5, I02 = 1/5**) | H | H | 3 |
+| Monitorização operacional apenas básica e separação de ambientes ainda manual, limitando operação industrial (**T03 = 3/5, T04 = 3/5**) | M | M | 3 |","## Maturity Radar
+
+A **Câmara Municipal de Lisboa** apresenta um score global de **2,30/5,0**, correspondente a uma maturidade **Emergente** em **Prontidão Automação**. Em termos práticos, isto significa que existem condições parciais para avançar com automação de processos, mas ainda **não existe um modelo operacional, económico e de governação suficientemente sólido** para escalar iniciativas com previsibilidade.
+
+### Leitura global do radar
+
+- Apenas **1 dos 7 pilares** atinge **3,0/5 ou mais**: **Integração e Arquitetura (3,00/5)**.
+- **60% do peso total da avaliação** está concentrado em pilares com score **igual ou inferior a 2,40/5**:  
+  **Tecnologia e Ferramentas (15%)**, **Pessoas e Competências (15%)**, **Governança e Gestão (10%)**, **Económico e Financeiro (10%)** e **Estratégia e Cultura (10%)**.
+- Os pilares com **menor maturidade** são **Económico e Financeiro (1,60/5)** e **Estratégia e Cultura (1,60/5)**. Isto é relevante porque, mesmo quando a tecnologia permite automatizar, a ausência de **estratégia, business case e medição de valor** tende a bloquear escala e continuidade.
+
+### Padrões principais identificados
+
+#### 1) Há base processual suficiente para começar, mas não para escalar sem retrabalho
+O pilar **Processos** tem o melhor score ponderado operacional (**2,56/5**, com **25% do peso total**). Os sinais positivos são claros:
+
+- **P01 Documentação de processos críticos: 3/5**
+- **P02 Mapas de processo: 3/5**
+- **P05 Estabilidade estrutural dos processos: 5/5**
+- **P09 Volume e regras suficientes para justificar automação: 3/5**
+
+Isto sugere que a Câmara Municipal de Lisboa já tem uma base razoável para identificar automações em processos administrativos relativamente estáveis. No entanto, os bloqueios mais críticos estão na **definição operacional fina**:
+
+- **P03 Regras de decisão e excepções claramente definidas: 1/5**
+- **P04 Variabilidade controlada: 2/5**
+- **P07 Identificação sistemática de candidatos a automação: 1/5**
+- **P08 Metodologia de viabilidade técnica e ROI: 2/5**
+
+Ou seja: há processos documentados, mas ainda **não estão “prontos para automatizar” de forma repetível**, sobretudo porque as excepções e critérios de decisão não estão suficientemente normalizados.
+
+#### 2) A arquitetura mostra sinais de maturidade técnica, mas a base corporativa de integração ainda é frágil
+**Integração e Arquitetura** é o pilar mais forte (**3,00/5**), puxado por três respostas muito positivas:
+
+- **I03 Uso maioritário de APIs em vez de UI scraping: 4/5**
+- **I04 Qualidade e consistência dos dados: 5/5**
+- **I05 Práticas de resiliência arquitetural: 4/5**
+
+Este é um sinal importante: a Câmara Municipal de Lisboa **não parte de um cenário puramente artesanal ou dependente de automação frágil de interface**. A qualidade de dados e a resiliência são activos relevantes.
+
+Contudo, há uma assimetria clara:
+
+- **I01 Sistemas core expõem APIs: 1/5**
+- **I02 Existência de camada de integração (iPaaS/ESB/middleware): 1/5**
+
+Isto indica que a maturidade técnica **não é homogénea no ecossistema**. Há práticas modernas em certos fluxos, mas a base corporativa de integração continua fragmentada, com risco de criar automações difíceis de manter à medida que o número de casos cresce.
+
+#### 3) A organização tem capacidade analítica inicial, mas não tem ainda capacidade institucional de automação
+No pilar **Pessoas e Competências (2,20/5)**, destaca-se positivamente:
+
+- **H02 Business Analyst estabelecido: 4/5**
+- **H01 Competências internas/parceiro para desenvolvimento: 3/5**
+
+Isto significa que existe capacidade para **descobrir oportunidades e desenhar soluções**. No entanto, faltam os mecanismos para transformar isso numa capacidade contínua:
+
+- **H03 Citizen developers: 1/5**
+- **H04 Formação contínua: 1/5**
+- **H05 Resistência cultural à automação: 2/5**
+
+Na prática, a Câmara Municipal de Lisboa depende mais de pessoas-chave e/ou parceiros do que de um modelo interno disseminado. Isso aumenta risco de dependência, reduz velocidade e dificulta a adopção pelas áreas operacionais.
+
+#### 4) O maior bloqueio à escala está fora da tecnologia: governação, estratégia e valor económico
+Os pilares **Governança e Gestão (2,00/5)**, **Económico e Financeiro (1,60/5)** e **Estratégia e Cultura (1,60/5)** formam o principal travão estrutural.
+
+Pontos mais frágeis:
+
+- **G01 CoE ou função equivalente: 1/5**
+- **G03 Gestão do ciclo de vida das automações: 1/5**
+- **G04 Standards/templates documentados: 1/5**
+- **E02 Medição de ROI: 1/5**
+- **E03 Business cases formais: 1/5**
+- **E05 Gestão de custos de licenças/infra/maintenance: 1/5**
+- **S01 Estratégia de automação alinhada ao negócio: 1/5**
+- **S04 Ambição de hiperautomação: 1/5**
+- **S05 Comunicação da automação como vantagem organizacional: 1/5**
+
+Em contraste, existem alguns sinais de tração:
+
+- **S02 Sponsor executivo identificado: 3/5**
+- **G02 Pipeline básico de aprovação: 3/5**
+- **G05 Equipa de suporte dedicada: 4/5**
+
+O padrão é claro: há **patrocínio e alguma capacidade operacional**, mas falta o que transforma iniciativas pontuais num **programa municipal de automação**: estratégia, normas, ownership, medição de benefícios e disciplina financeira.
+
+### Outliers a reter
+
+**Pontos fortes / aceleradores**
+- **P05 Estabilidade dos processos: 5/5** — muito favorável à automação.
+- **I04 Qualidade de dados: 5/5** — reduz erros e retrabalho.
+- **I05 Resiliência arquitetural: 4/5** — boa base para soluções sustentáveis.
+- **H02 Business Analysis: 4/5** — capacidade relevante para discovery.
+- **G05 Suporte dedicado: 4/5** — importante para operação.
+
+**Pontos críticos / travões**
+- **Ausência de ferramenta de automação implementada (T01: 1/5)**
+- **Ausência de CoE/função estruturante (G01: 1/5)**
+- **Ausência de gestão de ciclo de vida (G03: 1/5)**
+- **Ausência de estratégia de automação (S01: 1/5)**
+- **Ausência de business case e ROI (E02/E03: 1/5)**
+- **Regras e excepções dos processos não definidas (P03: 1/5)**
+
+### Conclusão executiva
+
+A **Câmara Municipal de Lisboa** está num ponto em que **já faz sentido iniciar ou consolidar pilotos de automação**, sobretudo em processos administrativos estáveis, repetitivos e baseados em regras. No entanto, a organização **ainda não está preparada para escalar automação de forma transversal** sem primeiro resolver quatro lacunas estruturais:
+
+1. **Estratégia e modelo de governação**  
+2. **Método formal de seleção e priorização de casos**  
+3. **Modelo económico com business case e ROI**  
+4. **Normalização operacional dos processos (regras, excepções, standards)**
+
+O radar mostra, portanto, uma organização com **potencial técnico e processual para começar**, mas com **maturidade de gestão ainda insuficiente para industrializar automação**.","## Resultados por Pilar
+
+### 1) Processos — **2,56/5** | Peso **25%** | Contributo para o score global: **0,64**
+
+**Leitura geral:** é o pilar com maior peso e apresenta uma maturidade intermédia-baixa. A Câmara Municipal de Lisboa tem alguma base documental, mas ainda não tem os processos suficientemente preparados para uma automação escalável e de baixo retrabalho.
+
+**Evidências principais**
+- `P01 = 3/5` e `P02 = 3/5`: os processos críticos estão documentados e há mapas em alguns processos.
+- `P05 = 5/5`: os processos têm estabilidade estrutural, com evolução planeada.
+- `P06 = 3/5`: existem KPIs definidos, mas não são monitorizados.
+- `P03 = 1/5`: passos, regras de decisão e exceções **não** estão claramente definidos.
+- `P04 = 2/5`: existe variabilidade e muitas exceções.
+- `P07 = 1/5`: não há identificação sistemática de candidatos à automação.
+- `P08 = 2/5`: a avaliação de viabilidade e ROI é subjetiva.
+- `P09 = 3/5`: há vários processos com volume e estabilidade suficientes.
+
+**Interpretação**
+O maior bloqueio neste pilar não é a falta de processos com potencial; é a falta de **industrialização da análise de processo**. A combinação de estabilidade (`P05`) com ausência de definição clara de regras/exceções (`P03`) sugere que os processos podem parecer automatizáveis à superfície, mas ainda exigem trabalho de desenho antes da implementação.
+
+**Risco principal**
+Automatizar processos ainda ambíguos ou com demasiadas exceções tende a transferir ineficiência para dentro da automação.
+
+**Ações prioritárias**
+1. Criar uma **ficha padrão de avaliação de processos candidatos**.
+2. Formalizar regras de decisão, exceções e volumes para os top 10 processos candidatos.
+3. Passar de KPIs definidos para **KPIs monitorizados** antes e depois da automação.
+4. Instituir um processo mensal de **pipeline de oportunidades**.
+
+---
+
+### 2) Tecnologia e Ferramentas — **2,40/5** | Peso **15%** | Contributo: **0,36**
+
+**Leitura geral:** existem condições técnicas parciais, mas a base de ferramentas de automação ainda é incipiente.
+
+**Evidências principais**
+- `T01 = 1/5`: não existem ferramentas de automação implementadas.
+- `T02 = 3/5`: a stack atual suporta integração em sistemas principais através de APIs.
+- `T03 = 3/5`: existem ambientes separados, mas com gestão manual.
+- `T04 = 3/5`: há alertas básicos de falha.
+- `T05 = 2/5`: o escalamento é manual e lento.
+
+**Interpretação**
+A Câmara Municipal de Lisboa não parte de um vazio tecnológico total, mas também não possui ainda uma plataforma operacional pronta para suportar automações em volume. Os elementos disponíveis apontam para uma capacidade de arranque, não para escala. A inexistência de ferramenta implementada (`T01`) é especialmente relevante, porque significa que vários mecanismos de observabilidade, segurança, controlo de versões e orquestração poderão ainda depender de práticas manuais.
+
+**Risco principal**
+Sem plataforma e modelo técnico padronizado, cada automação poderá ser desenhada de forma diferente, aumentando custo de manutenção e risco operacional.
+
+**Ações prioritárias**
+1. Definir a **arquitetura-alvo de automação** antes da aquisição de tooling.
+2. Selecionar ferramentas com base em 4 critérios: integração, segurança, escalabilidade e custo total.
+3. Automatizar o ciclo dev/teste/prod com standards mínimos.
+4. Subir o nível de monitorização de alertas básicos para **monitorização operacional com SLA e logging estruturado**.
+
+---
+
+### 3) Integração e Arquitetura — **3,00/5** | Peso **15%** | Contributo: **0,45**
+
+**Leitura geral:** este é o pilar mais forte da avaliação. Há sinais importantes de maturidade na qualidade de dados e na resiliência arquitetural, embora persistam fragilidades sérias no modelo de integração.
+
+**Evidências principais**
+- `I01 = 1/5`: os sistemas core não expõem APIs de forma adequada.
+- `I02 = 1/5`: não existe camada de integração (iPaaS, ESB ou middleware); predominam integrações ponto-a-ponto.
+- `I03 = 4/5`: as automações dependem maioritariamente de APIs, e não de UI scraping.
+- `I04 = 5/5`: a qualidade de dados é garantida com data governance.
+- `I05 = 4/5`: existem práticas de resiliência implementadas.
+
+**Interpretação**
+O score de 3,00 resulta sobretudo da força em **dados e resiliência**, não da camada de integração em si. Isto é positivo porque reduz o risco de automações frágeis do ponto de vista informacional, mas não resolve o problema estrutural das integrações ponto-a-ponto. Em termos práticos, a Câmara Municipal de Lisboa tem melhor base para automatizar do que muitas organizações públicas, mas precisa de melhorar o desenho de integração para evitar dívida técnica futura.
+
+**Risco principal**
+Escalar com integrações ponto-a-ponto aumentará esforço de manutenção, acoplamento entre sistemas e tempo de mudança.
+
+**Ações prioritárias**
+1. Definir princípios de integração para automação: **API-first sempre que possível**.
+2. Priorizar uma **camada intermédia de integração** para novos casos.
+3. Mapear dependências técnicas dos 5 processos mais prioritários.
+4. Estabelecer padrões de tratamento de erro, retries, versionamento e observabilidade.
+
+---
+
+### 4) Pessoas e Competências — **2,20/5** | Peso **15%** | Contributo: **0,33**
+
+**Leitura geral:** existe capacidade analítica útil, mas a massa crítica de competências em automação ainda é insuficiente para expansão sustentada.
+
+**Evidências principais**
+- `H01 = 3/5`: existe equipa pequena interna ou apoio de parceiro externo.
+- `H02 = 4/5`: a função de Business Analyst está estabelecida.
+- `H03 = 1/5`: não existe capacidade de citizen development.
+- `H04 = 1/5`: não há formação contínua em automação.
+- `H05 = 2/5`: existe resistência cultural significativa.
+
+**Interpretação**
+A Câmara Municipal de Lisboa tem uma base útil para identificação de oportunidades, graças ao perfil analítico já presente, mas não tem ainda um mecanismo consistente de capacitação. A ausência de formação contínua e de citizen development indica dependência de poucos recursos especializados. Num contexto municipal, isso é particularmente relevante, porque a adoção entre serviços tende a exigir proximidade ao negócio e autonomia controlada.
+
+**Risco principal**
+A organização pode criar um funil de procura de automação sem capacidade suficiente para análise, desenvolvimento, suporte e adoção local.
+
+**Ações prioritárias**
+1. Lançar um **plano de capacitação por perfis**: sponsor, BA, utilizador-chave, técnico e suporte.
+2. Criar uma comunidade interna de prática em automação.
+3. Tratar a resistência à mudança com comunicação orientada a benefícios: redução de tarefas repetitivas, melhoria de serviço e libertação de capacidade.
+4. Avaliar um modelo de **citizen automation controlado**, com guardrails e casos de baixo risco.
+
+---
+
+### 5) Governança e Gestão — **2,00/5** | Peso **10%** | Contributo: **0,20**
+
+**Leitura geral:** este é um dos pilares mais críticos para a evolução futura. Há alguns sinais de organização operacional, mas a governação ainda é insuficiente para garantir escala e controlo.
+
+**Evidências principais**
+- `G01 = 1/5`: não existe Centro de Excelência ou função equivalente.
+- `G02 = 3/5`: existe um pipeline básico de avaliação e aprovação.
+- `G03 = 1/5`: o ciclo de vida das automações não está gerido ponta a ponta.
+- `G04 = 1/5`: não existem standards, templates e boas práticas documentadas.
+- `G05 = 4/5`: existe equipa de suporte dedicada.
+- `G06 = 2/5`: a gestão de riscos específica para automações ainda não está desenvolvida.
+
+**Interpretação**
+O dado mais positivo é a existência de suporte dedicado (`G05`), o que mostra consciência operacional. No entanto, sem standards, sem ciclo de vida definido e sem função de coordenação, a organização corre o risco de suportar automações sem as governar adequadamente. Para uma entidade da dimensão da Câmara Municipal de Lisboa, esta lacuna é especialmente relevante porque multiplica heterogeneidade entre departamentos e aumenta risco de dependências informais.
+
+**Risco principal**
+Automatizações isoladas podem entrar em produção sem regras comuns de desenho, testes, segurança, manutenção e descontinuação.
+
+**Ações prioritárias**
+1. Criar uma **função de governação de automação**, mesmo que ainda não seja um CoE formal completo.
+2. Documentar standards mínimos: naming, logs, testes, segurança, gestão de credenciais, documentação e handover.
+3. Implementar um **ciclo de vida standard**: ideia → análise → business case → desenvolvimento → teste → produção → monitorização → melhoria/descontinuação.
+4. Introduzir controlos de risco e auditoria adequados ao contexto público.
+
+---
+
+### 6) Económico e Financeiro — **1,60/5** | Peso **10%** | Contributo: **0,16**
+
+**Leitura geral:** é um dos dois pilares mais fracos e constitui um obstáculo direto à priorização e sustentabilidade do programa.
+
+**Evidências principais**
+- `E01 = 3/5`: existe budget pontual para projetos.
+- `E02 = 1/5`: o ROI das automações não é medido.
+- `E03 = 1/5`: não existem business cases formais antes de avançar.
+- `E04 = 2/5`: apenas são contabilizadas poupanças óbvias.
+- `E05 = 1/5`: custos de licenciamento, infraestrutura e manutenção são desconhecidos.
+
+**Interpretação**
+A Câmara Municipal de Lisboa consegue financiar iniciativas pontuais, mas não dispõe ainda de um modelo económico para decidir com rigor onde investir. Isto é crítico porque, sem business case e sem TCO visível, é difícil comparar oportunidades, justificar expansão ou demonstrar impacto para liderança e serviços. Em programas de automação, esta lacuna conduz frequentemente a perceções de valor, e não a valor comprovado.
+
+**Risco principal**
+Investir em automações com benefício pouco mensurável e sem noção clara do custo de operação ao longo do tempo.
+
+**Ações prioritárias**
+1. Criar um **template único de business case** para automação.
+2. Medir 5 dimensões de valor: horas libertadas, redução de erro, redução de tempo de ciclo, cumprimento de SLA e satisfação do utilizador.
+3. Calcular **TCO** por automação: desenvolvimento, licenciamento, infraestrutura, suporte e manutenção.
+4. Instituir revisão trimestral de benefícios realizados versus previstos.
+
+---
+
+### 7) Estratégia e Cultura — **1,60/5** | Peso **10%** | Contributo: **0,16**
+
+**Leitura geral:** este é o outro pilar mais fraco e, em conjunto com o económico-financeiro, limita a capacidade de transformar automação numa competência organizacional transversal.
+
+**Evidências principais**
+- `S01 = 1/5`: não existe estratégia de automação alinhada com a estratégia de negócio.
+- `S02 = 3/5`: existe sponsor identificado.
+- `S03 = 2/5`: o equilíbrio entre automação e força de trabalho é discutido de forma ad hoc.
+- `S04 = 1/5`: não existe ambição em hiperautomação.
+- `S05 = 1/5`: a automação não é comunicada como vantagem organizacional.
+
+**Interpretação**
+Existe um ponto de apoio relevante — o sponsor executivo — mas ainda não foi traduzido em direção estratégica clara. A Câmara Municipal de Lisboa encontra-se numa fase em que a automação pode ser vista como um conjunto de projetos, e não como uma capacidade transversal de melhoria de serviço, produtividade e controlo operacional. Sem narrativa estratégica, a resistência cultural tende a manter-se e a priorização fica dependente de solicitações casuísticas.
+
+**Risco principal**
+Iniciativas desconexas, baixa adesão entre serviços e dificuldade em sustentar investimento e mudança organizacional.
+
+**Ações prioritárias**
+1. Definir uma **estratégia de automação a 12-24 meses** com objetivos concretos por domínio de serviço.
+2. Traduzir a estratégia em critérios de priorização: volume, regra, risco, impacto no munícipe e esforço técnico.
+3. Criar uma narrativa institucional simples: automação para melhorar serviço, reduzir tarefas repetitivas e reforçar capacidade das equipas.
+4. Comunicar casos-piloto e ganhos obtidos para acelerar adesão interna.
+
+---
+
+## Conclusão transversal
+
+A Câmara Municipal de Lisboa tem **potencial real para avançar em automação**, sobretudo porque combina alguma estabilidade processual, boa qualidade de dados, práticas técnicas de resiliência e um sponsor identificado. No entanto, o retrato global mostra que a organização ainda não dispõe dos mecanismos que transformam esse potencial em **capacidade repetível e escalável**.
+
+### Prioridades transversais recomendadas
+1. **Estratégia e modelo operativo de automação**;
+2. **Pipeline estruturado de processos candidatos**;
+3. **Governança mínima e standards**;
+4. **Modelo de business case, ROI e TCO**;
+5. **Capacitação e gestão da mudança**;
+6. **2 a 4 pilotos com medição de benefícios desde o dia 1**.
+
+### Impacto esperado se estas ações forem executadas
+Com estas medidas, a Câmara Municipal de Lisboa deverá conseguir:
+- reduzir seleção subjetiva de oportunidades;
+- aumentar taxa de sucesso de pilotos;
+- evitar dívida técnica e dispersão de práticas;
+- demonstrar valor económico e operacional;
+- criar base para escala interdepartamental com menor risco.","## Metodologia da Avaliação de Prontidão Automação
+
+Esta avaliação mede a capacidade da organização para **identificar, priorizar, desenvolver, operar e escalar automações de forma sustentável**. Não avalia adoção de IA de forma genérica; avalia especificamente a **prontidão para automação de processos e operações**, incluindo componentes de processo, tecnologia, integração, pessoas, governação e viabilidade económica.
+
+### Estrutura do modelo
+A avaliação foi realizada em **7 pilares**, com pesos diferenciados no score global:
+
+1. **Processos (25%)**  
+   Avalia documentação, estabilidade, regras, exceções, métricas e capacidade de identificar candidatos à automação.
+2. **Tecnologia e Ferramentas (15%)**  
+   Avalia existência de ferramentas de automação, ambientes, monitorização, alertas e capacidade de escala técnica.
+3. **Integração e Arquitetura (15%)**  
+   Avalia APIs, middleware/iPaaS, dependência de UI scraping, qualidade de dados e resiliência arquitetural.
+4. **Pessoas e Competências (15%)**  
+   Mede competências internas, capacidade analítica, formação, citizen development e resistência à mudança.
+5. **Governança e Gestão (10%)**  
+   Mede CoE, processo de aprovação, ciclo de vida, standards, suporte e gestão de risco.
+6. **Económico e Financeiro (10%)**  
+   Mede orçamento, business case, ROI, controlo de custos e quantificação de benefícios.
+7. **Estratégia e Cultura (10%)**  
+   Mede alinhamento estratégico, patrocínio executivo, visão organizacional e comunicação da automação.
+
+### Escala de maturidade usada
+Cada pergunta foi classificada numa escala de **1 a 5**:
+
+- **1/5 — Inexistente ou ad hoc**  
+  A prática não existe ou depende de esforço informal e não repetível.
+- **2/5 — Inicial**  
+  Existem sinais pontuais, mas sem consistência, método ou cobertura suficiente.
+- **3/5 — Parcialmente estabelecido**  
+  A prática existe em algumas áreas ou processos, mas ainda não está normalizada nem monitorizada.
+- **4/5 — Estabelecido**  
+  A prática está implementada, é repetível e suporta execução com baixo risco.
+- **5/5 — Otimizado**  
+  A prática está madura, medida, governada e preparada para escala.
+
+### Como o score global foi calculado
+O score global resulta de **média ponderada dos 7 pilares**:
+
+- Processos: **2,56 x 25% = 0,64**
+- Tecnologia e Ferramentas: **2,40 x 15% = 0,36**
+- Integração e Arquitetura: **3,00 x 15% = 0,45**
+- Pessoas e Competências: **2,20 x 15% = 0,33**
+- Governança e Gestão: **2,00 x 10% = 0,20**
+- Económico e Financeiro: **1,60 x 10% = 0,16**
+- Estratégia e Cultura: **1,60 x 10% = 0,16**
+
+**Total = 2,30/5,0**
+
+### Processo de recolha e leitura dos dados
+O presente relatório foi construído com base em **40 respostas detalhadas** fornecidas para a avaliação da Câmara Municipal de Lisboa, distribuídas pelos 7 pilares. A leitura foi feita em três níveis:
+
+1. **Nível quantitativo** — análise dos scores por pergunta, pilar e peso relativo;  
+2. **Nível qualitativo** — interpretação das evidências textuais associadas a cada resposta;  
+3. **Nível de prontidão operacional** — avaliação da capacidade real de escalar automações com controlo, ROI e continuidade.
+
+### Como interpretar o resultado “Emergente”
+No contexto de **Prontidão Automação**, a maturidade **Emergente** tipicamente significa:
+- existem **condições favoráveis em partes da organização**;
+- há **casos com potencial de automação**, mas não um sistema de decisão robusto;
+- a escala ainda é limitada por **falta de governação, priorização económica e alinhamento estratégico**;
+- o risco principal não é tecnológico, mas sim **organizacional e de modelo operativo**.","## Próximos Passos — Proposta de envolvimento da Oramix
+
+A recomendação da Oramix para a Câmara Municipal de Lisboa é um arranque em **3 fases**, desenhado para reduzir risco, criar prova de valor e estabelecer uma base real de escala.
+
+### Fase 1 — Diagnóstico operacional e priorização do portefólio
+**Duração sugerida:** 3 a 4 semanas
+
+#### Objetivo
+Transformar a avaliação de Prontidão Automação num plano executável, com processos concretos, métricas e business cases.
+
+#### Atividades
+- Workshop executivo de alinhamento com sponsor e direções envolvidas.
+- Entrevistas com donos de processo, IT, suporte e áreas operacionais.
+- Levantamento de **8–12 processos** candidatos.
+- Avaliação de cada processo por:
+  - volume;
+  - estabilidade;
+  - regras/decisões;
+  - exceções;
+  - sistemas envolvidos;
+  - risco;
+  - esforço manual;
+  - benefício esperado.
+- Construção de **matriz valor vs. complexidade**.
+- Definição de **2 business cases prioritários**.
+
+#### Entregáveis Oramix
+- Backlog priorizado de automação.
+- Heatmap de viabilidade.
+- Modelo de business case.
+- Roadmap executivo de 12 meses refinado.
+- Recomendação de abordagem tecnológica e de governação.
+
+---
+
+### Fase 2 — Piloto orientado a resultados
+**Duração sugerida:** 8 a 10 semanas
+
+#### Objetivo
+Colocar em produção **1 a 2 automações piloto** com medição real de valor.
+
+#### Atividades
+- Desenho detalhado do processo alvo.
+- Formalização de regras, exceções e critérios de aceitação.
+- Configuração de ambientes de desenvolvimento, teste e produção.
+- Desenvolvimento da automação.
+- Testes funcionais, operacionais e de resiliência.
+- Preparação de monitorização, alertas e runbooks.
+- Go-live assistido e período de hypercare.
+
+#### Entregáveis Oramix
+- Automação(ões) piloto em produção.
+- Dashboard com KPIs antes/depois.
+- Documentação funcional e técnica.
+- Modelo de suporte e manutenção.
+- Relatório de ROI inicial aos 30–60 dias.
+
+#### Meta operacional recomendada
+- Pelo menos **1 caso com redução >30% de esforço manual**.
+- Pelo menos **1 caso com baseline económico medido**.
+
+---
+
+### Fase 3 — Industrialização e capacitação interna
+**Duração sugerida:** 2 a 3 meses
+
+#### Objetivo
+Passar de piloto para capacidade repetível.
+
+#### Atividades
+- Desenho de um **CoE leve** ou função de automação.
+- Criação de standards, templates e critérios de aprovação.
+- Formação prática para:
+  - Business Analysts;
+  - equipa de IT;
+  - equipa de suporte;
+  - gestores de processo.
+- Implementação de cadência de governance mensal e reporting trimestral.
+- Preparação do pipeline seguinte de automações.
+
+#### Entregáveis Oramix
+- Operating model de automação.
+- Kit de standards e templates.
+- Plano de formação e transferência de conhecimento.
+- Portefólio priorizado para a vaga seguinte.
+
+---
+
+## Modelo de apoio recomendado pela Oramix
+
+### 1. Apoio executivo
+- Steering committee quinzenal durante diagnóstico e piloto.
+- Revisão mensal de progresso, risco e valor.
+
+### 2. Apoio funcional e técnico
+- Consultor de automação/BA para desenho dos processos.
+- Arquiteto/integração para desenho técnico e resiliência.
+- Especialista de change management para adoção interna.
+
+### 3. Apoio pós-produção
+- **Hypercare de 2 a 4 semanas** após go-live.
+- Ajustes finos baseados em dados reais de operação.
+- Transferência gradual para equipa interna da Câmara Municipal de Lisboa.
+
+## Recomendação final da Oramix
+Para a Câmara Municipal de Lisboa, o passo mais acertado **não é tentar escalar já**, mas sim:
+1. **priorizar 2 casos com valor claro**;
+2. **medir ROI de forma rigorosa**;
+3. **criar governança mínima viável**;
+4. **industrializar a seguir, com base em evidência**.
+
+Com o score atual de **2,30/5**, esta abordagem dá a melhor relação entre **risco, tempo de execução e valor demonstrável** no contexto de **Prontidão Automação**.","## Recomendações de Use Cases de Automação
+
+As recomendações abaixo foram priorizadas para o contexto da **Prontidão Automação** da Câmara Municipal de Lisboa, tendo em conta:
+- **maturidade global ainda emergente (2,30/5)**;
+- **boa qualidade de dados (I04 = 5/5)**;
+- **estabilidade razoável dos processos (P05 = 5/5)**;
+- **falta de estratégia, CoE e medição de ROI**;
+- **necessidade de quick wins com risco controlado**.
+
+### 1) Prioridade Alta — Automatização da receção, validação inicial e encaminhamento de requerimentos/documentos padronizados
+
+**Exemplos no contexto municipal:** pedidos digitais com formulário estruturado, submissões documentais recorrentes, pedidos de certidões, comunicações administrativas, processos com tipologia bem definida.
+
+#### Porque faz sentido agora
+- A Câmara Municipal de Lisboa já tem alguma base de documentação de processos (**P01 = 3/5**) e mapeamento parcial (**P02 = 3/5**).
+- Este tipo de fluxo tende a ter **volume**, **regras repetíveis** e impacto direto no serviço ao munícipe.
+- A qualidade dos dados é um ponto forte (**I04 = 5/5**), o que reduz falhas de validação.
+- Permite automatizar tarefas como:
+  - validação de campos obrigatórios;
+  - verificação de anexos;
+  - classificação por tipologia;
+  - encaminhamento para a unidade competente;
+  - geração de registo e número de processo.
+
+#### Benefício esperado
+- **Redução de 40–70%** no esforço manual de triagem inicial.
+- **Redução de 20–40%** no tempo de encaminhamento.
+- Melhor cumprimento de SLA e maior rastreabilidade.
+- Menos erros de distribuição e menos retrabalho.
+
+#### Condição crítica de sucesso
+- Antes de automatizar, é necessário fechar a lacuna de **P03 = 1/5**: regras de decisão e exceções devem ficar explicitamente definidas por tipologia documental.
+
+---
+
+### 2) Prioridade Alta — Automatização de reconciliações e reporting operacional/financeiro entre sistemas e folhas de cálculo
+
+**Exemplos no contexto municipal:** consolidação periódica de dados de execução, reconciliação de estados, extração para mapas operacionais, controlo de indicadores de atividade, preparação de reporting interno.
+
+#### Porque faz sentido agora
+- É um use case particularmente adequado quando a maturidade financeira da automação é baixa (**Económico e Financeiro = 1,60/5**), porque permite **medir valor rapidamente**.
+- Tira partido da qualidade de dados já existente (**I04 = 5/5**) e da capacidade de integrações por API em alguns sistemas (**T02 = 3/5**, **I03 = 4/5**).
+- Evita, numa fase inicial, processos de atendimento com demasiadas exceções e risco reputacional.
+
+#### Benefício esperado
+- **Redução de 50–80%** do tempo gasto em reconciliações manuais e compilação de informação.
+- Menor dependência de ficheiros Excel dispersos.
+- Melhor auditabilidade e rastreio das transformações de dados.
+- Criação imediata de evidência para ROI, algo hoje inexistente (**E02 = 1/5**).
+
+#### Condição crítica de sucesso
+- Selecionar processos com fronteiras claras e periodicidade fixa (diária, semanal ou mensal).
+- Definir dono do indicador e regra de validação final.
+
+---
+
+### 3) Prioridade Média — Automatização de pedidos internos repetitivos (RH, IT, compras de baixo valor, aprovações administrativas)
+
+**Exemplos no contexto municipal:** pedidos de acesso, onboarding/offboarding administrativo, atualização cadastral, requisições internas padronizadas, aprovações simples multi-etapa.
+
+#### Porque faz sentido agora
+- São processos menos expostos ao cidadão e, por isso, adequados para estabilizar método e governação.
+- Permitem reduzir resistência interna à automação através de ganhos visíveis no dia-a-dia.
+- Ajustam-se a uma abordagem faseada, sem exigir de imediato uma arquitetura complexa.
+
+#### Benefício esperado
+- **Redução de 25–50%** no tempo de ciclo administrativo.
+- Menor atraso entre pedido, validação e execução.
+- Melhor experiência interna e maior transparência de estados.
+- Criação de um “laboratório controlado” para testar standards de automação.
+
+#### Condição crítica de sucesso
+- Limitar a primeira vaga a subprocessos realmente padronizados; evitar casos com muitas exceções ou forte dependência de decisões discricionárias.
+
+---
+
+### Ordem recomendada de implementação
+1. **Receção/encaminhamento de requerimentos e documentação padronizada** — maior impacto no serviço e bom potencial de escala.
+2. **Reconciliações e reporting operacional/financeiro** — quick win com ROI mensurável e baixo risco político/operacional.
+3. **Pedidos internos repetitivos** — útil para industrializar método e reduzir resistência à mudança.
+
+### Use cases a adiar nesta fase
+Com a maturidade atual da Câmara Municipal de Lisboa, recomenda-se **adiar** para uma fase posterior:
+- automações muito dependentes de sistemas legacy sem integração estável;
+- automações com exceções elevadas e regras não formalizadas;
+- iniciativas de hiperautomação mais ambiciosas sem CoE, standards e business cases consolidados.
+
+Isto é consistente com os scores de **Governança (2,00)**, **Estratégia (1,60)** e **Económico-Financeiro (1,60)**.","## Roadmap de Prontidão para Automação
+
+**Ponto de partida da Câmara Municipal de Lisboa:** score global **2,30/5,0** (*Emergente*). Os pilares mais fortes são **Integração e Arquitetura (3,00/5)** e **Processos (2,56/5)**; os mais frágeis são **Económico e Financeiro (1,60/5)** e **Estratégia e Cultura (1,60/5)**, seguidos de **Governança e Gestão (2,00/5)**. Isto indica que a Câmara Municipal de Lisboa **já tem base suficiente para arrancar com automações cirúrgicas**, mas **ainda não tem condições para escalar com controlo** sem primeiro reforçar estratégia, governação, business case e ciclo de vida.
+
+### Horizonte 0–3 meses — Fundamentos mínimos para arrancar bem
+
+**Objetivo:** criar capacidade de decisão, priorização e controlo antes de investir em escala.
+
+#### Prioridades
+1. **Definir uma estratégia de automação de 12 meses**
+   - Nomear um **sponsor executivo formal** e um **owner operacional** da automação.
+   - Definir 3 a 5 objetivos de negócio mensuráveis, por exemplo:
+     - redução de tempo de ciclo;
+     - redução de tarefas manuais repetitivas;
+     - melhoria de SLA ao munícipe;
+     - aumento de rastreabilidade e auditabilidade.
+   - Ligar a automação a prioridades reais da Câmara Municipal de Lisboa, e não a iniciativas tecnológicas isoladas.
+
+2. **Criar um modelo leve de governança**
+   - Instituir um **comité mensal de priorização**.
+   - Definir um processo formal de intake e aprovação de oportunidades.
+   - Criar standards mínimos:
+     - ficha de processo;
+     - matriz de risco;
+     - template de business case;
+     - critérios de passagem a produção;
+     - modelo de suporte.
+
+3. **Inventariar e priorizar processos candidatos**
+   - Levantar **15–25 processos** com potencial de automação.
+   - Classificar cada processo por:
+     - volume;
+     - esforço manual;
+     - nº de exceções;
+     - estabilidade;
+     - dependência de sistemas;
+     - risco operacional;
+     - impacto no munícipe.
+   - Selecionar **2–3 quick wins** com baixa a média complexidade.
+
+4. **Estabelecer baseline de indicadores**
+   - Como **P06 = 3/5** mas os KPIs não são monitorizados, a prioridade é medir:
+     - tempo médio por caso;
+     - taxa de retrabalho;
+     - SLA cumprido/incumprido;
+     - nº de intervenções manuais;
+     - custo estimado por processo;
+     - capacidade libertada.
+
+#### Entregáveis até ao mês 3
+- Estratégia de automação aprovada.
+- Backlog priorizado de oportunidades.
+- Modelo de governança “light”.
+- 2 business cases completos.
+- Definição da ferramenta/abordagem técnica para pilotos.
+
+#### Meta de maturidade estimada
+- **Score global:** de **2,30** para **~2,55–2,65**.
+- Melhoria esperada sobretudo em:
+  - **Estratégia e Cultura:** 1,60 → **2,40+**
+  - **Governança e Gestão:** 2,00 → **2,60+**
+  - **Económico e Financeiro:** 1,60 → **2,10+**
+
+---
+
+### Horizonte 3–6 meses — Pilotos controlados e prova de valor
+
+**Objetivo:** implementar automações de baixo risco, provar ROI e fechar lacunas operacionais.
+
+#### Prioridades
+1. **Desenvolver 2 pilotos em processos estáveis e mensuráveis**
+   - Dar preferência a processos com:
+     - documentação já existente (**P01 = 3/5**);
+     - mapas de processo parciais (**P02 = 3/5**);
+     - estabilidade estrutural elevada (**P05 = 5/5**);
+     - dados fiáveis (**I04 = 5/5**).
+   - Evitar, nesta fase, processos com demasiadas exceções, porque **P03 = 1/5** e **P04 = 2/5** indicam regras de decisão ainda mal consolidadas.
+
+2. **Formalizar o ciclo de vida da automação**
+   - Corrigir diretamente a fragilidade de **G03 = 1/5**.
+   - Definir etapas: descoberta → desenho → desenvolvimento → testes → produção → monitorização → manutenção → descontinuação.
+
+3. **Implementar medição de valor económico**
+   - Corrigir **E02 = 1/5**, **E03 = 1/5** e **E05 = 1/5**.
+   - Cada piloto deve medir, no mínimo:
+     - horas poupadas/mês;
+     - redução de tempo de ciclo;
+     - custo evitado;
+     - backlog reduzido;
+     - melhoria de compliance/auditoria.
+
+4. **Capacitar equipa interna**
+   - Formação prática para:
+     - Business Analysts;
+     - IT/integração;
+     - equipa de suporte.
+   - Meta mínima: criar **1 célula operacional** capaz de gerir backlog, testes e operação assistida.
+
+#### Entregáveis até ao mês 6
+- 2 automações piloto em produção.
+- Dashboard de monitorização operacional e de valor.
+- Runbook de suporte e manutenção.
+- Normas mínimas de desenvolvimento e operação.
+- Formação inicial da equipa interna.
+
+#### KPIs de sucesso recomendados
+- **≥20%** redução do tempo de ciclo nos processos piloto.
+- **≥30%** redução de intervenção manual nos passos automatizados.
+- **≥90%** de execução sem erro nas rotinas automatizadas após estabilização.
+- Business case medido com dados reais aos 60 dias.
+
+#### Meta de maturidade estimada
+- **Score global:** **~2,80–2,95**.
+- Melhoria esperada em:
+  - **Tecnologia e Ferramentas:** 2,40 → **3,00+**
+  - **Governança e Gestão:** 2,00 → **2,90+**
+  - **Económico e Financeiro:** 1,60 → **2,50+**
+  - **Pessoas e Competências:** 2,20 → **2,70+**
+
+---
+
+### Horizonte 6–12 meses — Escala com controlo
+
+**Objetivo:** passar de pilotos isolados para uma capacidade repetível de automação.
+
+#### Prioridades
+1. **Criar um CoE leve ou função equivalente**
+   - Não precisa de ser uma estrutura pesada.
+   - Deve assegurar:
+     - pipeline de oportunidades;
+     - standards;
+     - arquitetura de referência;
+     - gestão de risco;
+     - reporting de valor.
+   - Isto responde diretamente a **G01 = 1/5** e **G04 = 1/5**.
+
+2. **Industrializar a seleção e execução de automações**
+   - Meta: ter **6–10 casos no pipeline**, com **3–5 em produção** até ao fim de 12 meses.
+   - Introduzir scoring padrão para decidir prioridade:
+     - valor anual estimado;
+     - complexidade técnica;
+     - risco;
+     - impacto no munícipe;
+     - dependências de integração.
+
+3. **Reforçar arquitetura e integração**
+   - Embora **Integração e Arquitetura = 3,00/5**, há um problema estrutural: **I02 = 1/5** (integrações ponto-a-ponto) e **I01 = 1/5** (nem todos os sistemas core expõem APIs de forma útil).
+   - Recomenda-se plano progressivo para:
+     - normalizar integrações;
+     - reduzir dependências frágeis;
+     - definir padrões de autenticação, logging e resiliência.
+
+4. **Criar disciplina financeira da automação**
+   - Orçamentação anual dedicada.
+   - Gestão de licenças, infraestrutura e manutenção.
+   - Revisão trimestral do portefólio com ROI real vs. previsto.
+
+5. **Gestão da mudança e comunicação interna**
+   - Necessário porque **H05 = 2/5** indica resistência significativa.
+   - Comunicar automação como:
+     - libertação de capacidade;
+     - melhoria de serviço;
+     - redução de tarefas repetitivas;
+     - reforço de controlo e não substituição indiscriminada de pessoas.
+
+#### Entregáveis até ao mês 12
+- CoE/função de automação operacional.
+- Portefólio governado com business cases.
+- 3–5 automações em produção com suporte estabilizado.
+- Modelo de reporting trimestral de valor.
+- Plano de evolução de arquitetura de integração.
+
+#### Meta de maturidade estimada
+- **Score global:** **~3,10–3,30**.
+- Objetivo: mover a Câmara Municipal de Lisboa de **Emergente** para **Intermédia / Estruturada inicial** em Prontidão Automação.
+
+### Prioridade transversal do roadmap
+A maior alavanca para a Câmara Municipal de Lisboa **não é começar por comprar tecnologia**; é **criar disciplina de seleção, business case, governação e medição de valor**, porque os scores mais baixos estão exatamente em **Estratégia (1,60)**, **Económico-Financeiro (1,60)** e **Governança (2,00)**.","2026-07-07T00:05:45.194Z","## Quick Wins (0-3 meses)
+
+1. **Criar um “Automation Intake” único para a Câmara Municipal de Lisboa**  
+   **Acção:** definir uma ficha standard para submissão de oportunidades com 6 critérios obrigatórios: volume, frequência, tempo manual, taxa de erro, estabilidade do processo e número de excepções. Aplicar a 10-15 processos transversais (por exemplo, áreas administrativas, financeiras, RH, expediente ou gestão documental, sujeito a validação interna).  
+   **Resultado esperado:** backlog inicial priorizado com **5 casos de automação de maior valor**, reduzindo decisões ad hoc e respondendo directamente às lacunas **P07/P08**.
+
+2. **Implementar governação mínima de automação (“light CoE”)**  
+   **Acção:** nomear formalmente um sponsor, um responsável operacional, um ponto focal técnico e um ponto focal de negócio; aprovar um RACI simples; instituir uma reunião quinzenal de pipeline; criar 4 templates mínimos: PDD, desenho técnico, plano de testes e handover para suporte.  
+   **Resultado esperado:** clarificação de ownership e redução do risco de projectos informais; cobertura imediata das lacunas **G01, G03 e G04** sem necessidade de criar já uma estrutura pesada.
+
+3. **Medir baseline económica em 2-3 processos candidatos**  
+   **Acção:** para cada processo candidato, recolher dados de base: nº de transacções/mês, tempo médio por transacção, horas manuais consumidas, SLA/tempo de ciclo, erros/retrabalho e custo estimado. Construir um business case simples com payback, mesmo que inicial.  
+   **Resultado esperado:** primeiros **business cases comparáveis e defensáveis**, permitindo à Câmara Municipal de Lisboa tomar decisões de investimento com base em dados e atacar de imediato **E02, E03 e E05**.
+
+4. **Seleccionar um piloto “bom para automatizar” e não apenas “visível”**  
+   **Acção:** escolher 1 processo com estas características: estável (**P05 = 5/5**), repetitivo, regras simples, baixo nº de excepções, dados de boa qualidade e dependência técnica controlada. Evitar começar por processos com forte variabilidade ou regras ainda implícitas.  
+   **Resultado esperado:** aumento da probabilidade de sucesso do primeiro caso, com um piloto executável em **8-12 semanas** e mais fácil de transformar em caso de referência interno.
+
+5. **Lançar um mini-plano de capacitação e gestão da mudança**  
+   **Acção:** realizar 2 sessões de sensibilização para dirigentes e equipas operacionais sobre o que é automação de processos, critérios de selecção de casos, impacto nos papéis e modelo de suporte; identificar 1 “champion” por área-piloto.  
+   **Resultado esperado:** redução da resistência cultural, alinhamento de expectativas e geração de um fluxo inicial de oportunidades melhor qualificadas, mitigando **H04, H05 e S05**.","[""section_1"",""section_4"",""section_7"",""section_8"",""section_2"",""section_3"",""section_6"",""section_5"",""section_9""]","## Executive Summary
+
+A **Câmara Municipal de Lisboa** apresenta um nível de **Prontidão Automação de 2,30/5,0**, correspondente ao estágio de maturidade **Emergente**. Em termos práticos, isto significa que existem **condições parciais para automatizar processos de forma pontual**, mas ainda **não estão reunidos os elementos de base para escalar automação de forma consistente, governada e com retorno económico demonstrável**.
+
+O perfil atual mostra uma organização com **alguma estabilidade processual e boa qualidade de dados**, mas com lacunas relevantes em **estratégia, governação, business case, medição de ROI e capacidade operacional de automação**. O risco principal não é “não conseguir automatizar”, mas sim **automatizar de forma avulsa, sem priorização, sem standards e sem prova de valor**.
+
+### Top 3 pontos fortes
+
+1. **Base arquitetural e de dados relativamente favorável**  
+   O pilar **Integração e Arquitetura** é o mais forte (**3,00/5**), com destaque para **qualidade e consistência dos dados** (**I04 = 5/5**) e **práticas de resiliência arquitetural** (**I05 = 4/5**). Além disso, as automações tendem a usar **APIs em vez de UI scraping** (**I03 = 4/5**), o que reduz fragilidade técnica.
+
+2. **Alguma maturidade processual nos processos críticos**  
+   Em **Processos (2,56/5)**, a Câmara Municipal de Lisboa já evidencia sinais positivos: **documentação formal dos processos críticos** (**P01 = 3/5**), **mapas de processo em alguns casos** (**P02 = 3/5**) e, sobretudo, **estabilidade estrutural** (**P05 = 5/5**). Esta estabilidade é um fator importante para seleção de candidatos à automação.
+
+3. **Capacidade humana inicial e patrocínio mínimo existente**  
+   Há uma **função de Business Analyst estabelecida** (**H02 = 4/5**), alguma capacidade interna/externa para desenvolvimento (**H01 = 3/5**) e **equipa de suporte dedicada** para manutenção (**G05 = 4/5**). Existe também **sponsor identificado** ao nível da liderança (**S02 = 3/5**), o que cria uma base útil para lançar uma agenda formal de automação.
+
+### Top 3 lacunas
+
+1. **Ausência de estratégia e modelo de governação de automação**  
+   Este é o maior bloqueador estrutural. Os resultados são claros: **não existe estratégia de automação alinhada com o negócio** (**S01 = 1/5**), **não existe CoE ou função equivalente** (**G01 = 1/5**), **não existe gestão de ciclo de vida das automações** (**G03 = 1/5**) nem **standards/templates documentados** (**G04 = 1/5**). Isto limita fortemente a capacidade de escalar com controlo.
+
+2. **Fraca disciplina económico-financeira e ausência de prova de valor**  
+   O pilar **Económico e Financeiro** é um dos mais baixos (**1,60/5**). Atualmente, **não é medido ROI** (**E02 = 1/5**), **não existem business cases formais** (**E03 = 1/5**) e os **custos de licenciamento, infraestrutura e manutenção são pouco conhecidos** (**E05 = 1/5**). Sem este controlo, a automação arrisca ser vista como custo e não como alavanca de eficiência.
+
+3. **Baixa operacionalização da automação no terreno**  
+   Apesar de existirem algumas condições de base, **não há ferramentas de automação implementadas** (**T01 = 1/5**), **não há identificação sistemática de processos candidatos** (**P07 = 1/5**), **as regras/exceções dos processos não estão claramente definidas** (**P03 = 1/5**) e **não existe formação contínua nem citizen development** (**H04 = 1/5; H03 = 1/5**). Na prática, a Câmara Municipal de Lisboa ainda não tem um “motor” operacional de automação.
+
+### Recomendação principal
+
+A prioridade para a **Câmara Municipal de Lisboa** deve ser **instituir um programa formal de automação nos próximos 90 dias**, antes de investir em escala. Esse programa deve incluir, no mínimo:
+
+- **definição de uma estratégia de automação** alinhada com objetivos de serviço público, eficiência e capacidade libertada;
+- **criação de um modelo de governação leve** (owner, pipeline de oportunidades, standards, ciclo de vida e gestão de risco);
+- **inventário e priorização de 5–10 processos candidatos**, com critérios objetivos de volume, estabilidade, regras e impacto;
+- **baseline de KPIs e modelo de ROI**, incluindo tempo poupado, redução de erro, SLA e capacidade administrativa libertada;
+- **execução de 2–3 pilotos de baixo risco e alto volume**, para demonstrar valor rapidamente e criar confiança interna.
+
+Em síntese: a **Prontidão Automação** da Câmara Municipal de Lisboa **não está ainda preparada para escalar**, mas **tem condições suficientes para arrancar com um modelo disciplinado e orientado a valor**. O ganho mais imediato não virá da tecnologia isolada, mas da combinação entre **priorização, governação, business case e desenho rigoroso de processos**.","final","6a2a96848034a14b54df2a7e","2026-06-11T11:05:40.790000","2026-07-09T00:22:20.329000","service_4fa6979f-0d3e-486c-8eee-88cc8a4e0910","service+4fa6979f-0d3e-486c-8eee-88cc8a4e0910@no-reply.base44.com","false"

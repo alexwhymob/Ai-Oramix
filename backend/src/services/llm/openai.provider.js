@@ -1,4 +1,5 @@
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
+import { recordLlmAudit } from '../llmAudit.service.js';
 
 export async function generateStructuredObjectWithOpenAI({
   apiKey,
@@ -7,8 +8,9 @@ export async function generateStructuredObjectWithOpenAI({
   schema,
   systemPrompt,
   userPrompt,
-  temperature = 0.4
+  temperature = 0.4, auditOperation = 'structured_generation'
 }) {
+  const startedAt = performance.now();
   const response = await fetch(OPENAI_RESPONSES_URL, {
     method: 'POST',
     headers: {
@@ -31,6 +33,7 @@ export async function generateStructuredObjectWithOpenAI({
   });
 
   const data = await parseJsonSafe(response);
+  await recordLlmAudit({ provider: 'openai', model, operation: auditOperation, status: response.ok ? 'success' : 'error', duration_ms: Math.round(performance.now() - startedAt), input_tokens: data?.usage?.input_tokens ?? null, output_tokens: data?.usage?.output_tokens ?? null, total_tokens: data?.usage?.total_tokens ?? null, error_code: response.ok ? null : 'openai_request_failed' });
   if (!response.ok) {
     throw createLlmError(
       data?.error?.message || `OpenAI request failed with status ${response.status}`,
@@ -61,8 +64,9 @@ export async function generateTextWithOpenAI({
   model,
   prompt,
   systemPrompt = null,
-  temperature = 0.7
+  temperature = 0.7, auditOperation = 'text_generation'
 }) {
+  const startedAt = performance.now();
   const response = await fetch(OPENAI_RESPONSES_URL, {
     method: 'POST',
     headers: {
@@ -77,6 +81,7 @@ export async function generateTextWithOpenAI({
   });
 
   const data = await parseJsonSafe(response);
+  await recordLlmAudit({ provider: 'openai', model, operation: auditOperation, status: response.ok ? 'success' : 'error', duration_ms: Math.round(performance.now() - startedAt), input_tokens: data?.usage?.input_tokens ?? null, output_tokens: data?.usage?.output_tokens ?? null, total_tokens: data?.usage?.total_tokens ?? null, error_code: response.ok ? null : 'openai_request_failed' });
   if (!response.ok) {
     throw createLlmError(
       data?.error?.message || `OpenAI request failed with status ${response.status}`,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';

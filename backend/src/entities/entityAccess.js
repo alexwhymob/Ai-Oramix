@@ -10,7 +10,8 @@ const ADMIN_ONLY_ENTITIES = new Set([
   'NotificationTemplate',
   'MaturityPreset',
   'MaturityLevel',
-  'HtmlReportConfig'
+  'HtmlReportConfig',
+  'LlmAuditLog'
 ]);
 
 export async function buildEntityAccessFilter({ entityName, action, user }) {
@@ -61,7 +62,7 @@ export function applyEntityWriteDefaults({ entityName, action, payload, user }) 
   };
 }
 
-const USER_WRITE_FIELDS = new Set(['email', 'full_name', 'role', 'active']);
+const USER_WRITE_FIELDS = new Set(['email', 'full_name', 'role', 'active', 'booking_url']);
 
 function sanitizeUserWritePayload(action, payload = {}) {
   if (action === 'create' || action === 'bulkCreate') {
@@ -83,7 +84,13 @@ function sanitizeUserWritePayload(action, payload = {}) {
 }
 
 export function assertFunctionAccess({ functionName, action, user }) {
-  if (functionName === 'quizSession' && action === 'adminRegister') {
+  if (functionName === 'deleteCustomerCascade') {
+    requireAuthenticated(user);
+    if (user.role !== 'admin') throwForbidden();
+    return;
+  }
+
+  if (functionName === 'quizSession' && ['adminRegister', 'renewResultAccess', 'renewInputAccess'].includes(action)) {
     requireAuthenticated(user);
     if (!['admin', 'account_manager'].includes(user.role)) {
       throwForbidden();

@@ -1,5 +1,6 @@
 import { getUserFromToken } from '../services/auth.service.js';
 import { ACCESS_COOKIE_NAME, parseCookies } from '../services/authCookies.service.js';
+import { withSpan } from '../telemetry/tracing.js';
 
 export async function authMiddleware(req, _res, next) {
   try {
@@ -11,7 +12,7 @@ export async function authMiddleware(req, _res, next) {
       throw error;
     }
 
-    req.user = await getUserFromToken(token);
+    req.user = await withSpan('auth.verify', { 'app.auth.required': true }, () => getUserFromToken(token));
     next();
   } catch (error) {
     next(error);
@@ -22,7 +23,7 @@ export async function optionalAuthMiddleware(req, _res, next) {
   try {
     const token = extractBearerToken(req.headers.authorization) || parseCookies(req)[ACCESS_COOKIE_NAME];
     if (token) {
-      req.user = await getUserFromToken(token);
+      req.user = await withSpan('auth.verify', { 'app.auth.required': false }, () => getUserFromToken(token));
     }
   } catch {
     req.user = null;
