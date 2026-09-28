@@ -13,7 +13,9 @@ import { useMaturityData } from '@/lib/useMaturity';
 import { base44 } from '@/api/base44Client';
 
 export default function Quiz() {
-  const { token } = useParams();
+  const { token: pathToken } = useParams();
+  const [fragmentToken] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('access'));
+  const token = pathToken || fragmentToken;
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const [currentPillarIdx, setCurrentPillarIdx] = useState(0);
@@ -28,6 +30,12 @@ export default function Quiz() {
   const [showValidation, setShowValidation] = useState(false);
   const draftTimer = useRef(null);
   const { resolveLevel } = useMaturityData();
+
+  useEffect(() => {
+    if (fragmentToken) {
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
+    }
+  }, [fragmentToken]);
 
   const { data: allPillars = [] } = useQuery({
     queryKey: ['pillars'],
@@ -60,7 +68,11 @@ export default function Quiz() {
   }, [rawQuestions, pillars]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setSessionError('invalid_link');
+      setLoadingSession(false);
+      return;
+    }
     base44.functions.invoke('quizSession', { action: 'load', token })
       .then(res => {
         const { customer, assessment, existingAnswers, accessToken: sessionToken } = res.data;
@@ -84,8 +96,10 @@ export default function Quiz() {
   }, [token]);
 
   useEffect(() => {
-    localStorage.setItem(`quiz_${token}`, JSON.stringify(answers));
-  }, [answers, token]);
+    if (!assessmentId) return;
+    localStorage.setItem(`quiz_${assessmentId}`, JSON.stringify(answers));
+    if (token) localStorage.removeItem(`quiz_${token}`);
+  }, [answers, assessmentId, token]);
 
   useEffect(() => {
     if (!assessmentId || !accessToken || !Object.keys(answers).length) return;
@@ -128,7 +142,8 @@ export default function Quiz() {
       maturityLevel: maturity.key,
       pillarScores,
     });
-    localStorage.removeItem(`quiz_${token}`);
+    localStorage.removeItem(`quiz_${assessmentId}`);
+    if (token) localStorage.removeItem(`quiz_${token}`);
     navigate(`/complete/${assessmentId}#access=${encodeURIComponent(response.data.resultToken)}`);
   };
 

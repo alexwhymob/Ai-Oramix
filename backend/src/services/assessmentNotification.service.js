@@ -68,7 +68,7 @@ export async function sendAssessmentStartEmail(assessmentId, accessToken, deps =
   const customer = await models.Customer.findOne({ id: assessment.customer_id }).lean();
   if (!customer?.email || !accessToken) return { skipped: true, reason: 'customer_email_or_access_missing' };
 
-  const quizLink = `${env.FRONTEND_URL}/quiz/${accessToken}`;
+  const quizLink = `${env.FRONTEND_URL}/quiz#access=${encodeURIComponent(accessToken)}`;
   const message = await buildNotificationMessage({
     templateKey: 'assessment_started',
     assessment,
@@ -109,7 +109,7 @@ async function sendIncompleteAssessmentReminders(deps) {
       // storing it. Legacy drafts receive one expiring token on their first
       // reminder, after which their old permanent QR token is rejected.
       const accessToken = getInputAccessLink(assessment) || await issueInputAccess(assessment.id);
-      const quizLink = `${env.FRONTEND_URL}/quiz/${accessToken}`;
+      const quizLink = `${env.FRONTEND_URL}/quiz#access=${encodeURIComponent(accessToken)}`;
       const message = await buildNotificationMessage({
         templateKey: 'incomplete_reminder',
         assessment,

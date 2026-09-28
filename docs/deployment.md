@@ -49,6 +49,7 @@ Variaveis iniciais:
 
 ```txt
 NODE_ENV=development
+HOST=0.0.0.0
 PORT=3003
 FRONTEND_URL=http://localhost:5175
 TRUST_PROXY=false
@@ -90,22 +91,19 @@ O backend ja possui autenticacao JWT e geracao de relatorio com provider LLM tro
 
 ## Recomendacao de Deploy
 
-Caminho mais simples para a fase atual:
+Caminho escolhido para este lancamento: Docker numa VPS, com proxy reverso, frontend, backend, MongoDB e Redis em containers. Ver a secao [Deploy Docker numa VPS](#deploy-docker-numa-vps).
+
+Alternativa gerida, caso seja preferida mais tarde:
 
 1. Frontend em `Vercel` ou `Render Static Site`.
 2. Backend em `Render Web Service`.
 3. MongoDB Atlas como base de dados.
 
-Se o deploy for num `VPS`, a recomendacao muda para:
-
-1. Frontend buildado e servido por `Nginx`.
-2. Backend Node/Express a correr localmente na VPS em `127.0.0.1:3003`.
-3. `Nginx` a fazer reverse proxy de `/api` para o backend.
-4. MongoDB Atlas mantido externo, como planeado.
-
 O repositorio agora inclui:
 
 - `render.yaml` para subir frontend + backend no Render.
+- `docker-compose.prod.yml` para Caddy, frontend, backend, MongoDB e Redis em producao numa VPS.
+- `.env.production.example` como base para os segredos/configuracao do Compose de producao.
 - `frontend/vercel.json` para suportar rotas SPA na Vercel.
 - `.nvmrc` com Node `22`.
 
@@ -149,67 +147,49 @@ VITE_API_BASE_URL=https://SEU-BACKEND/api
 
 3. A Vercel usa `frontend/vercel.json` para reescrever rotas SPA para `index.html`.
 
-## Deploy em VPS
+## Deploy Docker numa VPS
 
-O repositorio agora inclui exemplos para VPS:
+O caminho escolhido para producao em VPS e correr frontend, backend, MongoDB e Redis em containers. O ficheiro [docker-compose.prod.yml](../docker-compose.prod.yml) separa esta configuracao do Compose local de desenvolvimento.
 
-- `deploy/nginx/oramix.conf.example`
-- `deploy/systemd/oramix-backend.service.example`
+Arquitetura:
 
-Arquitetura recomendada:
+- Caddy em container publica as portas 80 e 443 e encaminha pedidos ao frontend;
+- frontend Nginx no container serve a aplicacao e encaminha `/api` ao backend;
+- backend, MongoDB e Redis apenas na rede interna Docker, sem portas publicadas no host;
+- OpenAI e Resend continuam servicos externos; o MongoDB usa o volume Docker `mongo_data`.
 
-- `https://app.seudominio.com` serve o frontend estatico
-- `https://app.seudominio.com/api/*` faz proxy para `http://127.0.0.1:3003/api/*`
-- o backend liga ao MongoDB Atlas via `MONGODB_URI` ou `MONGODB_DIRECT_URI`
-- o Nginx aplica CSP, `X-Frame-Options` e `nosniff` ao frontend
+Preparacao inicial na VPS:
 
-Passos sugeridos:
+1. Instalar Docker Engine e o plugin Docker Compose.
+2. Publicar o repositorio numa pasta de deploy, copiar `.env.production.example` para `.env.production` e restringir permissoes do ficheiro (`chmod 600 .env.production`).
+3. Preencher segredos unicos para `JWT_SECRET`, `LLM_CONFIG_ENCRYPTION_KEY`, `REDIS_PASSWORD` e `MONGO_ROOT_PASSWORD`; pode gerar valores com `openssl rand -hex 32`. Usar passwords hexadecimais para evitar caracteres especiais nas URLs. Nunca reutilizar segredos de desenvolvimento.
+4. Manter as mesmas chaves `JWT_SECRET` e `LLM_CONFIG_ENCRYPTION_KEY` entre deploys. A chave LLM tambem protege valores LLM e segredos MFA cifrados na base; trocar sem migracao pode tornar esses valores ilegiveis. Se a base ja tiver chaves LLM cifradas, localizar a chave usada no ambiente anterior ou migrar esses valores antes do primeiro arranque.
+5. Configurar backups do volume MongoDB com restauro testado. Guardar `MONGO_ROOT_PASSWORD` fora do repositorio.
+6. Ainda sem dominio, a configuracao Caddy serve HTTP na porta 80. Quando houver dominio, apontar o DNS para a VPS, trocar `FRONTEND_URL` para `https://<dominio>` e substituir `:80` no `deploy/caddy/Caddyfile` pelo dominio. Caddy obterá e renovará o certificado TLS automaticamente; manter as portas 80 e 443 acessiveis.
 
-1. Instalar `node`, `npm` e `nginx` na VPS.
-2. Publicar o projeto em `/var/www/oramix/`.
-3. No `frontend/`:
-
-```bash
-npm install
-npm run build
-```
-
-4. No `backend/`:
+Antes do corte dos QR antigos, fazer backup do MongoDB e executar a migracao uma vez:
 
 ```bash
-npm install
-npm start
+docker compose --env-file .env.production -f docker-compose.prod.yml build backend
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d mongo redis
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm --no-deps backend npm run migrate:remove-legacy-qr
 ```
 
-5. Criar um ficheiro `.env` local no backend com variaveis de producao.
-6. Registar o backend com `systemd` usando `deploy/systemd/oramix-backend.service.example`.
-7. Configurar o `Nginx` com base em `deploy/nginx/oramix.conf.example`.
-8. Ativar HTTPS com `certbot`.
+A migracao remove permanentemente `Customer.qr_token` e o indice correspondente. O deploy seguinte aceita apenas as credenciais novas de 48 horas; emitir QR novos para os respondentes com avaliacoes em curso.
 
-Variaveis importantes em VPS:
+Arrancar ou atualizar os containers:
 
-```txt
-NODE_ENV=production
-PORT=3003
-FRONTEND_URL=https://app.seudominio.com
-TRUST_PROXY=true
-AUTH_COOKIE_SAMESITE=lax
-AUTH_COOKIE_SECURE=true
-AUTH_COOKIE_DOMAIN=
-MONGODB_URI=...
-MONGODB_DIRECT_URI=...
-MONGODB_DB_NAME=...
-JWT_SECRET=...
-LLM_CONFIG_ENCRYPTION_KEY=...
-LLM_PROVIDER=openai
-LLM_MODEL=gpt-5.4-mini
-OPENAI_API_KEY=...
-EMAIL_PROVIDER=resend
-RESEND_API_KEY=...
-EMAIL_FROM=...
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml up --build -d
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f backend frontend redis
 ```
 
-Quando o frontend e servido pelo mesmo dominio e o Nginx encaminha `/api`, manter `AUTH_COOKIE_SAMESITE=lax`. Se forem usados dominios separados, configurar `AUTH_COOKIE_SAMESITE=none`, `AUTH_COOKIE_SECURE=true` e uma lista explicita de origens permitidas em `FRONTEND_URL`.
+O Caddy em container trata do proxy e do TLS depois de configurar dominio e DNS. Na fase sem dominio, a aplicacao fica acessivel por HTTP; nao usar credenciais reais de utilizador ate ativar HTTPS. Permitir no firewall SSH administrativo, HTTP e HTTPS; nao abrir `3003` nem `6379`. Com frontend e API no mesmo dominio, manter `AUTH_COOKIE_SAMESITE=lax`; a API configura cookies `Secure` em `NODE_ENV=production`.
+
+Depois do primeiro arranque, criar a conta admin com um comando one-off: `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm -it backend npm run create:admin -- --email admin@empresa.pt --name "Admin"`. O script pede a password sem a mostrar no terminal. Ativar MFA logo no primeiro login.
+
+Depois de configurar DNS e HTTPS, validar `/api/health` pelo dominio, login, MFA dos administradores, envio de e-mail, geracao de relatorio e o percurso completo de avaliacao e acesso a resultados. Usar um remetente Resend do dominio verificado. Manter uma instancia backend: o scheduler atual executa dentro do backend e nao coordena entre varias instancias.
 
 ## Docker
 
@@ -292,7 +272,7 @@ Muda:
 
 Nao muda:
 
-- MongoDB Atlas continua valido
+- MongoDB pode correr no proprio Compose de producao; Atlas continua uma alternativa suportada no deploy gerido
 - as variaveis do backend continuam praticamente as mesmas
 - o frontend continua a falar com `/api`
 - a configuracao de OpenAI e Resend continua igual

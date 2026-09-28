@@ -49,7 +49,7 @@ const attributes = [
     `SameSite=${env.AUTH_COOKIE_SAMESITE}`
   ];
 
-  if (env.NODE_ENV === 'production' || env.AUTH_COOKIE_SECURE) {
+  if (env.AUTH_COOKIE_SECURE) {
     attributes.push('Secure');
   }
 

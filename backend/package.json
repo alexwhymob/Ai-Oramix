@@ -11,7 +11,9 @@
     "import:assessment-answers": "node src/scripts/importCsv/importAssessmentAnswers.js",
     "import:importar": "node src/scripts/importCsv/importImportarFolder.js",
     "import:all": "node src/scripts/importCsv/importAll.js",
+    "import:configuration": "node src/scripts/importConfiguration.js",
     "seed:templates": "node src/scripts/seedAssessmentTemplates.js",
+    "migrate:remove-legacy-qr": "node src/scripts/removeLegacyQrTokens.js",
     "create:admin": "node src/scripts/createAdminUser.js",
     "test": "vitest run",
     "test:watch": "vitest"

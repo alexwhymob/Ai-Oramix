@@ -15,8 +15,9 @@ Aplicacao web para avaliacoes de maturidade e prontidao para adocao de IA. O pro
 frontend/       Aplicacao React/Vite
 backend/        API Express, autenticacao, modelos e servicos
 docs/           Documentacao tecnica e operacional
-deploy/         Exemplos de Nginx e systemd
-docker-compose.yml
+deploy/         Configuracao de deploy e exemplos de proxy
+docker-compose.yml       Stack local de desenvolvimento
+docker-compose.prod.yml  Stack de producao em containers
 ```
 
 ## Configuracao local
@@ -99,6 +100,19 @@ Parar os containers:
 docker compose down
 ```
 
+### Docker em producao numa VPS
+
+Usar a stack de producao separada, com secrets em `.env.production` e Caddy em container como proxy/HTTPS:
+
+```bash
+cp .env.production.example .env.production
+chmod 600 .env.production
+# Editar .env.production e substituir todos os valores de exemplo.
+docker compose --env-file .env.production -f docker-compose.prod.yml up --build -d
+```
+
+O Caddy em container publica as portas 80/443; frontend, backend e Redis ficam na rede Docker. Sem dominio, o Caddy serve HTTP; com dominio e DNS configurados, ativa HTTPS automaticamente. Consultar [Deploy Docker numa VPS](docs/deployment.md#deploy-docker-numa-vps) antes de expor a aplicacao.
+
 ## Testes e build
 
 ```bash
@@ -136,6 +150,6 @@ Os scripts fazem upsert na nossa base MongoDB. Nao importam dados para nenhuma p
 
 ## Seguranca
 
-Segredos, chaves de API, credenciais do Atlas e tokens JWT devem ser fornecidos por variaveis de ambiente. O backend aplica autenticacao JWT em cookies HttpOnly, refresh tokens rotativos, autorizacao por role, rate limiting, bloqueio progressivo contra brute force, headers de seguranca e registo de auditoria. O acesso publico a resultados usa uma credencial de troca unica, valida por 30 dias, que e convertida num cookie de leitura `HttpOnly`; consultar [Roadmap de seguranca e acesso publico](docs/security-roadmap.md) para o fluxo e a transicao dos QR links legados.
+Segredos, chaves de API, credenciais do Atlas e tokens JWT devem ser fornecidos por variaveis de ambiente. O backend aplica autenticacao JWT em cookies HttpOnly, refresh tokens rotativos, autorizacao por role, rate limiting, bloqueio progressivo contra brute force, headers de seguranca e registo de auditoria. QR links de avaliacao expiram em 48 horas, guardam apenas o hash e colocam o token no fragmento do URL; links legados sao revogados na migracao documentada. O acesso publico a resultados usa uma credencial de troca unica, valida por 30 dias, convertida num cookie de leitura `HttpOnly`; consultar [Roadmap de seguranca e acesso publico](docs/security-roadmap.md).
 
 Antes de um deploy publico, validar whitelist de IP do Atlas, HTTPS, rotacao de segredos, politica de backups e logs sem dados sensiveis.

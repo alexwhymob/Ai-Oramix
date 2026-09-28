@@ -123,6 +123,12 @@ function mergeFilters(filter, accessFilter = {}) {
 }
 
 function sanitizeEntityRecord(entityName, record) {
+  if (entityName === 'Customer') {
+    const sanitized = { ...record };
+    delete sanitized.qr_token;
+    return sanitized;
+  }
+
   if (entityName !== 'User') return record;
 
   const sanitized = { ...record };

@@ -13,7 +13,6 @@ const customerSchema = new mongoose.Schema({
     enum: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+', null],
     default: null
   },
-  qr_token: { type: String, default: null },
   registered_by: { type: String, enum: ['self', 'admin'], default: 'self' },
   language: { type: String, enum: ['pt', 'en'], default: 'pt' },
   phone: { type: String, default: null },
@@ -24,7 +23,6 @@ const customerSchema = new mongoose.Schema({
 }, schemaOptions);
 
 customerSchema.index({ email: 1 });
-customerSchema.index({ qr_token: 1 });
 customerSchema.index({ account_manager_id: 1 });
 
 touchUpdatedDate(customerSchema);

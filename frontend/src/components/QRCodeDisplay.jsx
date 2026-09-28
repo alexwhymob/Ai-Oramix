@@ -3,8 +3,8 @@ import QRCode from 'qrcode';
 import { Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function QRCodeDisplay({ token, size = 200, compact = false }) {
-  const quizUrl = `${window.location.origin}/quiz/${token}`;
+export default function QRCodeDisplay({ token, assessmentId, size = 200, compact = false }) {
+  const quizUrl = `${window.location.origin}/quiz#access=${encodeURIComponent(token)}`;
   const [qrUrl, setQrUrl] = useState('');
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function QRCodeDisplay({ token, size = 200, compact = false }) {
   const handleDownload = () => {
     const a = document.createElement('a');
     a.href = qrUrl;
-    a.download = `qr_${token.slice(0, 8)}.png`;
+    a.download = `qr_assessment_${assessmentId?.slice(0, 8) || 'access'}.png`;
     a.target = '_blank';
     a.click();
   };
@@ -40,7 +40,7 @@ export default function QRCodeDisplay({ token, size = 200, compact = false }) {
           <Download className="w-3.5 h-3.5" />
           Download
         </Button>
-        <Button variant="outline" size="sm" onClick={() => window.open(quizUrl, '_blank')} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => window.open(quizUrl, '_blank', 'noopener,noreferrer')} className="gap-1.5">
           <ExternalLink className="w-3.5 h-3.5" />
           Open
         </Button>

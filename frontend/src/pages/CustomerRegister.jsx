@@ -136,12 +136,12 @@ export default function CustomerRegister() {
         return;
       }
 
-      if (!response.data?.qr_token) {
+      if (!response.data?.accessToken) {
         setEmailError(t('Nao foi possivel iniciar a avaliacao. Tente novamente.', 'Could not start the assessment. Please try again.'));
         return;
       }
 
-      navigate(`/quiz/${response.data.qr_token}`);
+      navigate(`/quiz#access=${encodeURIComponent(response.data.accessToken)}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
       setEmailError(message || t('Ocorreu um erro ao iniciar a avaliacao. Tente novamente.', 'An error occurred while starting the assessment. Please try again.'));

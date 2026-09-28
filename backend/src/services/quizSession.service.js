@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
   Assessment,
   AssessmentAnswer,
@@ -60,7 +59,7 @@ export async function handleQuizSessionAction(payload) {
     case 'renewResultAccess':
       return renewResultAccess(payload.assessmentId, payload.actor);
     case 'renewInputAccess':
-      return renewInputAccess(payload.assessmentId, payload.actor);
+      return renewInputAccess(payload.assessmentId, payload.actor, payload.customerId);
     default: {
       const error = new Error('unknown_action');
       error.status = 400;
@@ -80,11 +79,9 @@ async function registerCustomer(form, { registered_by, status, templateId = null
   validateCustomerForm(form, { requireDataConsent: registered_by === 'self' });
   const template = await assertAssessmentTemplateExists(templateId);
 
-  const qr_token = randomUUID();
   const customer = await Customer.create({
     ...form,
     data_consent_at: form.data_consent ? (form.data_consent_at || new Date().toISOString()) : null,
-    qr_token,
     registered_by,
     language: form.language || 'pt'
   });
@@ -97,11 +94,12 @@ async function registerCustomer(form, { registered_by, status, templateId = null
     language: form.language || 'pt'
   });
 
-  const accessToken = await issueInputAccess(assessment.id);
+  const accessExpiresAt = new Date(Date.now() + INPUT_ACCESS_DURATION_MS);
+  const accessToken = await issueInputAccess(assessment.id, accessExpiresAt);
   return {
-    qr_token: accessToken,
+    accessToken,
     assessmentId: assessment.id,
-    accessExpiresAt: new Date(Date.now() + INPUT_ACCESS_DURATION_MS)
+    accessExpiresAt
   };
 }
 
@@ -109,11 +107,9 @@ async function adminRegister(form, templateId = null) {
   validateCustomerForm(form);
   const template = await assertAssessmentTemplateExists(templateId);
 
-  const qr_token = randomUUID();
   const customer = await Customer.create({
     ...form,
     data_consent_at: form.data_consent ? (form.data_consent_at || new Date().toISOString()) : null,
-    qr_token,
     registered_by: 'admin',
     language: form.language || 'pt'
   });
@@ -125,7 +121,14 @@ async function adminRegister(form, templateId = null) {
     language: form.language || 'pt'
   });
 
-  return { customer: customer.toJSON(), assessmentId: assessment.id, accessToken: await issueInputAccess(assessment.id) };
+  const accessExpiresAt = new Date(Date.now() + INPUT_ACCESS_DURATION_MS);
+  const accessToken = await issueInputAccess(assessment.id, accessExpiresAt);
+  return {
+    customer: customer.toJSON(),
+    assessmentId: assessment.id,
+    accessToken,
+    accessExpiresAt
+  };
 }
 
 function validateCustomerForm(form = {}, { requireDataConsent = false } = {}) {
@@ -152,51 +155,26 @@ function validateCustomerForm(form = {}, { requireDataConsent = false } = {}) {
 }
 
 async function loadMainSession(token) {
-  let assessment = await Assessment.findOne({ public_access_token_hash: hashSecret(token) }).select('+public_access_token_hash').lean();
-  let customer = assessment ? await Customer.findOne({ id: assessment.customer_id }).lean() : null;
-  const legacyCustomer = !assessment ? await Customer.findOne({ qr_token: token }).lean() : null;
-
-  if (assessment && !isInputAccessValid(assessment, token)) {
-    throwAccessDenied();
-  }
-
-  if (!assessment && !legacyCustomer) {
+  if (!token) {
     const error = new Error('invalid_token');
     error.status = 404;
     error.code = 'invalid_token';
     throw error;
   }
 
-  customer = customer || legacyCustomer;
-  const allAssessments = await Assessment.find({ customer_id: customer.id }).sort({ created_date: 1 }).lean();
-  const mainAssessments = allAssessments.filter(assessment => assessment.assessment_type !== 'sub_assessment');
-
-  assessment = assessment || mainAssessments[0];
-  if (!assessment) {
-    const createdAssessment = await Assessment.create({
-      customer_id: customer.id,
-      status: 'in_progress',
-      started_at: new Date(),
-      language: customer.language || 'pt'
-    });
-    assessment = createdAssessment.toJSON();
-  }
+  const assessment = await Assessment.findOne({ public_access_token_hash: hashSecret(token) })
+    .select('+public_access_token_hash')
+    .lean();
+  if (!assessment || !isInputAccessValid(assessment, token)) throwAccessDenied();
+  const customer = await Customer.findOne({ id: assessment.customer_id }).lean();
+  if (!customer) throwNotFound();
+  delete customer.qr_token;
 
   if (assessment.status === 'completed') {
     const error = new Error('result_access_required');
     error.status = 403;
     error.code = 'result_access_required';
     throw error;
-  }
-
-  // `qr_token` is retained only for existing records created before expiring
-  // access links. Once a temporary link exists, the legacy permanent token is
-  // never accepted again.
-  if (legacyCustomer && assessment.public_access_expires_at) throwAccessDenied();
-
-  let accessToken = token;
-  if (legacyCustomer || !isInputAccessValid(assessment, token)) {
-    accessToken = await issueInputAccess(assessment.id);
   }
 
   let existingAnswers = [];
@@ -208,7 +186,7 @@ async function loadMainSession(token) {
     ? await getAssessmentTemplateById(assessment.assessment_template_id)
     : null;
 
-  return { customer, assessment, existingAnswers, template, accessToken };
+  return { customer, assessment, existingAnswers, template, accessToken: token };
 }
 
 async function submitAssessment({ assessmentId, accessToken, answers = [], globalScore, maturityLevel, pillarScores }) {
@@ -383,18 +361,40 @@ async function renewResultAccess(assessmentId, actor) {
   return { assessmentId, resultToken: await issueResultAccess(assessmentId) };
 }
 
-async function renewInputAccess(assessmentId, actor) {
-  const assessment = await Assessment.findOne({ id: assessmentId }).lean();
-  if (!assessment || assessment.assessment_type === 'sub_assessment' || assessment.status === 'completed') throwNotFound();
-  const customer = await Customer.findOne({ id: assessment.customer_id }).lean();
-  if (!actor || (actor.role !== 'admin' && (actor.role !== 'account_manager' || !customer || (customer.account_manager_id !== actor.id && customer.created_by_id !== actor.id)))) {
+async function renewInputAccess(assessmentId, actor, customerId) {
+  let assessment = assessmentId ? await Assessment.findOne({ id: assessmentId }).lean() : null;
+  if (assessment && (assessment.assessment_type === 'sub_assessment' || assessment.status === 'completed')) throwNotFound();
+
+  const customer = assessment
+    ? await Customer.findOne({ id: assessment.customer_id }).lean()
+    : await Customer.findOne({ id: customerId }).lean();
+  if (!customer || !actor || (actor.role !== 'admin' && (actor.role !== 'account_manager' || (customer.account_manager_id !== actor.id && customer.created_by_id !== actor.id)))) {
     throwAccessDenied();
   }
-  const accessToken = await issueInputAccess(assessmentId);
+
+  if (!assessment) {
+    assessment = await Assessment.findOne({
+      customer_id: customer.id,
+      assessment_type: { $ne: 'sub_assessment' }
+    }).sort({ created_date: -1 }).lean();
+
+    if (assessment?.status === 'completed') throwNotFound();
+    if (!assessment) {
+      assessment = await Assessment.create({
+        customer_id: customer.id,
+        status: 'not_started',
+        language: customer.language || 'pt'
+      });
+      assessment = assessment.toJSON();
+    }
+  }
+
+  const accessExpiresAt = new Date(Date.now() + INPUT_ACCESS_DURATION_MS);
+  const accessToken = await issueInputAccess(assessment.id, accessExpiresAt);
   return {
-    assessmentId,
+    assessmentId: assessment.id,
     accessToken,
-    accessExpiresAt: new Date(Date.now() + INPUT_ACCESS_DURATION_MS)
+    accessExpiresAt
   };
 }
 
@@ -414,8 +414,7 @@ async function issueResultAccess(assessmentId) {
   return resultToken;
 }
 
-export async function issueInputAccess(assessmentId) {
-  const expiresAt = new Date(Date.now() + INPUT_ACCESS_DURATION_MS);
+export async function issueInputAccess(assessmentId, expiresAt = new Date(Date.now() + INPUT_ACCESS_DURATION_MS)) {
   const accessToken = createInputAccessToken(assessmentId, expiresAt);
   await Assessment.updateOne({ id: assessmentId }, {
     $set: {

@@ -38,7 +38,6 @@ Campos principais:
 - `role`
 - `sector`
 - `company_size`
-- `qr_token`
 - `registered_by`
 - `language`
 - `phone`
@@ -47,11 +46,12 @@ Campos principais:
 - `data_consent`
 - `data_consent_at`
 
+Os links QR nao sao guardados no modelo `Customer`. Os hashes e expiracao da credencial publica de escrita ficam no modelo `Assessment`. A migracao `npm run migrate:remove-legacy-qr` apaga o campo legado `Customer.qr_token` e o respetivo indice.
+
 Indices:
 
 - `id`, unico
 - `email`
-- `qr_token`
 - `account_manager_id`
 
 ### Assessment

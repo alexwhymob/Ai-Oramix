@@ -157,6 +157,7 @@ Acoes suportadas:
 - `exchangeResultAccess`
 - `issueSubAccess`
 - `renewResultAccess` (apenas admin ou account manager responsavel)
+- `renewInputAccess` (apenas admin ou account manager responsavel)
 
 Funcoes ainda nao migradas retornam `501 function_not_migrated`.
 
@@ -168,7 +169,11 @@ Funcoes ainda nao migradas retornam `501 function_not_migrated`.
 
 `renewResultAccess` invalida a sessao de resultados anterior e devolve uma nova credencial de troca apenas ao utilizador interno autorizado. O frontend administrativo transforma-a imediatamente num link com fragmento e nao deve registar nem persistir o valor bruto.
 
+`renewInputAccess` emite ou substitui a credencial de uma avaliacao nao concluida. Recebe `assessmentId` ou `customerId`, devolve `accessToken` e `accessExpiresAt` (48 horas) e invalida qualquer link anterior. Os links de QR usam `/quiz#access=...`; o frontend remove o fragmento antes do pedido a API. Links legados baseados em `Customer.qr_token` nao sao aceites.
+
 `registerCustomer` exige consentimento de tratamento de dados no payload `form`:
+
+A resposta contem `accessToken`, `assessmentId` e `accessExpiresAt`; o frontend inicia a avaliacao com `/quiz#access=<accessToken>`. O token nao e persistido em `Customer`.
 
 ```json
 {

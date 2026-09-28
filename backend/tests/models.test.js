@@ -61,7 +61,7 @@ describe('Mongoose models', () => {
       expect.arrayContaining([
         [{ id: 1 }, expect.objectContaining({ unique: true })],
         [{ email: 1 }, expect.any(Object)],
-        [{ qr_token: 1 }, expect.any(Object)]
+        [{ account_manager_id: 1 }, expect.any(Object)]
       ])
     );
 

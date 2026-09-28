@@ -59,7 +59,7 @@ export async function invokeFunction(req, res, next) {
       }, () => handleQuizSessionAction(payload));
       if (payload.action === 'registerCustomer') {
         try {
-          await sendAssessmentStartEmail(result.assessmentId, result.qr_token);
+          await sendAssessmentStartEmail(result.assessmentId, result.accessToken);
         } catch (emailError) {
           // Registration must still succeed if the mail provider is temporarily unavailable.
           console.error('Assessment start email failed:', emailError.message);

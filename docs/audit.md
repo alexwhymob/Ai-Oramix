@@ -54,6 +54,7 @@ Os eventos de leitura de entidades nao sao registados individualmente para evita
 - `quiz.get_result`
 - `quiz.get_sub_assessments`
 - `quiz.get_sub_result`
+- `quiz.input_access_renewed`
 - `quiz.unknown`
 
 ### Sub-assessments

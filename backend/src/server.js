@@ -18,8 +18,8 @@ try {
   await ensureDefaultNotificationTemplates();
   startAssessmentNotificationScheduler();
 
-  const server = app.listen(env.PORT, () => {
-    console.log(`Oramix AI backend listening on port ${env.PORT}`);
+  const server = app.listen(env.PORT, env.HOST, () => {
+    console.log(`Oramix AI backend listening on ${env.HOST}:${env.PORT}`);
   });
 
   const shutdown = async () => {

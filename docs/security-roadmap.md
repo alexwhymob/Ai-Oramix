@@ -49,22 +49,24 @@ Impedir que um identificador previsivel ou um link antigo conceda acesso indevid
 
 ## Transicao de QR links legados
 
-Os QR links existentes baseados em `Customer.qr_token` continuam aceites apenas para nao interromper avaliacao em curso. No primeiro acesso, a aplicacao cria a nova credencial de escrita em hash.
+O acesso por `Customer.qr_token` foi removido. Os QR novos usam um token de avaliacao com validade de 48 horas, guardado na base apenas como hash e transportado no fragmento `#access=...`; o frontend remove o fragmento do endereco antes de carregar a avaliacao. Os emails de inicio e lembrete usam o mesmo formato.
 
-Esta compatibilidade e temporaria: quem possuir um QR legado ainda pode iniciar ou retomar uma avaliacao nao submetida. Depois da submissao, esse QR nao concede acesso ao resultado.
+Links assinados de 48 horas emitidos por versoes recentes e ainda validos continuam aceites no formato anterior `/quiz/<token>` ate expirarem. O token permanente UUID baseado em `Customer.qr_token` e rejeitado.
 
-### Proxima entrega obrigatoria
+O admin ou account manager responsavel pode gerar um QR novo na lista de clientes para qualquer avaliacao ainda nao concluida. A emissao substitui o hash anterior, revoga o QR/link anterior e funciona tambem para clientes antigos que ainda nao tinham avaliacao. A criacao de cliente pelo painel mostra o QR imediatamente.
 
-- Definir uma data de corte e comunicar a substituicao dos QR links antigos.
-- Criar um fluxo administrativo para emitir e revogar links de avaliacao novos, sem guardar o valor bruto do token na base de dados.
-- Atualizar o gerador de QR para usar somente esses links novos.
-- Depois da janela de transicao, desativar a consulta por `Customer.qr_token` no endpoint publico.
+Os QR legados deixam de funcionar no deploy desta alteracao. Antes do deploy, fazer backup e executar `npm run migrate:remove-legacy-qr` no container backend para apagar `Customer.qr_token` existentes e o respetivo indice. Os respondentes com avaliacao em curso devem receber o QR novo do account manager.
+
+### Corte e comunicacao
+
+- Coordenar o deploy com o envio de novos QR aos respondentes com avaliacoes em curso.
+- O valor bruto do token so e apresentado no QR/link no momento da emissao; nao e escrito na base de dados nem nos logs HTTP porque fica no fragmento do URL.
 
 ## Itens pendentes priorizados
 
 | Prioridade | Item | Estado |
 | --- | --- | --- |
-| Alta | Remover suporte aos QR links legados apos a migracao | Pendente de data de corte e fluxo de reemissao |
+| Alta | Comunicar a substituicao dos QR legados e executar migracao apos backup | Pendente de janela de deploy |
 | Alta | Teste manual completo: quiz, submissao, troca unica, renovacao e expiracao de resultados | Pendente |
 | Media | Confirmar em producao HTTPS e `AUTH_COOKIE_SECURE=true` | Pendente de ambiente de producao |
 | Media | Procedimento de rotacao de segredos, backup/restauro e revisao de acessos Atlas | Pendente operacional |

@@ -162,13 +162,19 @@ export default function AdminCustomers() {
   };
 
   const showExpiringQr = async (customer, assessment) => {
-    if (!assessment || assessment.status === 'completed') return;
+    if (assessment?.status === 'completed') return;
     try {
       const response = await base44.functions.invoke('quizSession', {
         action: 'renewInputAccess',
-        assessmentId: assessment.id
+        assessmentId: assessment?.id,
+        customerId: customer.id
       });
-      setQrCustomer({ ...customer, access_token: response.data?.accessToken });
+      setQrCustomer({
+        ...customer,
+        assessment_id: response.data?.assessmentId,
+        access_token: response.data?.accessToken,
+        access_expires_at: response.data?.accessExpiresAt
+      });
       toast.success('A new 48-hour assessment link was generated.');
     } catch (error) {
       toast.error(error?.data?.message || error?.message || 'Unable to generate an assessment link.');
@@ -211,6 +217,13 @@ export default function AdminCustomers() {
           setSaveError('Job title is required.');
           return;
         }
+
+        setQrCustomer({
+          ...res.data.customer,
+          assessment_id: res.data.assessmentId,
+          access_token: res.data.accessToken,
+          access_expires_at: res.data.accessExpiresAt
+        });
       }
 
       qc.invalidateQueries({ queryKey: ['all_customers'] });
@@ -409,7 +422,7 @@ export default function AdminCustomers() {
                             </Button>
                           </Link>
                         )}
-                        {assessment && assessment.status !== 'completed' && (
+                        {!isAiConsultant && (!assessment || assessment.status !== 'completed') && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -525,7 +538,10 @@ export default function AdminCustomers() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>QR Code – {qrCustomer?.company}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground text-center">{qrCustomer?.name}</p>
-          {qrCustomer?.access_token && <QRCodeDisplay token={qrCustomer.access_token} size={200} />}
+          {qrCustomer?.access_token && <>
+            <QRCodeDisplay token={qrCustomer.access_token} assessmentId={qrCustomer.assessment_id} size={200} />
+            <p className="text-xs text-muted-foreground text-center">Assessment link expires in 48 hours. Issuing another link revokes this one.</p>
+          </>}
         </DialogContent>
       </Dialog>
 
