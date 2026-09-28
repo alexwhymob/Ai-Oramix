@@ -189,6 +189,31 @@ O Caddy em container trata do proxy e do TLS depois de configurar dominio e DNS.
 
 Depois do primeiro arranque, criar a conta admin com um comando one-off: `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm -it backend npm run create:admin -- --email admin@empresa.pt --name "Admin"`. O script pede a password sem a mostrar no terminal. Ativar MFA logo no primeiro login.
 
+### Telemetria opcional
+
+A telemetria de producao pode ser ligada sem alterar o proxy publico. Por defeito, `OTEL_ENABLED=false` e os servicos de traces nao arrancam. Para ativar metricas Prometheus, traces OpenTelemetry e a interface Jaeger, adicionar ao `.env.production`:
+
+```env
+OTEL_ENABLED=true
+OTEL_SERVICE_NAME=oramix-ai-backend
+OTEL_PROMETHEUS_PORT=9464
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+```
+
+Subir a stack com o profile de telemetria:
+
+```bash
+docker compose --profile telemetry --env-file .env.production -f docker-compose.prod.yml up --build -d
+```
+
+O Jaeger fica disponivel apenas em `127.0.0.1:16686` na VPS. Para abrir a interface a partir do computador de administracao, criar um tunel SSH:
+
+```bash
+ssh -L 16686:127.0.0.1:16686 utilizador@IP_DA_VPS
+```
+
+Depois abrir `http://localhost:16686`. As metricas Prometheus continuam em `http://127.0.0.1:9464/metrics`. Para desligar traces, definir `OTEL_ENABLED=false`, recriar o backend e parar os servicos opcionais com `docker compose --profile telemetry -f docker-compose.prod.yml stop otel-collector jaeger clickhouse`.
+
 Depois de configurar DNS e HTTPS, validar `/api/health` pelo dominio, login, MFA dos administradores, envio de e-mail, geracao de relatorio e o percurso completo de avaliacao e acesso a resultados. Usar um remetente Resend do dominio verificado. Manter uma instancia backend: o scheduler atual executa dentro do backend e nao coordena entre varias instancias.
 
 ## Docker

@@ -16,6 +16,7 @@ services:
       OTEL_ENABLED: ${OTEL_ENABLED:-false}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-oramix-ai-backend}
       OTEL_PROMETHEUS_PORT: ${OTEL_PROMETHEUS_PORT:-9464}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://otel-collector:4318/v1/traces}
       MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:?Set MONGO_ROOT_USERNAME in .env.production}:${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env.production}@mongo:27017/${MONGODB_DB_NAME:?Set MONGODB_DB_NAME in .env.production}?authSource=admin
       MONGODB_DB_NAME: ${MONGODB_DB_NAME:?Set MONGODB_DB_NAME in .env.production}
       REDIS_URL: redis://default:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.production}@redis:6379
@@ -96,6 +97,53 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  otel-collector:
+    image: otel/opentelemetry-collector:0.139.0
+    profiles: [telemetry]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      jaeger:
+        condition: service_started
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.21.0
+    profiles: [telemetry]
+    command: ["--config", "/jaeger/config.yaml", "--feature-gates=storage.clickhouse"]
+    volumes:
+      - ./observability/jaeger-clickhouse.yaml:/jaeger/config.yaml:ro
+    ports:
+      - "127.0.0.1:16686:16686"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8-alpine
+    profiles: [telemetry]
+    environment:
+      CLICKHOUSE_DB: jaeger
+      CLICKHOUSE_USER: jaeger
+      CLICKHOUSE_PASSWORD: jaeger_local_password
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1' --user jaeger --password \"$$CLICKHOUSE_PASSWORD\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
   redis:
     image: redis:7.4-alpine
     command:
@@ -122,3 +170,4 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+  clickhouse_data:
