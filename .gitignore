@@ -33,3 +33,9 @@ dist-ssr
 
 .env
 .vite
+
+#Certificados
+deploy/certs/*
+!deploy/certs/.gitkeep
+deploy/*.pem
+deploy/*.key
